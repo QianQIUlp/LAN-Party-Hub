@@ -149,13 +149,15 @@ export function ControllerPage({ state, onLeaveRoom, onInput, onSetReady }: Cont
   const fallbackReady = resolveAutoReadyFallback(state, onSetReady, layoutModel, text);
   const gamepadChrome = gameId === "drift-racer";
   const denseBoardChrome = gameId === "word-tiles";
-  const minimalChrome = denseBoardChrome || gamepadChrome;
+  const joystickChrome = layoutModel.kind === "virtual_joystick" && layoutModel.minimal;
+  const minimalChrome = denseBoardChrome || gamepadChrome || joystickChrome;
 
   return (
     <ControllerFrame
       title={minimalChrome ? "" : gameName}
       subtitle={minimalChrome ? undefined : `${text.phase}: ${text.formatPhase(game?.phase ?? text.unknown)} | ${orientation}`}
       wide={gamepadChrome || denseBoardChrome}
+      bare={joystickChrome}
       footer={
         minimalChrome ? undefined :
         <div style={{ display: "grid", gap: 10 }}>

@@ -63,12 +63,15 @@ export function VirtualJoystickLayout({ model }: VirtualJoystickLayoutProps) {
   const lastVectorRef = useRef<Vector2>({ moveX: 0, moveY: 0 });
   const onMoveChangeRef = useRef(model.onMoveChange);
   const [thumbOffset, setThumbOffset] = useState({ x: 0, y: 0, active: false });
-  const actionButtons = model.actionButtons ?? [];
+  const minimal = Boolean(model.minimal);
+  const actionButtons = minimal ? [] : model.actionButtons ?? [];
   const buttonColumns =
     model.actionButtonColumns ??
     (actionButtons.length >= 4 ? 2 : 1);
   const hasActionButtons = actionButtons.length > 0;
-  const controlSize = hasActionButtons ? "min(42vw, 220px)" : "min(78vw, 320px)";
+  const controlSize = minimal
+    ? "min(84vw, 360px)"
+    : hasActionButtons ? "min(42vw, 220px)" : "min(78vw, 320px)";
   const buttonSize =
     actionButtons.length >= 4
       ? "min(19vw, 96px)"
@@ -172,8 +175,15 @@ export function VirtualJoystickLayout({ model }: VirtualJoystickLayoutProps) {
   }
 
   return (
-    <div style={{ display: "grid", gap: 18 }}>
-      <div
+    <div
+      style={{
+        display: "grid",
+        gap: minimal ? 0 : 18,
+        minHeight: minimal ? "min(76vh, 680px)" : undefined,
+        placeItems: minimal ? "center" : undefined
+      }}
+    >
+      {!minimal ? <div
         style={{
           display: "grid",
           gap: 8,
@@ -186,9 +196,9 @@ export function VirtualJoystickLayout({ model }: VirtualJoystickLayoutProps) {
         <strong style={{ fontSize: "1.25rem", color: model.accentColor ?? "var(--accent)" }}>{model.title}</strong>
         {model.subtitle ? <span style={{ color: "var(--text-muted)" }}>{model.subtitle}</span> : null}
         {model.helperText ? <span style={{ color: "var(--text-muted)" }}>{model.helperText}</span> : null}
-      </div>
+      </div> : null}
 
-      {model.ready ? <ReadyPanel ready={model.ready} /> : null}
+      {!minimal && model.ready ? <ReadyPanel ready={model.ready} /> : null}
 
       <div
         style={{
@@ -271,13 +281,13 @@ export function VirtualJoystickLayout({ model }: VirtualJoystickLayoutProps) {
                 transition: activePointerIdRef.current === null ? "transform 100ms ease-out, box-shadow 140ms ease-out" : "none"
               }}
             >
-              {model.centerLabel ?? "MOVE"}
+              {minimal ? null : model.centerLabel ?? "MOVE"}
             </div>
           </div>
 
-          <div style={{ color: "var(--text-muted)", fontSize: "0.95rem", letterSpacing: "0.03em" }}>
+          {!minimal ? <div style={{ color: "var(--text-muted)", fontSize: "0.95rem", letterSpacing: "0.03em" }}>
             Innen fein steuern, am Rand mit voller Geschwindigkeit laufen.
-          </div>
+          </div> : null}
         </div>
 
         {hasActionButtons ? (
@@ -290,7 +300,7 @@ export function VirtualJoystickLayout({ model }: VirtualJoystickLayoutProps) {
         ) : null}
       </div>
 
-      {model.stats?.length ? (
+      {!minimal && model.stats?.length ? (
         <div style={{ display: "grid", gap: 10 }}>
           {model.stats.map((stat) => (
             <div

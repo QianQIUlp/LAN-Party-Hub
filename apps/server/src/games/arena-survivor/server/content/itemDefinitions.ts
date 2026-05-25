@@ -799,7 +799,7 @@ export const arenaSurvivorItemDefinitions = [
       "speed",
     ],
     description: "Kleiner Hybrid-Pick mit HP, Schaden, Ruestung und Tempo gegen Crit.",
-    iconPath: "/arena-survivor/item-icons/power-bracelet.svg",
+    iconPath: "/arena-survivor/item-icons/medal.svg",
     levels: [
       {
         level: 1,
@@ -825,7 +825,7 @@ export const arenaSurvivorItemDefinitions = [
       "range-tradeoff",
     ],
     description: "Crit und Ausweichen gegen geringere Waffenreichweite.",
-    iconPath: "/arena-survivor/item-icons/glass-eye.svg",
+    iconPath: "/arena-survivor/item-icons/blindfold.svg",
     levels: [
       {
         level: 1,
@@ -848,7 +848,7 @@ export const arenaSurvivorItemDefinitions = [
       "pickup",
     ],
     description: "Mehr Luck und Sammelkomfort gegen etwas Angriffstempo.",
-    iconPath: "/arena-survivor/item-icons/magnet-core.svg",
+    iconPath: "/arena-survivor/item-icons/lucky-charm.svg",
     levels: [
       {
         level: 1,
@@ -871,7 +871,7 @@ export const arenaSurvivorItemDefinitions = [
       "harvesting",
     ],
     description: "Fruehe Economy mit schwachem Startkampf-Tradeoff.",
-    iconPath: "/arena-survivor/item-icons/herbal-bandage.svg",
+    iconPath: "/arena-survivor/item-icons/harvest-sprout.svg",
     levels: [
       {
         level: 1,
@@ -895,7 +895,7 @@ export const arenaSurvivorItemDefinitions = [
       "attack-speed-tradeoff",
     ],
     description: "Mehr Fernkampf, Schaden und Reichweite gegen Tempo und Crit.",
-    iconPath: "/arena-survivor/item-icons/scope-lens.svg",
+    iconPath: "/arena-survivor/item-icons/heavy-bullets.svg",
     levels: [
       {
         level: 1,

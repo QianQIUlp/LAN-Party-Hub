@@ -22,6 +22,7 @@ type DetailContent =
       subtitle: string;
       description?: string;
       iconPath?: string;
+      level?: number;
       summary?: string;
       tags?: string[];
       stats?: LayoutStat[];
@@ -33,6 +34,7 @@ type DetailContent =
       subtitle: string;
       description?: string;
       iconPath?: string;
+      level?: number;
       stats?: LayoutStat[];
       weapon: NonNullable<ArenaSurvivorModernShopLayoutModel["loadout"]>["weapons"][number];
     }
@@ -42,6 +44,7 @@ type DetailContent =
       subtitle: string;
       description?: string;
       iconPath?: string;
+      level?: number;
       item: NonNullable<ArenaSurvivorModernShopLayoutModel["loadout"]>["items"][number];
     }
   | {
@@ -80,6 +83,21 @@ function detailLinesToStats(lines?: Array<{ label: string; value: string }>): La
 
 function iconInitial(label: string): string {
   return label.trim().slice(0, 1).toUpperCase() || "?";
+}
+
+function resolveLevelFrameColor(level?: number): string | null {
+  switch (level) {
+    case 1:
+      return "#22c55e";
+    case 2:
+      return "#38bdf8";
+    case 3:
+      return "#a78bfa";
+    case 4:
+      return "#ef4444";
+    default:
+      return null;
+  }
 }
 
 function MaterialIcon() {
@@ -181,14 +199,26 @@ function CloseIcon() {
   );
 }
 
-function IconFrame({ src, label, size = 56 }: { src?: string; label: string; size?: number }) {
+function IconFrame({
+  src,
+  label,
+  size = 56,
+  level
+}: {
+  src?: string;
+  label: string;
+  size?: number;
+  level?: number;
+}) {
+  const levelColor = resolveLevelFrameColor(level);
   const sharedStyle: CSSProperties = {
     width: size,
     height: size,
     borderRadius: 8,
-    border: "1px solid rgba(148, 163, 184, 0.18)",
+    border: levelColor ? `2px solid ${levelColor}` : "1px solid rgba(148, 163, 184, 0.18)",
     background: "rgba(8, 13, 25, 0.78)",
-    flex: "0 0 auto"
+    flex: "0 0 auto",
+    boxShadow: levelColor ? `0 0 0 1px ${levelColor}44, 0 0 18px ${levelColor}2f` : undefined
   };
 
   if (src) {
@@ -232,8 +262,8 @@ function MiniInfoBadge() {
         position: "absolute",
         right: 7,
         top: 7,
-        width: 24,
-        height: 24,
+        width: 22,
+        height: 22,
         borderRadius: 8,
         display: "grid",
         placeItems: "center",
@@ -366,55 +396,59 @@ function RoundIconButton({
 function LoadoutTile({
   iconPath,
   title,
-  subtitle,
+  level,
   selected,
   onClick
 }: {
   iconPath?: string;
   title: string;
-  subtitle: string;
+  level: number;
   selected?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
+      aria-label={title}
+      title={title}
       onClick={onClick}
       style={{
         position: "relative",
-        width: 92,
-        minHeight: 116,
+        width: 74,
+        height: 74,
         display: "grid",
-        justifyItems: "center",
-        alignContent: "start",
-        gap: 7,
-        padding: 8,
+        placeItems: "center",
+        padding: 7,
         borderRadius: 8,
-        border: selected ? "1px solid rgba(250, 204, 21, 0.64)" : "1px solid rgba(148, 163, 184, 0.16)",
+        border: selected ? "1px solid rgba(250, 204, 21, 0.72)" : "1px solid rgba(148, 163, 184, 0.14)",
         background: selected ? "rgba(250, 204, 21, 0.12)" : "rgba(15, 23, 42, 0.58)",
         color: "var(--text-main)",
         cursor: "pointer",
-        touchAction: "manipulation",
-        textAlign: "center"
+        touchAction: "manipulation"
       }}
     >
       <MiniInfoBadge />
-      <IconFrame src={iconPath} label={title} size={54} />
-      <strong
-        style={{
-          width: "100%",
-          minWidth: 0,
-          fontSize: "0.75rem",
-          lineHeight: 1.12,
-          overflow: "hidden",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical"
-        }}
-      >
-        {title}
-      </strong>
-      <span style={{ color: "var(--text-muted)", fontSize: "0.68rem", fontWeight: 800 }}>{subtitle}</span>
+      <IconFrame src={iconPath} label={title} size={58} level={level} />
+      {selected ? (
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: 6,
+            bottom: 6,
+            width: 22,
+            height: 22,
+            borderRadius: 8,
+            display: "grid",
+            placeItems: "center",
+            border: "1px solid rgba(255, 255, 255, 0.16)",
+            background: "rgba(22, 101, 52, 0.9)",
+            color: "#bbf7d0"
+          }}
+        >
+          <MergeIcon />
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -440,9 +474,9 @@ function OfferTile({
   return (
     <article
       style={{
-        minHeight: 148,
+        minHeight: 124,
         display: "grid",
-        gridTemplateRows: "1fr 42px",
+        gridTemplateRows: "1fr 40px",
         borderRadius: 8,
         border: `1px solid ${borderColor}`,
         background: offer.purchased
@@ -461,10 +495,8 @@ function OfferTile({
         style={{
           position: "relative",
           display: "grid",
-          gridTemplateRows: "62px auto auto",
-          gap: 7,
-          justifyItems: "center",
-          padding: "10px 8px 6px",
+          placeItems: "center",
+          padding: "10px 8px",
           border: 0,
           background: "transparent",
           color: "var(--text-main)",
@@ -475,7 +507,7 @@ function OfferTile({
       >
         <MiniInfoBadge />
         <span style={{ position: "relative", display: "grid", placeItems: "center" }}>
-          <IconFrame src={offer.iconPath} label={offer.title} size={60} />
+          <IconFrame src={offer.iconPath} label={offer.title} size={64} level={offer.targetLevel} />
           <span
             style={{
               position: "absolute",
@@ -492,23 +524,6 @@ function OfferTile({
           >
             {offer.cost}
           </span>
-        </span>
-        <strong
-          style={{
-            maxWidth: "100%",
-            minWidth: 0,
-            fontSize: "0.78rem",
-            lineHeight: 1.12,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical"
-          }}
-        >
-          {offer.title}
-        </strong>
-        <span style={{ color: "var(--text-muted)", fontSize: "0.68rem", fontWeight: 800 }}>
-          {offer.targetLevel ? `Lv. ${offer.targetLevel}` : offerKindLabel(offer.kind, en)}
         </span>
       </button>
       <button
@@ -633,6 +648,7 @@ function resolveDetailContent(
       subtitle: offer.targetLevel ? `${offerKindLabel(offer.kind, en)} | Lv. ${offer.targetLevel} | ${offer.cost} M` : `${offerKindLabel(offer.kind, en)} | ${offer.cost} M`,
       description: offer.description,
       iconPath: offer.iconPath,
+      level: offer.targetLevel,
       summary: offer.summary,
       tags: offer.tags,
       stats: offer.stats ?? detailLinesToStats(offer.detailLines),
@@ -653,6 +669,7 @@ function resolveDetailContent(
       subtitle: `Lv. ${weapon.level}/${weapon.maxLevel}`,
       description: weapon.description,
       iconPath: weapon.iconPath,
+      level: weapon.level,
       stats: weapon.stats,
       weapon
     };
@@ -670,6 +687,7 @@ function resolveDetailContent(
     subtitle: `Lv. ${item.level}`,
     description: item.description,
     iconPath: item.iconPath,
+    level: item.level,
     item
   };
 }
@@ -734,7 +752,7 @@ function DetailSheet({
             alignItems: "center"
           }}
         >
-          {detail.type === "stats" ? null : <IconFrame src={detail.iconPath} label={detail.title} size={56} />}
+          {detail.type === "stats" ? null : <IconFrame src={detail.iconPath} label={detail.title} size={56} level={detail.level} />}
           <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
             <strong style={{ fontSize: "1.05rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {detail.title}
@@ -1006,12 +1024,12 @@ export function ArenaSurvivorModernShopLayout({ model }: ArenaSurvivorModernShop
             <div style={{ display: "grid", gap: 6 }}>
               <div style={{ color: "var(--text-muted)", fontSize: "0.76rem", fontWeight: 900 }}>{en ? "Weapons" : "Waffen"}</div>
               <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
-                {weapons.map((weapon, index) => (
+                {weapons.map((weapon) => (
                   <LoadoutTile
                     key={weapon.weaponInstanceId}
                     iconPath={weapon.iconPath}
                     title={weapon.displayName}
-                    subtitle={`W${index + 1} | Lv. ${weapon.level}`}
+                    level={weapon.level}
                     selected={weapon.canCombine}
                     onClick={() => setDetailTarget({ type: "weapon", id: weapon.weaponInstanceId })}
                   />
@@ -1029,7 +1047,7 @@ export function ArenaSurvivorModernShopLayout({ model }: ArenaSurvivorModernShop
                     key={item.itemId}
                     iconPath={item.iconPath}
                     title={item.displayName}
-                    subtitle={`Lv. ${item.level}`}
+                    level={item.level}
                     onClick={() => setDetailTarget({ type: "item", id: item.itemId })}
                   />
                 ))}

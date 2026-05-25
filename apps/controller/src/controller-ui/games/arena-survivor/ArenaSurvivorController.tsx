@@ -259,6 +259,7 @@ function buildArenaSurvivorJoystickModel(
   return {
     kind: "virtual_joystick",
     title: player?.name ?? "Arena Survivor",
+    minimal: true,
     subtitle: running
       ? en
         ? "Move freely. Auto-fire is active."

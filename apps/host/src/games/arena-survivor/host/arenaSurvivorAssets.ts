@@ -9,11 +9,11 @@ const characterAssetIds = [
   { id: "sir-pampel-panzer", assetId: "sir-pampel-panzer" },
   { id: "flitzelotte", assetId: "flitzelotte" },
   { id: "professor-paradox", assetId: "professor-paradox" },
-  { id: "rundling-allround", assetId: "professor-paradox" },
-  { id: "pruegler-brawler", assetId: "kloppbert-keulenwucht" },
-  { id: "jaeger-ranger", assetId: "schrotto-scharfschuss" },
-  { id: "gluecksknolle-lucky", assetId: "flitzelotte" },
-  { id: "ackerling-farmer", assetId: "doktor-knolle" }
+  { id: "rundling-allround", assetId: "rundling-allround" },
+  { id: "pruegler-brawler", assetId: "pruegler-brawler" },
+  { id: "jaeger-ranger", assetId: "jaeger-ranger" },
+  { id: "gluecksknolle-lucky", assetId: "gluecksknolle-lucky" },
+  { id: "ackerling-farmer", assetId: "ackerling-farmer" }
 ] as const;
 const enemyAssetIds = [
   { id: "slime-blob", assetId: "slime-blob" },

@@ -5,23 +5,25 @@ interface ControllerFrameProps extends PropsWithChildren {
   subtitle?: string;
   footer?: ReactNode;
   wide?: boolean;
+  bare?: boolean;
 }
 
-export function ControllerFrame({ title, subtitle, footer, wide = false, children }: ControllerFrameProps) {
+export function ControllerFrame({ title, subtitle, footer, wide = false, bare = false, children }: ControllerFrameProps) {
   return (
     <main
       style={{
         display: "grid",
-        gap: wide ? 8 : 14,
-        maxWidth: wide ? 1040 : 680,
+        gap: bare ? 0 : wide ? 8 : 14,
+        maxWidth: bare ? "none" : wide ? 1040 : 680,
         width: "100%",
+        minHeight: bare ? "min(82vh, 760px)" : undefined,
         margin: "0 auto",
-        background: wide ? "rgba(2, 6, 23, 0.64)" : "var(--panel-bg)",
-        border: wide ? "1px solid rgba(148, 163, 184, 0.14)" : "1px solid var(--panel-border)",
-        borderRadius: wide ? 18 : "var(--radius-lg)",
-        padding: wide ? 8 : 14,
-        boxShadow: wide ? "0 18px 36px rgba(2, 6, 23, 0.24)" : "var(--button-shadow)",
-        backdropFilter: "blur(10px)"
+        background: bare ? "transparent" : wide ? "rgba(2, 6, 23, 0.64)" : "var(--panel-bg)",
+        border: bare ? "0" : wide ? "1px solid rgba(148, 163, 184, 0.14)" : "1px solid var(--panel-border)",
+        borderRadius: bare ? 0 : wide ? 18 : "var(--radius-lg)",
+        padding: bare ? 0 : wide ? 8 : 14,
+        boxShadow: bare ? "none" : wide ? "0 18px 36px rgba(2, 6, 23, 0.24)" : "var(--button-shadow)",
+        backdropFilter: bare ? "none" : "blur(10px)"
       }}
     >
       {title || subtitle ? (
