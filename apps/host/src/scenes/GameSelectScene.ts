@@ -277,7 +277,8 @@ export class GameSelectScene extends Phaser.Scene {
     const { x, y, width, height, lobby, disabled, language } = options;
     const en = language === "en";
     const gap = 10;
-    const buttonWidth = Math.floor((width - 24 - gap) / 2);
+    const categoryCount = Math.max(1, lobby.categories.length);
+    const buttonWidth = Math.floor((width - 24 - gap * (categoryCount - 1)) / categoryCount);
 
     this.add
       .rectangle(x, y, width, height, 0x08111f, 0.9)

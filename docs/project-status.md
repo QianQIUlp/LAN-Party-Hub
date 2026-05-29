@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot date: 2026-05-23
+Snapshot date: 2026-05-29
 
 ## Available In This Public Cut
 
@@ -31,6 +31,10 @@ Games:
 - Tap Race
 - Air Hockey
 - Light Trails
+
+Draw & Guess:
+
+- host-selectable word categories: U18, 18+, or all words combined
 
 ## Not Production-Ready Yet
 

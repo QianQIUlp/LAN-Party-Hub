@@ -13,7 +13,7 @@ const defaultWordCategory: ZeichnenUndErratenWordCategory = "standard";
 export function isZeichnenUndErratenWordCategory(
   value: unknown
 ): value is ZeichnenUndErratenWordCategory {
-  return value === "standard" || value === "adult";
+  return value === "standard" || value === "adult" || value === "all";
 }
 
 export function resolveZeichnenUndErratenWordCategory(
@@ -34,13 +34,18 @@ export function getZeichnenUndErratenLobbyState(
     categories: [
       {
         id: "standard",
-        label: en ? "Family" : "Familie",
-        description: en ? "Friendly drawing words for every group." : "Zeichenbegriffe fuer jede Runde."
+        label: en ? "U18" : "U18",
+        description: en ? "Friendly drawing words for every group." : "Familienfreundliche Zeichenbegriffe."
       },
       {
         id: "adult",
         label: en ? "18+" : "\u00dc18",
         description: en ? "Mature party words for adults." : "Erwachsene Party-Begriffe."
+      },
+      {
+        id: "all",
+        label: en ? "All" : "Alle",
+        description: en ? "Use both family and mature word lists." : "U18- und \u00dc18-Begriffe zusammen."
       }
     ]
   };

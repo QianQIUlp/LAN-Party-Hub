@@ -1,4 +1,4 @@
-export type ZeichnenUndErratenWordCategory = "standard" | "adult";
+export type ZeichnenUndErratenWordCategory = "standard" | "adult" | "all";
 
 export interface ZeichnenUndErratenLobbyCategoryOption {
   id: ZeichnenUndErratenWordCategory;

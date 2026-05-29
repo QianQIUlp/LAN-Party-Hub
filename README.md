@@ -2,8 +2,6 @@
 
 Open Party Lab is a local-first browser party-game environment built as an experiment in AI-assisted software development. The project exists because it is interesting to see how far human direction plus coding agents can take a multiplayer game platform.
 
-The current public release is a clean source cut intended for GitHub collaboration. It does not include old Git history, local temp folders, build outputs, artifacts, unpublished ideas, or private and hidden game prototypes.
-
 ## What It Is
 
 Open Party Lab runs three applications together:
@@ -52,13 +50,6 @@ Public game catalog in this source cut:
 - Tap Race
 - Air Hockey
 - Light Trails
-
-Not included in this public cut:
-
-- private or hidden game prototypes that were not approved for public release
-- removed experimental prototypes
-- legacy experiment folders
-- `Temp/`, `artifacts/`, `node_modules/`, `dist/`, logs, and local editor state
 
 ## Quick Start
 

@@ -380,9 +380,12 @@ const adultWordPool = [
   "Bodypaint"
 ] as const;
 
+const allWordPool = [...standardWordPool, ...adultWordPool] as const;
+
 const wordPoolByCategory = {
   standard: standardWordPool,
-  adult: adultWordPool
+  adult: adultWordPool,
+  all: allWordPool
 } as const satisfies Record<ZeichnenUndErratenWordCategory, readonly string[]>;
 
 function clamp01(value: number): number {
