@@ -9,5 +9,14 @@
       "../tap-race",
       "../open-party-game-tap-race"
     ]
+  },
+  {
+    "id": "pantomime",
+    "package": "@open-party-lab/game-pantomime",
+    "repo": "https://github.com/Hartwich/pantomime.git",
+    "defaultLocalPath": "local-games/pantomime",
+    "alternateLocalPaths": [
+      "../pantomime"
+    ]
   }
 ]

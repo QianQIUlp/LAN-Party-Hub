@@ -242,52 +242,6 @@ const internalControllerGameRegistry: Record<string, ControllerGameRegistration>
       return withAutoReady(model, context);
     }
   },
-  pantomime: {
-    id: "pantomime",
-    layoutKey: "choice",
-    buildLayout({ state }) {
-      const text = getControllerText(state.room?.language ?? state.preferredLanguage);
-      const en = state.room?.language === "en";
-      const pantomimeState = (state.game?.state ?? {}) as {
-        actorPlayerId?: string;
-        actorName?: string;
-        secretTerm?: string;
-        finishAt?: number | null;
-      };
-      const isActor = state.player?.id === pantomimeState.actorPlayerId;
-      const now = Date.now();
-      const secondsLeft = Math.max(0, Math.ceil(((pantomimeState.finishAt ?? now) - now) / 1000));
-
-      return {
-        kind: "choice",
-        title: isActor ? (en ? "Your turn!" : "Du bist dran!") : (en ? "Guess the term" : "Ratet den Begriff"),
-        subtitle: text.formatPhase(state.game?.phase),
-        helperText: isActor
-          ? `${en ? "Act out" : "Stelle pantomimisch dar"}: ${pantomimeState.secretTerm ?? "?"}`
-          : `${pantomimeState.actorName ?? (en ? "A player" : "Ein Spieler")} ${en ? "is acting. Guess out loud." : "spielt pantomimisch. Bitte laut raten."}`,
-        disabled: true,
-        choices: [
-          {
-            id: "pantomime-info",
-            label: isActor ? (en ? "Act without words" : "Ohne Worte spielen") : (en ? "Only guess, do not act" : "Nur raten, nicht zeigen"),
-            description: en ? "The game happens in the room, not on the phone." : "Das Spiel laeuft im Raum, nicht auf dem Handy.",
-            disabled: true,
-            onSelect: () => undefined
-          }
-        ],
-        stats: [
-          {
-            label: en ? "Actor" : "Darsteller",
-            value: pantomimeState.actorName ?? "?"
-          },
-          {
-            label: en ? "Time" : "Zeit",
-            value: `${secondsLeft}s`
-          }
-        ]
-      };
-    }
-  },
   imposter: {
     id: "imposter",
     layoutKey: "choice",

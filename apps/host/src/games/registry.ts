@@ -2,7 +2,6 @@
 import { lightTrailsHostManifest } from "./light-trails/manifest.js";
 import { arenaSurvivorHostManifest } from "./arena-survivor/manifest.js";
 import { chaosKommandoHostManifest } from "./chaos-kommando/manifest.js";
-import { pantomimeHostManifest } from "./pantomime/manifest.js";
 import { imposterHostManifest } from "./imposter/manifest.js";
 import { tabuHostManifest } from "./tabu/manifest.js";
 import { zeichnenUndErratenHostManifest } from "./zeichnen-und-erraten/manifest.js";
@@ -21,7 +20,6 @@ export const hostGameRegistry: Record<
   [arenaSurvivorHostManifest.id]: arenaSurvivorHostManifest,
   [chaosKommandoHostManifest.id]: chaosKommandoHostManifest,
   [lightTrailsHostManifest.id]: lightTrailsHostManifest,
-  [pantomimeHostManifest.id]: pantomimeHostManifest,
   [imposterHostManifest.id]: imposterHostManifest,
   [tabuHostManifest.id]: tabuHostManifest,
   [zeichnenUndErratenHostManifest.id]: zeichnenUndErratenHostManifest,

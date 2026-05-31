@@ -10,7 +10,6 @@ import { arenaSurvivorServerGame } from "../games/arena-survivor/server/ArenaSur
 import { chaosKommandoServerGame } from "../games/chaos-kommando/server/ChaosKommandoServerGame.js";
 import { minionsTdServerGame } from "../games/minions-td/server/MinionsTdServerGame.js";
 import { lightTrailsServerGame } from "../games/light-trails/server/LightTrailsServerGame.js";
-import { pantomimeServerGame } from "../games/pantomime/server/pantomimeServerGame.js";
 import { imposterServerGame } from "../games/imposter/server/ImposterServerGame.js";
 import { tabuServerGame } from "../games/tabu/server/tabuServerGame.js";
 import { zeichnenUndErratenServerGame } from "../games/zeichnen-und-erraten/server/zeichnenUndErratenServerGame.js";
@@ -42,10 +41,6 @@ export class GameRegistry {
     [
       minionsTdServerGame.manifest.id,
       { manifest: minionsTdServerGame.manifest, serverGame: minionsTdServerGame }
-    ],
-    [
-      pantomimeServerGame.manifest.id,
-      { manifest: pantomimeServerGame.manifest, serverGame: pantomimeServerGame }
     ],
     [
       lightTrailsServerGame.manifest.id,

@@ -25,7 +25,6 @@ import { LightTrailsHostScene } from "../games/light-trails/host/LightTrailsHost
 import { ArenaSurvivorHostScene } from "../games/arena-survivor/host/ArenaSurvivorHostScene.js";
 import { ChaosKommandoHostScene } from "../games/chaos-kommando/host/ChaosKommandoHostScene.js";
 import { MinionsTdHostScene } from "../games/minions-td/host/MinionsTdHostScene.js";
-import { PantomimeHostScene } from "../games/pantomime/host/PantomimeHostScene.js";
 import { ImposterHostScene } from "../games/imposter/host/ImposterHostScene.js";
 import { TabuHostScene } from "../games/tabu/host/TabuHostScene.js";
 import { ZeichnenUndErratenHostScene } from "../games/zeichnen-und-erraten/host/ZeichnenUndErratenHostScene.js";
@@ -65,7 +64,6 @@ export function bootstrapHostApp(): Phaser.Game {
       ArenaSurvivorHostScene,
       ChaosKommandoHostScene,
       MinionsTdHostScene,
-      PantomimeHostScene,
       ImposterHostScene,
       TabuHostScene,
       ZeichnenUndErratenHostScene,

@@ -46,13 +46,13 @@ Public game catalog in this source cut:
 - MinionsTD
 - Imposter
 - Tabu
-- Pantomime
 - Air Hockey
 - Light Trails
 
 Optional local game repos:
 
 - Tap Race (`local-games/tap-race` when cloned locally; the legacy `local-games/open-party-game-tap-race` folder still works)
+- Pantomime (`local-games/pantomime` when cloned locally)
 
 ## Quick Start
 
