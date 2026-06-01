@@ -1,6 +1,8 @@
 import { existsSync } from "node:fs";
 import {
+  cp,
   mkdir,
+  readdir,
   readFile,
   rm,
   symlink,
@@ -14,6 +16,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
 const knownGamesPath = path.join(projectRoot, "config", "known-games.json");
 const scopeDir = path.join(projectRoot, "node_modules", "@open-party-lab");
+const publicAssetTargets = [
+  {
+    sourceSubdir: ["public", "host"],
+    targetDir: path.join(projectRoot, "apps", "host", "public")
+  },
+  {
+    sourceSubdir: ["public", "controller"],
+    targetDir: path.join(projectRoot, "apps", "controller", "public")
+  }
+];
 
 const generatedFiles = {
   server: path.join(projectRoot, "apps", "server", "src", "game-engine", ".generated", "externalGames.ts"),
@@ -67,6 +79,38 @@ async function ensurePackageLink(game, localPath) {
   await mkdir(scopeDir, { recursive: true });
   await removePackageLink(game);
   await symlink(localPath, resolvePackageLinkPath(game), process.platform === "win32" ? "junction" : "dir");
+}
+
+async function removePublicAssets(game) {
+  for (const target of publicAssetTargets) {
+    await rm(path.join(target.targetDir, game.id), { recursive: true, force: true });
+  }
+}
+
+async function syncPublicAssets(game, localPath) {
+  await removePublicAssets(game);
+
+  for (const target of publicAssetTargets) {
+    const sourceRoot = path.join(localPath, ...target.sourceSubdir);
+
+    if (!existsSync(sourceRoot)) {
+      continue;
+    }
+
+    const entries = await readdir(sourceRoot, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (!entry.isDirectory() && !entry.isFile()) {
+        continue;
+      }
+
+      const sourcePath = path.join(sourceRoot, entry.name);
+      const targetPath = path.join(target.targetDir, entry.name);
+      await rm(targetPath, { recursive: true, force: true });
+      await mkdir(path.dirname(targetPath), { recursive: true });
+      await cp(sourcePath, targetPath, { recursive: true, force: true });
+    }
+  }
 }
 
 function run(command, args, cwd) {
@@ -242,6 +286,7 @@ async function syncLocalGames() {
 
     if (!existsSync(localPath)) {
       await removePackageLink(game);
+      await removePublicAssets(game);
       console.log(`[games] ${game.id}: missing, skipped.`);
       continue;
     }
@@ -250,9 +295,11 @@ async function syncLocalGames() {
 
     if (!prepared) {
       await removePackageLink(game);
+      await removePublicAssets(game);
       continue;
     }
 
+    await syncPublicAssets(game, localPath);
     await ensurePackageLink(game, localPath);
     linkedGames.push(game);
     console.log(`[games] ${game.id}: linked.`);
@@ -266,6 +313,7 @@ async function clearLocalGames() {
 
   for (const game of knownGames) {
     await removePackageLink(game);
+    await removePublicAssets(game);
   }
 
   await writeGeneratedFiles([]);

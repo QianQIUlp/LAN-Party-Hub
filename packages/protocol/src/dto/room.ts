@@ -1,9 +1,5 @@
 import type { AvailableGameDto, PublicGamePhase } from "./gameState.js";
 import type { SupportedLanguage } from "@open-party-lab/game-core";
-import type {
-  ArenaSurvivorCharacterState,
-  ArenaSurvivorLobbyState
-} from "../games/arenaSurvivor.js";
 import type { MinionsTdLobbyState } from "../games/minionsTd.js";
 import type { PlayerSnapshot } from "./player.js";
 
@@ -40,8 +36,6 @@ export interface RoomSnapshot {
   selectedGameSettings?: Record<string, string | number | boolean>;
   availableGames: AvailableGameDto[];
   players: PlayerSnapshot[];
-  arenaSurvivorCharacterOptions?: ArenaSurvivorCharacterState[];
-  arenaSurvivorLobby?: ArenaSurvivorLobbyState;
   minionsTdLobby?: MinionsTdLobbyState;
   currentRound: RoundSummary | null;
 }

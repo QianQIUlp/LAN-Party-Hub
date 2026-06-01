@@ -1,6 +1,9 @@
-import type { ArenaSurvivorCharacterState, PlayerSnapshot, RoomSnapshot } from "@open-party-lab/protocol";
+import type { PlayerSnapshot, RoomSnapshot } from "@open-party-lab/protocol";
 import { ControllerFrame } from "../controller-ui/layout/ControllerFrame.js";
 import { getControllerText } from "../i18n/controllerText.js";
+
+type AvailableRoomGame = RoomSnapshot["availableGames"][number];
+type PlayerSetupOption = NonNullable<AvailableRoomGame["playerSetup"]>["options"][number];
 
 interface LobbyPageProps {
   room: RoomSnapshot | null;
@@ -11,13 +14,22 @@ interface LobbyPageProps {
   onSelectCharacter: (characterId: string) => void;
 }
 
-function renderArenaSurvivorCharacterChooser(
+function getPlayerSetupVisual(option: PlayerSetupOption): NonNullable<PlayerSetupOption["visual"]> {
+  return option.visual ?? {
+    primaryColor: "#38bdf8",
+    secondaryColor: "#bae6fd",
+    accentColor: "#facc15"
+  };
+}
+
+function renderPlayerSetupChooser(
   room: RoomSnapshot,
+  selectedGame: AvailableRoomGame,
   currentPlayer: PlayerSnapshot | null,
   text: ReturnType<typeof getControllerText>,
   onSelectCharacter: (characterId: string) => void
 ) {
-  const characterOptions = room.arenaSurvivorCharacterOptions ?? [];
+  const characterOptions = selectedGame.playerSetup?.options ?? [];
 
   if (characterOptions.length === 0) {
     return null;
@@ -55,6 +67,7 @@ function renderArenaSurvivorCharacterChooser(
         {characterOptions.map((character) => {
           const selectedByCurrentPlayer = currentPlayer?.selectedCharacterId === character.id;
           const selectedPlayers = playersByCharacterId.get(character.id) ?? [];
+          const visual = getPlayerSetupVisual(character);
 
           return (
             <button
@@ -63,7 +76,7 @@ function renderArenaSurvivorCharacterChooser(
               onClick={() => onSelectCharacter(character.id)}
               style={{
                 border: selectedByCurrentPlayer
-                  ? `2px solid ${character.visual.accentColor}`
+                  ? `2px solid ${visual.accentColor}`
                   : "1px solid rgba(148, 163, 184, 0.18)",
                 borderRadius: "var(--radius-md)",
                 background: selectedByCurrentPlayer
@@ -100,23 +113,29 @@ function renderArenaSurvivorCharacterChooser(
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
                     <div style={{ display: "grid", gap: 2 }}>
                       <strong>{character.name}</strong>
-                      <span style={{ color: character.visual.secondaryColor, fontSize: "0.9rem" }}>{character.title}</span>
+                      {character.title ? (
+                        <span style={{ color: visual.secondaryColor, fontSize: "0.9rem" }}>{character.title}</span>
+                      ) : null}
                     </div>
-                    <span
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: 999,
-                        background: "rgba(255, 255, 255, 0.08)",
-                        color: "var(--text-muted)",
-                        fontSize: "0.78rem",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em"
-                      }}
-                    >
-                      {character.archetype}
-                    </span>
+                    {character.archetype ? (
+                      <span
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          background: "rgba(255, 255, 255, 0.08)",
+                          color: "var(--text-muted)",
+                          fontSize: "0.78rem",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em"
+                        }}
+                      >
+                        {character.archetype}
+                      </span>
+                    ) : null}
                   </div>
-                  <p style={{ margin: 0, color: "var(--text-muted)", lineHeight: 1.45 }}>{character.description}</p>
+                  {character.description ? (
+                    <p style={{ margin: 0, color: "var(--text-muted)", lineHeight: 1.45 }}>{character.description}</p>
+                  ) : null}
 
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
                     <span style={{ color: selectedByCurrentPlayer ? "var(--success)" : "var(--text-muted)" }}>
@@ -154,8 +173,12 @@ export function LobbyPage({
   const playerCount = room?.players.length ?? 0;
   const readyCount = (room?.players ?? []).filter((entry) => entry.isReady).length;
   const enoughPlayers = selectedGame ? playerCount >= selectedGame.minPlayers : false;
-  const arenaSurvivorSelected = room?.selectedGameId === "arena-survivor";
-  const characterSelectionMissing = arenaSurvivorSelected && !currentPlayer?.selectedCharacterId;
+  const playerSetupOptions = selectedGame?.playerSetup?.options ?? [];
+  const playerSetupOptionIds = new Set(playerSetupOptions.map((option) => option.id));
+  const hasPlayerSetup = playerSetupOptions.length > 0;
+  const playerSetupSelectionMissing =
+    selectedGame?.playerSetup?.required === true &&
+    (!currentPlayer?.selectedCharacterId || !playerSetupOptionIds.has(currentPlayer.selectedCharacterId));
 
   return (
     <ControllerFrame
@@ -171,7 +194,7 @@ export function LobbyPage({
         <button
           type="button"
           onClick={() => onSetReady(!(currentPlayer?.isReady ?? false))}
-          disabled={characterSelectionMissing}
+          disabled={playerSetupSelectionMissing}
           style={{
             border: 0,
             borderRadius: "var(--radius-md)",
@@ -179,10 +202,10 @@ export function LobbyPage({
             color: "#052e16",
             padding: "16px 20px",
             fontWeight: 800,
-            opacity: characterSelectionMissing ? 0.55 : 1
+            opacity: playerSetupSelectionMissing ? 0.55 : 1
           }}
         >
-          {characterSelectionMissing
+          {playerSetupSelectionMissing
             ? text.chooseCharacterFirst
             : currentPlayer?.isReady
               ? text.notReady
@@ -208,7 +231,7 @@ export function LobbyPage({
               {text.readyCount}: {readyCount}/{playerCount}
               {enoughPlayers ? "" : ` | ${text.needsMorePlayers}`}
             </span>
-            {arenaSurvivorSelected ? (
+            {hasPlayerSetup ? (
               <span>
                 {text.character}: {currentPlayer?.selectedCharacterName ?? text.noCharacter}
               </span>
@@ -216,8 +239,8 @@ export function LobbyPage({
           </div>
         ) : null}
 
-        {room && arenaSurvivorSelected
-          ? renderArenaSurvivorCharacterChooser(room, currentPlayer, text, onSelectCharacter)
+        {room && selectedGame && hasPlayerSetup
+          ? renderPlayerSetupChooser(room, selectedGame, currentPlayer, text, onSelectCharacter)
           : null}
 
         <div style={{ display: "grid", gap: 10 }}>
@@ -235,7 +258,7 @@ export function LobbyPage({
             >
               <div style={{ display: "grid", gap: 4 }}>
                 <strong>{entry.name}</strong>
-                {arenaSurvivorSelected ? (
+                {hasPlayerSetup ? (
                   <span style={{ color: "var(--text-muted)", fontSize: "0.86rem" }}>
                     {entry.selectedCharacterName ?? text.noCharacter}
                   </span>

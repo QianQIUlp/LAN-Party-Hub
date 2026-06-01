@@ -35,6 +35,34 @@ export interface GameLobbySetupDefinition {
   title?: string;
   description?: string;
   fields: readonly GameLobbySetupField[];
+  confirmation?: {
+    settingKey: string;
+    actionType: string;
+    label?: string;
+    description?: string;
+  };
+}
+
+export interface GamePlayerSetupOption {
+  id: string;
+  name: string;
+  title?: string;
+  archetype?: string;
+  description?: string;
+  portraitPath?: string;
+  visual?: {
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+  };
+}
+
+export interface GamePlayerSetupDefinition {
+  kind: "choice";
+  title?: string;
+  description?: string;
+  required?: boolean;
+  options: readonly GamePlayerSetupOption[];
 }
 
 export interface GameManifest {
@@ -52,4 +80,5 @@ export interface GameManifest {
   phaseDurations?: Partial<RoundPhaseTimings>;
   roundCompletionMode?: "standard" | "wait_for_ready";
   lobbySetup?: GameLobbySetupDefinition;
+  playerSetup?: GamePlayerSetupDefinition;
 }

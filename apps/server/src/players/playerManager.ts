@@ -5,7 +5,6 @@ import {
 } from "@open-party-lab/protocol";
 import { createId } from "../core/ids/createId.js";
 import { now } from "../core/time/now.js";
-import { arenaSurvivorCharacterDefinitionsById } from "../games/arena-survivor/server/definitions/characterDefinitions.js";
 import type { PlayerRecord, RoomRecord } from "../rooms/roomStore.js";
 import { PlayerPresenceTracker } from "./playerPresenceTracker.js";
 import { PlayerStore } from "./playerStore.js";
@@ -119,7 +118,7 @@ export class PlayerManager {
   setSelectedCharacter(room: RoomRecord, playerId: string, characterId: string): PlayerRecord | null {
     const player = this.playerStore.get(room, playerId);
 
-    if (!player || !arenaSurvivorCharacterDefinitionsById[characterId]) {
+    if (!player) {
       return null;
     }
 
@@ -190,16 +189,12 @@ export class PlayerManager {
   }
 
   toSnapshot(player: PlayerRecord): PlayerSnapshot {
-    const selectedCharacter = player.selectedCharacterId
-      ? arenaSurvivorCharacterDefinitionsById[player.selectedCharacterId]
-      : null;
-
     return {
       id: player.id,
       name: player.name,
       color: player.color,
       selectedCharacterId: player.selectedCharacterId,
-      selectedCharacterName: selectedCharacter?.name ?? null,
+      selectedCharacterName: null,
       isReady: player.isReady,
       connected: player.connected,
       presence: player.presence,

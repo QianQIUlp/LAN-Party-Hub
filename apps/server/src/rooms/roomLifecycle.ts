@@ -1,12 +1,9 @@
 import {
-  arenaSurvivorSetupConfig,
   minionsTdSetupConfig,
   type AvailableGameDto,
   type RoomLifecycle,
   type RoomSnapshot
 } from "@open-party-lab/protocol";
-import { arenaSurvivorCharacterDefinitions } from "../games/arena-survivor/server/definitions/characterDefinitions.js";
-import { arenaSurvivorRoomSettingKeys } from "../games/arena-survivor/server/arenaSurvivorConfig.js";
 import {
   minionsTdRoomSettingKeys,
   listMinionsTdMaps,
@@ -26,22 +23,6 @@ export function deriveRoomLifecycle(room: RoomRecord): RoomLifecycle {
   return "lobby";
 }
 
-function clampArenaSurvivorDifficultyTier(value: unknown): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return arenaSurvivorSetupConfig.difficulty.defaultValue;
-  }
-
-  return Math.max(
-    arenaSurvivorSetupConfig.difficulty.min,
-    Math.min(arenaSurvivorSetupConfig.difficulty.max, Math.round(value))
-  );
-}
-
-function resolveArenaSurvivorSetupConfirmed(room: RoomRecord): boolean {
-  const arenaSettings = room.gameSettingsByGameId["arena-survivor"] ?? {};
-  return arenaSettings[arenaSurvivorRoomSettingKeys.setupConfirmed] === true;
-}
-
 function isArenaSurvivorContinuingRun(room: RoomRecord): boolean {
   if (room.selectedGameId !== "arena-survivor" || !room.currentRound) {
     return false;
@@ -52,6 +33,33 @@ function isArenaSurvivorContinuingRun(room: RoomRecord): boolean {
   };
 
   return room.currentRound.phase === "finished" && roundState.result?.outcome === "survived";
+}
+
+function areRequiredPlayerSetupChoicesSelected(room: RoomRecord, selectedGame: AvailableGameDto): boolean {
+  if (selectedGame.playerSetup?.required !== true) {
+    return true;
+  }
+
+  const validOptionIds = new Set(selectedGame.playerSetup.options.map((option) => option.id));
+
+  return [...room.players.values()].every(
+    (player) => Boolean(player.selectedCharacterId) && validOptionIds.has(player.selectedCharacterId ?? "")
+  );
+}
+
+function isLobbySetupConfirmed(room: RoomRecord, selectedGame: AvailableGameDto): boolean {
+  const confirmation = selectedGame.lobbySetup?.confirmation;
+
+  if (!confirmation) {
+    return true;
+  }
+
+  if (selectedGame.id === "arena-survivor" && isArenaSurvivorContinuingRun(room)) {
+    return true;
+  }
+
+  const settings = room.gameSettingsByGameId[selectedGame.id] ?? {};
+  return settings[confirmation.settingKey] === true;
 }
 
 function toPublicSelectedGameSettings(room: RoomRecord): Record<string, string | number | boolean> | undefined {
@@ -81,18 +89,13 @@ export function canStartRound(room: RoomRecord, selectedGame: AvailableGameDto |
 
   const players = [...room.players.values()];
   const allPlayersReady = players.length > 0 && players.every((player) => player.isReady);
-  const allArenaCharactersSelected =
-    selectedGame.id !== "arena-survivor" ||
-    players.every((player) => Boolean(player.selectedCharacterId));
-  const arenaSetupReady =
-    selectedGame.id !== "arena-survivor" ||
-    isArenaSurvivorContinuingRun(room) ||
-    resolveArenaSurvivorSetupConfirmed(room);
+  const allRequiredPlayerSetupChoicesSelected = areRequiredPlayerSetupChoicesSelected(room, selectedGame);
+  const setupConfirmed = isLobbySetupConfirmed(room, selectedGame);
 
   return (
     allPlayersReady &&
-    allArenaCharactersSelected &&
-    arenaSetupReady &&
+    allRequiredPlayerSetupChoicesSelected &&
+    setupConfirmed &&
     players.length >= selectedGame.minPlayers &&
     players.length <= selectedGame.maxPlayers
   );
@@ -134,28 +137,24 @@ export function explainCannotStartRound(
       : `Es sind noch nicht alle bereit: ${waitingPlayers.map((player) => player.name).join(", ")}.`;
   }
 
-  if (
-    selectedGame.id === "arena-survivor" &&
-    players.some((player) => !player.selectedCharacterId)
-  ) {
-    const missingCharacters = players
-      .filter((player) => !player.selectedCharacterId)
+  if (!areRequiredPlayerSetupChoicesSelected(room, selectedGame)) {
+    const validOptionIds = new Set(selectedGame.playerSetup?.options.map((option) => option.id) ?? []);
+    const missingChoices = players
+      .filter(
+        (player) => !player.selectedCharacterId || !validOptionIds.has(player.selectedCharacterId)
+      )
       .map((player) => player.name)
       .join(", ");
 
     return en
-      ? `These players need to choose a character first: ${missingCharacters}.`
-      : `Diese Spieler muessen erst einen Charakter waehlen: ${missingCharacters}.`;
+      ? `These players need to choose their setup first: ${missingChoices}.`
+      : `Diese Spieler muessen erst ihre Auswahl treffen: ${missingChoices}.`;
   }
 
-  if (
-    selectedGame.id === "arena-survivor" &&
-    !isArenaSurvivorContinuingRun(room) &&
-    !resolveArenaSurvivorSetupConfirmed(room)
-  ) {
+  if (!isLobbySetupConfirmed(room, selectedGame)) {
     return en
-      ? "The host needs to confirm Arena Survivor on the setup screen first."
-      : "Der Host muss Arena Survivor erst im Setup-Bildschirm bestaetigen.";
+      ? "The host needs to confirm the game setup first."
+      : "Der Host muss das Spiel-Setup erst bestaetigen.";
   }
 
   return null;
@@ -178,32 +177,9 @@ export function toRoomSnapshot(
     typeof minionsTdSettings[minionsTdRoomSettingKeys.startingGold] === "number"
       ? (minionsTdSettings[minionsTdRoomSettingKeys.startingGold] as number)
       : minionsTdSetupConfig.startingGold.defaultValue;
-  const arenaSurvivorCharacterOptions =
-    room.selectedGameId === "arena-survivor"
-      ? arenaSurvivorCharacterDefinitions.map((character) => ({
-          id: character.id,
-          name: character.name,
-          title: character.title,
-          archetype: character.archetype,
-          description: character.description,
-          portraitPath: `/arena-survivor/characters/portraits/${character.id}.svg`,
-          visual: {
-            primaryColor: character.visual.primaryColor,
-            secondaryColor: character.visual.secondaryColor,
-            accentColor: character.visual.accentColor
-          }
-        }))
-      : undefined;
-  const arenaSurvivorSettings = room.gameSettingsByGameId["arena-survivor"] ?? {};
-  const arenaSurvivorLobby =
-    room.selectedGameId === "arena-survivor"
-      ? {
-          difficulty: clampArenaSurvivorDifficultyTier(
-            arenaSurvivorSettings[arenaSurvivorRoomSettingKeys.difficultyTier]
-          ),
-          setupConfirmed: resolveArenaSurvivorSetupConfirmed(room)
-        }
-      : undefined;
+  const selectedGame = room.selectedGameId
+    ? availableGames.find((game) => game.id === room.selectedGameId)
+    : undefined;
   const minionsTdLobby =
     room.selectedGameId === "minions-td"
       ? {
@@ -229,8 +205,6 @@ export function toRoomSnapshot(
     selectedGameId: room.selectedGameId,
     selectedGameSettings: toPublicSelectedGameSettings(room),
     availableGames,
-    arenaSurvivorCharacterOptions,
-    arenaSurvivorLobby,
     minionsTdLobby,
     players: [...room.players.values()]
       .sort((left, right) => left.joinedAt - right.joinedAt)
@@ -240,7 +214,7 @@ export function toRoomSnapshot(
         color: player.color,
         selectedCharacterId: player.selectedCharacterId,
         selectedCharacterName: player.selectedCharacterId
-          ? arenaSurvivorCharacterDefinitions.find((character) => character.id === player.selectedCharacterId)?.name ?? null
+          ? selectedGame?.playerSetup?.options.find((option) => option.id === player.selectedCharacterId)?.name ?? null
           : null,
         isReady: player.isReady,
         connected: player.connected,

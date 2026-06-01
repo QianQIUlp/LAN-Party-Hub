@@ -23,25 +23,6 @@ export const gameCatalog = [
     }
   },
   {
-    id: "arena-survivor",
-    displayName: "Arena Survivor",
-    description: "Ueberlebe in der Arena gegen immer neue Gegner.",
-    minPlayers: 1,
-    maxPlayers: 4,
-    hostView: "ArenaSurvivorHostScene",
-    controllerView: "arena-survivor",
-    controllerLayout: "virtual_joystick",
-    supportsTeams: false,
-    estimatedRoundDurationMs: 45_000,
-    roundCompletionMode: "wait_for_ready",
-    phaseDurations: {
-      roundIntroMs: 1_500,
-      countdownMs: 2_000,
-      resultMs: 4_000,
-      scoreboardMs: 4_000
-    }
-  },
-  {
     id: "minions-td",
     displayName: "MinionsTD",
     description: "Baue Tower, schicke Minions weiter und halte deine Lane laenger als die anderen.",

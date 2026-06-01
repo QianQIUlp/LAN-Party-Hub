@@ -6,7 +6,6 @@
   type SupportedLanguage
 } from "@open-party-lab/game-core";
 import type { AvailableGameDto } from "@open-party-lab/protocol";
-import { arenaSurvivorServerGame } from "../games/arena-survivor/server/ArenaSurvivorServerGame.js";
 import { chaosKommandoServerGame } from "../games/chaos-kommando/server/ChaosKommandoServerGame.js";
 import { minionsTdServerGame } from "../games/minions-td/server/MinionsTdServerGame.js";
 import { externalServerGameEntries } from "./.generated/externalGames.js";
@@ -18,10 +17,6 @@ export interface ServerGameEntry {
 
 export class GameRegistry {
   private readonly games = new Map<string, ServerGameEntry>([
-    [
-      arenaSurvivorServerGame.manifest.id,
-      { manifest: arenaSurvivorServerGame.manifest, serverGame: arenaSurvivorServerGame }
-    ],
     [
       chaosKommandoServerGame.manifest.id,
       { manifest: chaosKommandoServerGame.manifest, serverGame: chaosKommandoServerGame }
@@ -79,7 +74,8 @@ export class GameRegistry {
       supportsTeams: manifest.supportsTeams,
       estimatedRoundDurationMs: manifest.estimatedRoundDurationMs,
       roundCompletionMode: manifest.roundCompletionMode,
-      lobbySetup: manifest.lobbySetup
+      lobbySetup: manifest.lobbySetup,
+      playerSetup: manifest.playerSetup
     };
   }
 }

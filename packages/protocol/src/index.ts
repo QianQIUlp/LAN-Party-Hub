@@ -5,7 +5,6 @@ export * from "./dto/scoreboard.js";
 export * from "./events/clientToServer.js";
 export * from "./events/eventNames.js";
 export * from "./events/serverToClient.js";
-export * from "./games/arenaSurvivor.js";
 export * from "./games/lightTrails.js";
 export * from "./games/chaosKommando.js";
 export * from "./games/minionsTd.js";

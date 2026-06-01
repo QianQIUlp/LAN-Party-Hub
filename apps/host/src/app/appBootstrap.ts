@@ -17,11 +17,9 @@ import {
 import { BootScene } from "../scenes/BootScene.js";
 import { LobbyScene } from "../scenes/LobbyScene.js";
 import { GameSelectScene } from "../scenes/GameSelectScene.js";
-import { ArenaSurvivorSetupScene } from "../scenes/ArenaSurvivorSetupScene.js";
 import { MinionsTdSetupScene } from "../scenes/MinionsTdSetupScene.js";
 import { RoundIntroScene } from "../scenes/RoundIntroScene.js";
 import { ScoreboardScene } from "../scenes/ScoreboardScene.js";
-import { ArenaSurvivorHostScene } from "../games/arena-survivor/host/ArenaSurvivorHostScene.js";
 import { ChaosKommandoHostScene } from "../games/chaos-kommando/host/ChaosKommandoHostScene.js";
 import { MinionsTdHostScene } from "../games/minions-td/host/MinionsTdHostScene.js";
 import { externalHostScenes } from "../games/.generated/externalGames.js";
@@ -47,11 +45,9 @@ export function bootstrapHostApp(): Phaser.Game {
       BootScene,
       LobbyScene,
       GameSelectScene,
-      ArenaSurvivorSetupScene,
       MinionsTdSetupScene,
       RoundIntroScene,
       ScoreboardScene,
-      ArenaSurvivorHostScene,
       ChaosKommandoHostScene,
       MinionsTdHostScene,
       ...externalHostScenes

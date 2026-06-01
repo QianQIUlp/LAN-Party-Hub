@@ -22,6 +22,8 @@ local-games/
 apps/server/src/game-engine/.generated/
 apps/host/src/games/.generated/
 apps/controller/src/controller-ui/games/.generated/
+apps/host/public/arena-survivor/
+apps/controller/public/arena-survivor/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

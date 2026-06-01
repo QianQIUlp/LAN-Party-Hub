@@ -13,7 +13,7 @@ import type {
 import { io, type Socket } from "socket.io-client";
 import { readStoredHostLanguage, writeStoredHostLanguage } from "../i18n/hostText.js";
 
-export type HostLobbyScreen = "catalog" | "arena-survivor-setup" | "minions-td-setup" | null;
+export type HostLobbyScreen = "catalog" | "minions-td-setup" | null;
 export type HostSceneOverride = "catalog" | null;
 
 export interface HostAppState {
@@ -50,10 +50,6 @@ function resolvePreferredLobbyScreen(
 
   if (room.selectedGameId === "minions-td") {
     return currentPreference === "catalog" ? "catalog" : "minions-td-setup";
-  }
-
-  if (room.selectedGameId === "arena-survivor") {
-    return currentPreference === "catalog" ? "catalog" : "arena-survivor-setup";
   }
 
   return "catalog";
@@ -156,9 +152,7 @@ export class HostSocketClient {
       preferredLobbyScreen:
         gameId === "minions-td"
           ? "minions-td-setup"
-          : gameId === "arena-survivor"
-            ? "arena-survivor-setup"
-            : "catalog",
+          : "catalog",
       error: null
     });
     this.socket.emit("game:select", { roomCode, gameId });

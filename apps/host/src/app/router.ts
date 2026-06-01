@@ -1,5 +1,5 @@
 ﻿import Phaser from "phaser";
-import { getRoomPhase, type ArenaSurvivorState } from "@open-party-lab/protocol";
+import { getRoomPhase } from "@open-party-lab/protocol";
 import type { HostAppState, HostSocketClient } from "./hostSocketClient.js";
 import { HostPerfTracker } from "./perfTelemetry.js";
 import { hostGameRegistry } from "../games/registry.js";
@@ -8,7 +8,6 @@ export const hostSceneKeys = {
   boot: "BootScene",
   lobby: "LobbyScene",
   gameSelect: "GameSelectScene",
-  arenaSurvivorSetup: "ArenaSurvivorSetupScene",
   minionsTdSetup: "MinionsTdSetupScene",
   roundIntro: "RoundIntroScene",
   scoreboard: "ScoreboardScene"
@@ -25,9 +24,9 @@ function shouldKeepArenaSurvivorResultScene(
     return false;
   }
 
-  const arenaState = state.game?.state as ArenaSurvivorState | null | undefined;
+  const arenaState = state.game?.state as { result?: { outcome?: string } } | null | undefined;
 
-  return arenaState?.result.outcome === "survived";
+  return arenaState?.result?.outcome === "survived";
 }
 
 function shouldKeepZeichnenUndErratenResultScene(
@@ -85,13 +84,6 @@ function resolveSceneKey(state: HostAppState): string {
 
   if (phase === "result" || phase === "scoreboard" || phase === "finished") {
     return hostSceneKeys.scoreboard;
-  }
-
-  if (
-    state.room.selectedGameId === "arena-survivor" &&
-    state.preferredLobbyScreen !== "catalog"
-  ) {
-    return hostSceneKeys.arenaSurvivorSetup;
   }
 
   if (

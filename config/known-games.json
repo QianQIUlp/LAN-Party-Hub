@@ -90,5 +90,14 @@
     "alternateLocalPaths": [
       "../zeichnen-und-erraten"
     ]
+  },
+  {
+    "id": "arena-survivor",
+    "package": "@open-party-lab/game-arena-survivor",
+    "repo": "https://github.com/Hartwich/arena-survivor.git",
+    "defaultLocalPath": "local-games/arena-survivor",
+    "alternateLocalPaths": [
+      "../arena-survivor"
+    ]
   }
 ]

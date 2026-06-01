@@ -138,7 +138,7 @@ Options:
   --input-every-ms <ms>       Interval for repeated input. Default: 100
   --input-duration-ms <ms>    Duration for repeated input. Default: 0
   --auto-character <true|false>
-                              Auto-pick Arena Survivor characters when present. Default: true
+                              Auto-pick player setup options when present. Default: true
 
 The helper is game-agnostic. For game input, pass the JSON shape that game expects.
 It adds playerId, sentAt, and pressedAt when those fields are not already provided.`);
@@ -217,9 +217,12 @@ async function joinVirtualControllers(args) {
 
     controllers.push(controller);
 
-    if (args.autoCharacter && joined.room.selectedGameId === "arena-survivor") {
-      const characters = joined.room.arenaSurvivorCharacterOptions ?? [];
-      const character = characters[index % characters.length];
+    if (args.autoCharacter) {
+      const selectedGame = joined.room.availableGames.find(
+        (game) => game.id === joined.room.selectedGameId
+      );
+      const playerSetupOptions = selectedGame?.playerSetup?.options ?? [];
+      const character = playerSetupOptions[index % playerSetupOptions.length];
 
       if (character) {
         socket.emit("player:select-character", {

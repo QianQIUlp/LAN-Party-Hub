@@ -188,7 +188,9 @@ export class GameSelectScene extends Phaser.Scene {
     const sideWidth = stacked ? contentWidth : Math.min(360, Math.max(300, Math.floor(contentWidth * 0.34)));
     const heroWidth = stacked ? contentWidth : contentWidth - sideWidth - gap;
     const heroHeight = stacked ? 220 : 240;
-    const hasLobbySetupControls = Boolean(selectedGame.lobbySetup?.fields.length);
+    const hasLobbySetupControls = Boolean(
+      (selectedGame.lobbySetup?.fields.length ?? 0) > 0 || selectedGame.lobbySetup?.confirmation
+    );
     const setupPanelHeight = hasLobbySetupControls
       ? this.measureLobbySetupHeight(selectedGame)
       : 0;
@@ -269,6 +271,7 @@ export class GameSelectScene extends Phaser.Scene {
 
   private measureLobbySetupHeight(game: AvailableGameDto): number {
     const fields = game.lobbySetup?.fields ?? [];
+    const confirmation = game.lobbySetup?.confirmation;
 
     return 54 + fields.reduce((height, field) => {
       if (field.kind === "select") {
@@ -280,7 +283,7 @@ export class GameSelectScene extends Phaser.Scene {
       }
 
       return height;
-    }, 0);
+    }, 0) + (confirmation ? 52 : 0);
   }
 
   private renderLobbySetupControls(options: {
@@ -345,6 +348,63 @@ export class GameSelectScene extends Phaser.Scene {
         });
         cursorY += 58;
       }
+    });
+
+    const confirmation = game.lobbySetup?.confirmation;
+
+    if (confirmation) {
+      const confirmed = settings[confirmation.settingKey] === true;
+      const buttonLabel = confirmed
+        ? (en ? "Setup confirmed" : "Setup bestaetigt")
+        : confirmation.label ?? (en ? "Confirm setup" : "Setup bestaetigen");
+
+      this.renderLobbyConfirmationButton({
+        x: x + 12,
+        y: cursorY + 4,
+        width: width - 24,
+        game,
+        actionType: confirmation.actionType,
+        label: buttonLabel,
+        confirmed,
+        disabled
+      });
+    }
+  }
+
+  private renderLobbyConfirmationButton(options: {
+    x: number;
+    y: number;
+    width: number;
+    game: AvailableGameDto;
+    actionType: string;
+    label: string;
+    confirmed: boolean;
+    disabled: boolean;
+  }): void {
+    const { x, y, width, game, actionType, label, confirmed, disabled } = options;
+    const enabled = !disabled && !confirmed;
+    const fill = confirmed ? 0x14532d : enabled ? 0xfacc15 : 0x0b1320;
+    const stroke = confirmed ? 0x86efac : enabled ? 0xfde68a : 0xffffff;
+    const textColor = confirmed ? "#dcfce7" : enabled ? "#422006" : "#64748b";
+
+    this.add
+      .rectangle(x, y, width, 34, fill, enabled || confirmed ? 0.96 : 0.58)
+      .setOrigin(0)
+      .setStrokeStyle(1, stroke, enabled || confirmed ? 0.92 : 0.12);
+    this.add.text(x + width / 2, y + 17, label, {
+      fontFamily: hostTheme.titleFont,
+      fontSize: "15px",
+      color: textColor
+    }).setOrigin(0.5);
+
+    if (!enabled) {
+      return;
+    }
+
+    this.add.zone(x, y, width, 34).setOrigin(0).setInteractive({ useHandCursor: true }).on("pointerdown", () => {
+      this.client?.sendGameHostAction(game.id, {
+        type: actionType
+      });
     });
   }
 

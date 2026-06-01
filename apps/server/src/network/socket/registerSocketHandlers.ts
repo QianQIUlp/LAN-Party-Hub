@@ -15,7 +15,6 @@ import { PlayerManager } from "../../players/playerManager.js";
 import { ReconnectService } from "../../players/reconnectService.js";
 import { canStartRound, explainCannotStartRound } from "../../rooms/roomLifecycle.js";
 import { RoomManager } from "../../rooms/roomManager.js";
-import { arenaSurvivorRoomSettingKeys } from "../../games/arena-survivor/server/arenaSurvivorConfig.js";
 
 type IoServer = import("socket.io").Server<
   ClientToServerEvents,
@@ -104,6 +103,45 @@ export function registerSocketHandlers({
 }: RegisterSocketHandlersDeps): void {
   function getSelectedGame(room: NonNullable<ReturnType<RoomManager["getRoom"]>>) {
     return room.selectedGameId ? gameRegistry.getAvailableGame(room.selectedGameId, room.language) : undefined;
+  }
+
+  function resetInvalidPlayerSetupSelections(
+    room: NonNullable<ReturnType<RoomManager["getRoom"]>>,
+    selectedGame: ReturnType<typeof getSelectedGame>
+  ): void {
+    const optionIds = new Set(selectedGame?.playerSetup?.options.map((option) => option.id) ?? []);
+
+    for (const player of room.players.values()) {
+      if (!player.selectedCharacterId) {
+        continue;
+      }
+
+      if (optionIds.has(player.selectedCharacterId)) {
+        continue;
+      }
+
+      player.selectedCharacterId = null;
+    }
+  }
+
+  function resetLobbySetupConfirmation(
+    room: NonNullable<ReturnType<RoomManager["getRoom"]>>,
+    selectedGame: ReturnType<typeof getSelectedGame>
+  ): void {
+    const confirmation = selectedGame?.lobbySetup?.confirmation;
+
+    if (!selectedGame || !confirmation) {
+      return;
+    }
+
+    const currentSettings = room.gameSettingsByGameId[selectedGame.id] ?? {};
+    room.gameSettingsByGameId = {
+      ...room.gameSettingsByGameId,
+      [selectedGame.id]: {
+        ...currentSettings,
+        [confirmation.settingKey]: false
+      }
+    };
   }
 
   function startReadyLockedRound(room: NonNullable<ReturnType<RoomManager["getRoom"]>>) {
@@ -469,6 +507,14 @@ export function registerSocketHandlers({
         return;
       }
 
+      const selectedGame = getSelectedGame(room);
+      const playerSetupOptions = selectedGame?.playerSetup?.options ?? [];
+
+      if (!playerSetupOptions.some((option) => option.id === payload.characterId)) {
+        stateBroadcaster.emitError(socket, "player/not-found", text.characterOrPlayerNotFound);
+        return;
+      }
+
       const player = playerManager.setSelectedCharacter(room, payload.playerId, payload.characterId);
 
       if (!player) {
@@ -501,16 +547,9 @@ export function registerSocketHandlers({
         return;
       }
 
-      if (payload.gameId === "arena-survivor") {
-        const currentArenaSettings = room.gameSettingsByGameId["arena-survivor"] ?? {};
-        room.gameSettingsByGameId = {
-          ...room.gameSettingsByGameId,
-          "arena-survivor": {
-            ...currentArenaSettings,
-            [arenaSurvivorRoomSettingKeys.setupConfirmed]: false
-          }
-        };
-      }
+      const selectedGame = getSelectedGame(room);
+      resetInvalidPlayerSetupSelections(room, selectedGame);
+      resetLobbySetupConfirmation(room, selectedGame);
 
       if (maybeAutoStartReadyRound(room.code)) {
         return;

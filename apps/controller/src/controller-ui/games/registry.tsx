@@ -1,6 +1,5 @@
 ﻿import type { ControllerLayoutKey } from "@open-party-lab/game-core";
 import type { ControllerAppState } from "../../app/controllerSocketClient.js";
-import { buildArenaSurvivorControllerModel } from "./arena-survivor/ArenaSurvivorController.js";
 import { buildChaosKommandoControllerModel } from "./chaos-kommando/ChaosKommandoController.js";
 import { buildMinionsTdControllerModel } from "./minions-td/MinionsTdController.js";
 import type {
@@ -82,13 +81,6 @@ function withAutoReady<T extends { ready?: ReadyLayoutModel }>(
 }
 
 const internalControllerGameRegistry: Record<string, ControllerGameRegistration> = {
-  "arena-survivor": {
-    id: "arena-survivor",
-    layoutKey: "virtual_joystick",
-    buildLayout(context) {
-      return buildArenaSurvivorControllerModel(context);
-    }
-  },
   "chaos-kommando": {
     id: "chaos-kommando",
     layoutKey: "chaos_kommando_controls",
