@@ -1,60 +1,33 @@
 # Open Party Lab
 
-Open Party Lab is a local-first browser party-game environment built as an experiment in AI-assisted software development. The project exists because it is interesting to see how far human direction plus coding agents can take a multiplayer game platform.
+Open Party Lab is a local-first browser party-game platform for shared screens and phone controllers. It is also an experiment in AI-assisted software development: the platform is structured so humans and coding agents can improve games, docs, tests, and tooling in small reviewable steps.
 
-## What It Is
-
-Open Party Lab runs three applications together:
-
-- `apps/server`: authoritative Socket.IO room, round, score, and game-state server
-- `apps/host`: Phaser host screen for a TV, monitor, or shared computer
-- `apps/controller`: React phone controller used by players in the browser
-
-Shared code lives in npm workspace packages:
-
-- `packages/protocol`: Socket events, DTOs, and shared room/game-state DTOs
-- `packages/game-core`: game manifests, shared game types, round helpers, and layout keys
-- `packages/ui-kit`: shared visual tokens
-- `packages/utils`: small shared utilities
-
-The platform is moving toward optional multi-repo games. The host, controller, server, and shared platform packages stay together here. Individual games can live in separate Git repos and are loaded only when present locally.
+![Open Party Lab host game selection](docs/screenshots/host-game-selection-en.png)
 
 ## Current Status
 
 This is a playable local prototype, not a hosted production service. It is designed for devices on the same LAN.
 
-Most included games are alpha versions. Magic Arena, Magic Duell, Arena Survivor, MinionsTD, Zeichnen & Erraten, and Schaetzorama are the current recommended games: they are already in advanced alpha or beta shape and generally good to play locally. Rules, pacing, scoring, content, UI, and especially balancing are still expected to change. Playtesting notes, balance proposals, and small polish improvements are very welcome.
+Most games are still alpha. The current recommended games are already good to play locally, but rules, pacing, scoring, content, UI, and balancing are expected to keep changing.
 
-Implemented platform features:
+![Recommended Open Party Lab games](docs/screenshots/recommended-games-collage.png)
 
-- room creation with room code, join URL, and QR overlay
-- phone join flow
-- reconnect support through device/session tokens
-- shared round lifecycle across games
-- scoreboards and post-round flow
-- host controls for language, FPS, and player removal outside active rounds
-- typed protocol shared by server, host, and controller
+## How It Works
 
-Recommended optional local game repos:
+Open Party Lab runs three apps together:
 
-- Magic Arena (`local-games/magic-arena` when cloned locally) - recommended alpha
-- Magic Duell (`local-games/magic-duell` when cloned locally) - recommended alpha
-- Arena Survivor (`local-games/arena-survivor` when cloned locally) - beta, recommended
-- MinionsTD (`local-games/minions-td` when cloned locally) - beta, recommended
-- Zeichnen & Erraten (`local-games/zeichnen-und-erraten` when cloned locally) - beta, recommended
-- Schaetzorama (`local-games/schaetzorama` when cloned locally) - beta, recommended
+- `apps/server`: authoritative Socket.IO room, round, score, and game-state server
+- `apps/host`: Phaser host screen for a TV, monitor, projector, or shared computer
+- `apps/controller`: React phone controller used by players in the browser
 
-Other optional local game repos:
+Shared platform code lives in workspace packages:
 
-- Tap Race (`local-games/tap-race` when cloned locally)
-- Pantomime (`local-games/pantomime` when cloned locally)
-- Air Hockey (`local-games/air-hockey` when cloned locally)
-- Tabu (`local-games/tabu` when cloned locally)
-- Imposter (`local-games/imposter` when cloned locally)
-- Light Trails (`local-games/light-trails` when cloned locally)
-- Drift Racer (`local-games/drift-racer` when cloned locally) - under construction, currently not playable
-- Word Tiles (`local-games/word-tiles` when cloned locally)
-- Chaos-Kommando (`local-games/chaos-kommando` when cloned locally)
+- `packages/protocol`: socket events, DTOs, and shared room/game-state contracts
+- `packages/game-core`: game manifests, shared game types, round helpers, and layout keys
+- `packages/ui-kit`: shared visual tokens
+- `packages/utils`: small shared utilities
+
+The platform supports optional multi-repo games. The core platform stays here; individual games can live in separate Git repos under `local-games/`. Missing optional games are normal and are skipped by the generator.
 
 ## Quick Start
 
@@ -85,102 +58,137 @@ npm run dev:host
 npm run dev:controller
 ```
 
-Default ports:
+Default local URLs:
 
 - Server: `http://localhost:3000`
 - Host: `http://localhost:5173`
 - Controller: `http://localhost:5174`
 
-Useful scripts:
+If a dev port is already occupied, stop the running stack first:
 
-- `npm run games:list`
-- `npm run games:sync-local`
-- `npm run games:clear-local`
-- `npm run ai:controllers`
-- `npm run dev:all`
-- `npm run dev:stop`
-- `npm run dev:server`
-- `npm run dev:host`
-- `npm run dev:controller`
-- `npm run typecheck`
-- `npm run build`
-
-## Optional Local Games
-
-You do not need every game repo. The platform loads only game repos that exist locally and are linked by the generator.
-
-Recommended child-repo layout:
-
-```text
-Open-Party-Lab/
-  local-games/
-    tap-race/
+```bash
+npm run dev:stop
 ```
 
-Clone recommended games:
+## Recommended Games
+
+Clone the recommended game repos into `local-games/`:
 
 ```bash
 npm run games:clone-recommended
 npm run games:sync-local
 ```
 
-Clone optional games manually:
+Recommended optional local game repos:
+
+| Game | Status | Local path |
+| --- | --- | --- |
+| Magic Arena | recommended alpha | `local-games/magic-arena` |
+| Magic Duell | recommended alpha | `local-games/magic-duell` |
+| Arena Survivor | beta, recommended | `local-games/arena-survivor` |
+| MinionsTD | beta, recommended | `local-games/minions-td` |
+| Zeichnen & Erraten | beta, recommended | `local-games/zeichnen-und-erraten` |
+| Schaetzorama | beta, recommended | `local-games/schaetzorama` |
+
+Other optional local game repos:
+
+| Game | Notes | Local path |
+| --- | --- | --- |
+| Tap Race | playable prototype | `local-games/tap-race` |
+| Pantomime | playable prototype | `local-games/pantomime` |
+| Air Hockey | playable prototype | `local-games/air-hockey` |
+| Tabu | playable prototype | `local-games/tabu` |
+| Imposter | playable prototype | `local-games/imposter` |
+| Light Trails | playable prototype | `local-games/light-trails` |
+| Drift Racer | under construction, currently not playable | `local-games/drift-racer` |
+| Word Tiles | playable prototype | `local-games/word-tiles` |
+| Chaos-Kommando | playable prototype | `local-games/chaos-kommando` |
+
+Manual clone example:
 
 ```bash
 git clone https://github.com/Hartwich/magic-arena.git local-games/magic-arena
 git clone https://github.com/Hartwich/magic-duell.git local-games/magic-duell
-git clone https://github.com/Hartwich/arena-survivor.git local-games/arena-survivor
-git clone https://github.com/Hartwich/minions-td.git local-games/minions-td
-git clone https://github.com/Hartwich/zeichnen-und-erraten.git local-games/zeichnen-und-erraten
-git clone https://github.com/Hartwich/schaetzorama.git local-games/schaetzorama
-git clone https://github.com/Hartwich/tap-race.git local-games/tap-race
-git clone https://github.com/Hartwich/air-hockey.git local-games/air-hockey
-git clone https://github.com/Hartwich/tabu.git local-games/tabu
-git clone https://github.com/Hartwich/imposter.git local-games/imposter
-git clone https://github.com/Hartwich/light-trails.git local-games/light-trails
-git clone https://github.com/Hartwich/drift-racer.git local-games/drift-racer
-git clone https://github.com/Hartwich/word-tiles.git local-games/word-tiles
-git clone https://github.com/Hartwich/chaos-kommando.git local-games/chaos-kommando
 npm run games:sync-local
 ```
 
-`games:sync-local` builds and links only the local game repos it finds. Missing games are skipped and do not break `dev`, `typecheck`, or `build`.
-
-Lobby/setup ownership is split deliberately: the platform owns generic setup rendering and navigation, while game repos declare their setup fields in the game manifest and validate the resulting host actions on the server side. This lets multiple games reuse the same host setup UI without moving game-specific settings back into the platform repo.
+`games:sync-local` builds and links only the local game repos it finds. You do not need every game repo.
 
 New game repos should use the short game name as the repo and folder name, for example `tap-race`, not an `open-party-game-` prefix. Package names can still use the scoped npm shape, for example `@open-party-lab/game-tap-race`.
 
-For AI browser checks, use the in-app browser for screenshots. Virtual controllers can be added without opening phone browser windows:
+## Useful Scripts
+
+```bash
+npm run games:list
+npm run games:sync-local
+npm run games:clear-local
+npm run games:clone-recommended
+npm run ai:controllers
+npm run screenshots:readme
+npm run dev:all
+npm run dev:stop
+npm run typecheck
+npm run build
+```
+
+For AI browser checks, use virtual controllers instead of opening multiple phone browser windows:
 
 ```bash
 npm run ai:controllers -- --room DEBU --players 4 --ready true --hold-ms 600000
 ```
 
-## Ways To Contribute
+To refresh README screenshots, start the server and host first, then run:
 
-You do not need to understand the whole platform to help. Good contributions include:
+```bash
+npm run screenshots:readme
+```
 
-- playtest one game and open a playtest report;
+The screenshot script captures the English host game-selection screen and builds a recommended-games collage from local game screenshots.
+
+## LAN Setup
+
+Phones must reach the server and controller app through the host machine's LAN IP.
+
+Example PowerShell setup:
+
+```powershell
+$env:PUBLIC_CONTROLLER_ORIGIN="http://192.168.178.20:5174"
+$env:VITE_SERVER_URL="http://192.168.178.20:3000"
+```
+
+Then start the platform with `npm run dev:all`, open the host app on the shared screen, and scan the QR code from each phone.
+
+## Browser Notes
+
+Use a Chromium-based browser or Safari for phone controllers when possible. Firefox can work, but controller sessions may sometimes have issues with fullscreen behavior, reconnect/session handling, or touch input timing.
+
+The host screen is intended for a desktop browser. The controller is intended for phone-sized browser windows on the same network as the server.
+
+## Contributing
+
+Good contributions are usually small and vertical:
+
+- playtest one game and open a focused report;
 - improve controller text, layout, or feedback on phones;
-- improve host-screen readability for a shared TV or monitor;
+- improve host-screen readability for a TV or monitor;
 - propose balance, pacing, scoring, or rule-clarity improvements;
-- add screenshots, docs, or setup notes;
-- add small smoke tests for room creation, joining, reconnect, or round flow;
+- add screenshots, docs, setup notes, or small smoke tests;
 - build a new mini-game repo using the Mini-Game SDK.
 
-Start with small, vertical changes. For behavior changes, update the server logic, protocol types, host view, controller model, and docs together when needed.
+When behavior changes, update the server logic, protocol types, host view, controller model, and docs together when needed.
 
-## For AI Coding Agents
-
-This repo is intentionally structured for AI-assisted development. Start with:
+Start with:
 
 - [AGENTS.md](AGENTS.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
 - [docs/agent-task-guide.md](docs/agent-task-guide.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/minigame-sdk.md](docs/minigame-sdk.md)
 - [docs/multi-repo-games.md](docs/multi-repo-games.md)
 - [docs/create-a-game.md](docs/create-a-game.md)
 - [docs/playtesting.md](docs/playtesting.md)
+- [docs/project-status.md](docs/project-status.md)
+- [docs/roadmap.md](docs/roadmap.md)
 
 Recommended verification:
 
@@ -191,39 +199,7 @@ npm run typecheck
 npm run build
 ```
 
-If a check cannot be run, state that clearly in the pull request. Keep generated output, logs, temporary browser profiles, and build artifacts out of source control.
-
-## LAN Setup
-
-Phones must be able to reach the server and controller app through the host machine's LAN IP.
-
-Example PowerShell setup:
-
-```powershell
-$env:PUBLIC_CONTROLLER_ORIGIN="http://192.168.178.20:5174"
-$env:VITE_SERVER_URL="http://192.168.178.20:3000"
-```
-
-Then start the platform with `npm run dev:all` on Windows, or start the server, host, and controller scripts in separate terminals. Open the host app on the shared screen, and scan the QR code from each phone.
-
-## Browser Notes
-
-Use a Chromium-based browser or Safari for phone controllers when possible. Firefox can work, but controller sessions may sometimes have issues with fullscreen behavior, reconnect/session handling, or touch input timing.
-
-The host screen is intended for a desktop browser. The controller is intended for phone-sized browser windows on the same network as the server.
-
-## Collaboration
-
-Developers and AI coding agents are welcome to improve the project. Good contributions are usually vertical: update the server logic, protocol types, host view, controller model, and docs together. Balancing and usability improvements are especially useful while the games are still in alpha.
-
-Start with:
-
-- [AGENTS.md](AGENTS.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/minigame-sdk.md](docs/minigame-sdk.md)
-- [docs/multi-repo-games.md](docs/multi-repo-games.md)
-- [docs/project-status.md](docs/project-status.md)
+Keep generated output, logs, temporary browser profiles, and build artifacts out of source control. If a check cannot be run, state that clearly in the pull request.
 
 Contributions are voluntary and unpaid. The maintainer may publish official builds, including a possible Steam release, to reach a larger player base. See [CONTRIBUTING.md](CONTRIBUTING.md) and [NOTICE.md](NOTICE.md).
 
