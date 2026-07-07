@@ -110,6 +110,55 @@ function fitTextToHeight(
   textObject.setText(`${words[0]}...`);
 }
 
+function textFitsBox(
+  textObject: Phaser.GameObjects.Text,
+  maxWidth: number,
+  maxHeight: number
+): boolean {
+  return textObject.width <= maxWidth + 0.5 && textObject.height <= maxHeight + 0.5;
+}
+
+function fitTextToBox(
+  textObject: Phaser.GameObjects.Text,
+  fullText: string,
+  maxWidth: number,
+  maxHeight: number
+): void {
+  const boxWidth = Math.max(12, Math.floor(maxWidth));
+  const boxHeight = Math.max(12, Math.floor(maxHeight));
+
+  textObject.setWordWrapWidth(boxWidth, true);
+  textObject.setText(fullText);
+
+  if (textFitsBox(textObject, boxWidth, boxHeight)) {
+    return;
+  }
+
+  const words = fullText.split(/\s+/).filter(Boolean);
+
+  if (words.length > 1) {
+    for (let wordCount = words.length - 1; wordCount > 0; wordCount -= 1) {
+      textObject.setText(`${words.slice(0, wordCount).join(" ")}...`);
+
+      if (textFitsBox(textObject, boxWidth, boxHeight)) {
+        return;
+      }
+    }
+  }
+
+  for (let characterCount = fullText.length - 1; characterCount > 0; characterCount -= 1) {
+    const candidate = `${fullText.slice(0, characterCount).trimEnd()}...`;
+
+    textObject.setText(candidate);
+
+    if (textFitsBox(textObject, boxWidth, boxHeight)) {
+      return;
+    }
+  }
+
+  textObject.setText("...");
+}
+
 function parseColor(input: string | null | undefined, fallback: number): number {
   if (!input) {
     return fallback;
@@ -369,27 +418,35 @@ function drawGameIcon(
 }
 
 function getColumns(width: number, variant: GameCardVariant, gameCount: number): number {
+  const gap = variant === "compact" ? 12 : 18;
+  const minCardWidth = variant === "compact" ? 236 : 176;
+  const limitToStableCardWidth = (columns: number): number => {
+    const maxColumns = Math.max(1, Math.floor((width + gap) / (minCardWidth + gap)));
+
+    return Math.max(1, Math.min(columns, gameCount, maxColumns));
+  };
+
   if (variant === "compact") {
     if (width >= 1_160 && gameCount <= 8) {
-      return gameCount;
+      return limitToStableCardWidth(gameCount);
     }
 
     if (width >= 760) {
-      return 4;
+      return limitToStableCardWidth(4);
     }
 
-    return 2;
+    return limitToStableCardWidth(2);
   }
 
   if (width >= 760) {
-    return 4;
+    return limitToStableCardWidth(4);
   }
 
   if (width >= 520) {
-    return 2;
+    return limitToStableCardWidth(2);
   }
 
-  return 1;
+  return limitToStableCardWidth(1);
 }
 
 function drawPill(
@@ -453,31 +510,40 @@ function renderGameCard(
   container.add([shadow, glow, background, accentBar, iconPlate, icon]);
 
   if (variant === "compact") {
+    const titleMaxWidth = Math.max(42, width - 152);
     const title = scene.add.text(92, 36, game.displayName, {
       fontFamily: hostTheme.titleFont,
       fontSize: "20px",
       color: hostTheme.text,
-      wordWrap: { width: width - 152 }
+      wordWrap: { width: titleMaxWidth, useAdvancedWrap: true }
     });
-    fitTextToHeight(title, game.displayName, 42);
-    const metaY = Math.min(80, title.y + title.height + 5);
     container.add(title);
-    container.add(
-      scene.add.text(92, metaY, text.playerRange(game.minPlayers, game.maxPlayers), {
+    fitTextToBox(title, game.displayName, titleMaxWidth, 42);
+
+    if (!selected) {
+      const metaText = text.playerRange(game.minPlayers, game.maxPlayers);
+      const metaMaxWidth = Math.max(42, width - 108);
+      const metaY = Math.min(80, title.y + title.height + 5);
+      const meta = scene.add.text(92, metaY, metaText, {
         fontFamily: hostTheme.bodyFont,
         fontSize: "14px",
-        color: "#cbd5e1"
-      })
-    );
+        color: "#cbd5e1",
+        wordWrap: { width: metaMaxWidth, useAdvancedWrap: true }
+      });
+      fitTextToBox(meta, metaText, metaMaxWidth, 18);
+      container.add(meta);
+    }
   } else {
+    const titleMaxWidth = Math.max(42, width - 36);
+    const titleMaxHeight = Math.max(24, height - 148);
     const title = scene.add.text(18, 104, game.displayName, {
       fontFamily: hostTheme.titleFont,
       fontSize: "26px",
       color: hostTheme.text,
-      wordWrap: { width: width - 36 }
+      wordWrap: { width: titleMaxWidth, useAdvancedWrap: true }
     });
-    fitTextToHeight(title, game.displayName, 64);
     container.add(title);
+    fitTextToBox(title, game.displayName, titleMaxWidth, titleMaxHeight);
   }
 
   const shortcut = drawPill(scene, width - 54, variant === "compact" ? 14 : 18, `${index + 1}`, 0x0f172a);
@@ -864,20 +930,23 @@ export function renderSelectedGamePanel(
     fontSize: "12px",
     color: "#cbd5e1"
   });
+  const textMaxWidth = Math.max(42, width - 176);
   const title = scene.add.text(x + 152, y + 48, game.displayName, {
     fontFamily: hostTheme.titleFont,
     fontSize: "34px",
     color: hostTheme.text,
-    wordWrap: { width: width - 176 }
+    wordWrap: { width: textMaxWidth, useAdvancedWrap: true }
   });
+  fitTextToBox(title, game.displayName, textMaxWidth, 76);
+
   const description = scene.add.text(x + 152, title.y + title.height + 8, game.description, {
     fontFamily: hostTheme.bodyFont,
     fontSize: "17px",
     color: "#dbeafe",
     lineSpacing: 4,
-    wordWrap: { width: width - 176 }
+    wordWrap: { width: textMaxWidth, useAdvancedWrap: true }
   });
-  fitTextToHeight(description, game.description, Math.max(36, height - description.y - 62));
+  fitTextToBox(description, game.description, textMaxWidth, Math.max(24, y + height - description.y - 64));
 
   const pillsY = y + height - 52;
   drawPill(scene, x + 24, pillsY, text.playerRange(game.minPlayers, game.maxPlayers), 0x08111f);
