@@ -15,7 +15,11 @@ interface DraftPlacement {
   letter: string;
 }
 
-const blankLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ".split("");
+const baseBlankLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function blankLettersFor(en: boolean): string[] {
+  return (en ? baseBlankLetters : `${baseBlankLetters}ÄÖÜ`).split("");
+}
 
 function keyFor(x: number, y: number): string {
   return `${x}:${y}`;
@@ -122,13 +126,17 @@ export function WordTilesLayout({ model }: WordTilesLayoutProps) {
   const selectedTile = visibleRack.find((tile) => tile.id === selectedTileId) ?? null;
   const draftOrientation = resolveDraftOrientation(draft);
 
-  function isEligibleEmptyCell(x: number, y: number): boolean {
+  // Gating: Wo darf ein Stein abgelegt werden? Bewusst locker (nur Linien-
+  // Konsistenz) - die vollstaendige Regelpruefung macht der Server beim Legen.
+  // So sind auch Zuege moeglich, deren erster Stein noch nicht an einen
+  // vorhandenen Stein angrenzt.
+  function isPlaceableCell(x: number, y: number): boolean {
     if (!selectedTile || exchangeMode || model.disabled) {
       return false;
     }
 
     if (draft.length === 0) {
-      return boardHasTiles ? isAdjacentToBoardTile(cellsByKey, x, y) : x === 7 && y === 7;
+      return true;
     }
 
     if (draft.length === 1) {
@@ -146,6 +154,20 @@ export function WordTilesLayout({ model }: WordTilesLayoutProps) {
     return false;
   }
 
+  // Hervorhebung: Felder, die mit hoher Wahrscheinlichkeit zu einem gueltigen
+  // Zug fuehren (Anschluss an vorhandene Steine bzw. der Stern beim ersten Wort).
+  function isSuggestedCell(x: number, y: number): boolean {
+    if (!isPlaceableCell(x, y)) {
+      return false;
+    }
+
+    if (draft.length === 0) {
+      return boardHasTiles ? isAdjacentToBoardTile(cellsByKey, x, y) : x === 7 && y === 7;
+    }
+
+    return true;
+  }
+
   function placeTile(tile: WordTilesRackTileState, x: number, y: number, letter?: string): void {
     setDraft((current) => [...current, { x, y, tile, letter: letter ?? tile.letter }]);
     setSelectedTileId(null);
@@ -161,7 +183,7 @@ export function WordTilesLayout({ model }: WordTilesLayoutProps) {
       return;
     }
 
-    if (cell.tile || !selectedTile || !isEligibleEmptyCell(cell.x, cell.y)) {
+    if (cell.tile || !selectedTile || !isPlaceableCell(cell.x, cell.y)) {
       haptics.tap(6);
       return;
     }
@@ -319,7 +341,7 @@ export function WordTilesLayout({ model }: WordTilesLayoutProps) {
                   }
                 : null;
             const colors = bonusColors(cell.bonus);
-            const eligible = !renderedTile && isEligibleEmptyCell(cell.x, cell.y);
+            const eligible = !renderedTile && isSuggestedCell(cell.x, cell.y);
 
             return (
               <button
@@ -660,7 +682,7 @@ export function WordTilesLayout({ model }: WordTilesLayoutProps) {
           >
             <strong>{en ? "Blank tile" : "Joker"}</strong>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}>
-              {blankLetters.map((letter) => (
+              {blankLettersFor(en).map((letter) => (
                 <button
                   key={letter}
                   type="button"

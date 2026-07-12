@@ -146,6 +146,10 @@ interface MagicArenaActiveActionState {
 
 interface MagicArenaControllerState {
   magicPhase: "setup" | "planning" | "execution" | "game_over";
+  planningMode?: "planned" | "sequential";
+  planningSlotIndex?: number;
+  totalPlanningSlots?: number;
+  activePlayerId?: string | null;
   roundIndex: number;
   currentSlot: number | null;
   players: MagicArenaPlayerState[];
@@ -462,9 +466,19 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
   const pathLimit = mode === "base:move" ? 2 : getCardNeedsPath(currentCardId);
   const targetRange = getTargetRange(mode, currentCardId, selectedCardDefinition?.range);
   const selectableSlots = Math.max(0, ownPlayer?.requiredSlots ?? 0);
+  const sequential = state.planningMode === "sequential";
+  const planningSlot = state.planningSlotIndex ?? 0;
+  const totalSlots = sequential ? Math.max(1, state.totalPlanningSlots ?? 4) : Math.max(1, selectableSlots);
+  const isOwnTurn = !sequential || state.activePlayerId === model.currentPlayerId;
   const ready = Boolean(ownPlayer?.ready);
   const plannedSlotCount = useMemo(() => new Set(ownPlans.map((plan) => plan.slotIndex)).size, [ownPlans]);
-  const canReady = plannedSlotCount >= selectableSlots && selectableSlots >= 0 && !ready && state.magicPhase === "planning";
+  const canReady = sequential
+    ? !model.disabled &&
+      isOwnTurn &&
+      !ready &&
+      state.magicPhase === "planning" &&
+      ownPlans.some((plan) => plan.slotIndex === planningSlot)
+    : plannedSlotCount >= selectableSlots && selectableSlots >= 0 && !ready && state.magicPhase === "planning";
   const actionComplete = Boolean(buildDraftAction());
   const selectedActionDescription = selectedCardDefinition?.description ?? getBaseActionDescription(mode, en);
   const boardCells = useMemo<BoardCellLayout[]>(() => {
@@ -721,9 +735,10 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
   );
   const pathKeys = new Map(path.map((coord, index) => [axialKey(coord), index + 1]));
   const firstOpenSlot = useMemo(() => findFirstOpenSlot(), [ownPlans, selectableSlots]);
+  const initialSlot = sequential ? planningSlot : firstOpenSlot;
 
   useEffect(() => {
-    setSlotIndex(firstOpenSlot);
+    setSlotIndex(initialSlot);
     setFigureId(null);
     setMode("base:move");
     setPath([]);
@@ -731,7 +746,7 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
     setDirection(0);
     setDistance(1);
     setSwapTargetFigureId(null);
-  }, [firstOpenSlot, model.resetKey]);
+  }, [initialSlot, model.resetKey]);
 
   function resetTargets(nextMode = mode): void {
     setMode(nextMode);
@@ -1109,7 +1124,7 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
     }
 
     model.onPlanSlot(slotIndex, action);
-    setSlotIndex(findNextOpenSlotAfter(slotIndex));
+    setSlotIndex(sequential ? planningSlot : findNextOpenSlotAfter(slotIndex));
     setFigureId(null);
     resetTargets("base:move");
   }
@@ -1141,18 +1156,26 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
       ) : null}
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
-        {Array.from({ length: Math.max(1, selectableSlots) }, (_, index) => {
+        {Array.from({ length: totalSlots }, (_, index) => {
           const plan = ownPlans.find((entry) => entry.slotIndex === index);
           const plannedFigure = plan ? ownPlayer?.figures.find((figure) => figure.figureId === plan.figureId) : undefined;
+          const highlighted = sequential ? index === planningSlot : slotIndex === index;
+          const pastSlot = sequential && index < planningSlot;
           return (
             <button
               key={index}
               type="button"
-              onClick={() => setSlotIndex(index)}
+              disabled={sequential}
+              onClick={() => {
+                if (!sequential) {
+                  setSlotIndex(index);
+                }
+              }}
               style={{
                 ...slotButtonStyle,
-                border: slotIndex === index ? "2px solid #38bdf8" : plan ? "1px solid rgba(34,197,94,0.5)" : slotButtonStyle.border,
-                background: slotIndex === index ? "rgba(14,165,233,0.24)" : plan ? "rgba(34,197,94,0.16)" : slotButtonStyle.background
+                border: highlighted ? "2px solid #38bdf8" : plan ? "1px solid rgba(34,197,94,0.5)" : slotButtonStyle.border,
+                background: highlighted ? "rgba(14,165,233,0.24)" : plan ? "rgba(34,197,94,0.16)" : slotButtonStyle.background,
+                opacity: pastSlot ? 0.6 : 1
               }}
             >
               {plan ? (
@@ -1162,7 +1185,7 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
                 </>
               ) : (
                 <>
-                  <strong>Slot {index + 1}</strong>
+                  <strong>{sequential ? (en ? "Move" : "Zug") : "Slot"} {index + 1}</strong>
                   <ActionIcon actionId={undefined} />
                 </>
               )}
@@ -1370,10 +1393,10 @@ export function MagicArenaLayout({ model }: MagicArenaLayoutProps) {
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6 }}>
         <button type="button" disabled={model.disabled || !actionComplete} onClick={confirmSlot} style={primaryButtonStyle}>
-          {en ? "Lock slot" : "Slot setzen"}
+          {sequential ? (en ? "Set move" : "Zug setzen") : en ? "Lock slot" : "Slot setzen"}
         </button>
         <button type="button" disabled={!canReady} onClick={model.onReady} style={canReady ? primaryButtonStyle : secondaryButtonStyle}>
-          {ready ? (en ? "Ready" : "Bereit") : "Ready"}
+          {sequential ? (en ? "Execute move" : "Zug ausfuehren") : ready ? (en ? "Ready" : "Bereit") : "Ready"}
         </button>
       </section>
 
