@@ -23,6 +23,23 @@ function getPlayerSetupVisual(option: PlayerSetupOption): NonNullable<PlayerSetu
   };
 }
 
+function resolvePlayerSetupOptionPortrait(
+  room: RoomSnapshot,
+  option: PlayerSetupOption
+): PlayerSetupOption {
+  const mapping = option.portraitPathBySetting;
+
+  if (!mapping) {
+    return option;
+  }
+
+  const settingValue = room.selectedGameSettings?.[mapping.settingKey];
+  const themedPortraitPath =
+    settingValue === undefined ? undefined : mapping.values[String(settingValue)];
+
+  return themedPortraitPath ? { ...option, portraitPath: themedPortraitPath } : option;
+}
+
 function getPlayerSetupSelectionKey(setup: PlayerSetup): string {
   return setup.selectionKey ?? "character";
 }
@@ -173,7 +190,8 @@ function renderChoicePlayerSetupChooser(
       </div>
 
       <div style={{ display: "grid", gap: 10 }}>
-        {setup.options.map((option) => {
+        {setup.options.map((setupOption) => {
+          const option = resolvePlayerSetupOptionPortrait(room, setupOption);
           const currentValue = getPlayerSetupValue(currentPlayer, setup);
           const selectedByCurrentPlayer = currentValue === option.id;
           const selectedPlayers = playersBySelectionId.get(option.id) ?? [];
