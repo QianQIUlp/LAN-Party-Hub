@@ -51,6 +51,10 @@ export interface GamePlayerSetupOption {
   description?: string;
   iconPath?: string;
   portraitPath?: string;
+  portraitPathBySetting?: {
+    settingKey: string;
+    values: Readonly<Record<string, string>>;
+  };
   visual?: {
     primaryColor: string;
     secondaryColor: string;
