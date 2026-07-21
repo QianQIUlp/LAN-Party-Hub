@@ -23,12 +23,48 @@ import {
 } from "./gameSelectionUi.js";
 import { clampScroll, measureMaxScroll, renderScrollBar } from "./sceneScroll.js";
 
+const arenaSurvivorThemeSettingKey = "arenaSurvivorVisualTheme";
+
+const arenaSurvivorSetupBackgrounds: Record<string, { path: string; svg: boolean }> = {
+  classic: {
+    path: "/arena-survivor/themes/classic/backgrounds/arena-field.svg",
+    svg: true
+  },
+  "obsidian-relay": {
+    path: "/arena-survivor/themes/obsidian-relay/backgrounds/relay-vault.svg",
+    svg: true
+  },
+  "frostfire-saga": {
+    path: "/arena-survivor/themes/frostfire-saga/backgrounds/frostfire-arena.png",
+    svg: false
+  }
+};
+
+function resolveArenaSurvivorSetupTheme(
+  settings: Record<string, string | number | boolean>
+): string {
+  const value = settings[arenaSurvivorThemeSettingKey];
+  return typeof value === "string" && arenaSurvivorSetupBackgrounds[value]
+    ? value
+    : "frostfire-saga";
+}
+
+function resolveArenaSurvivorPortraitPath(
+  game: AvailableGameDto,
+  characterId: string,
+  theme: string
+): string | undefined {
+  const option = game.playerSetup?.options.find((entry) => entry.id === characterId);
+  return option?.portraitPathBySetting?.values[theme] ?? option?.portraitPath;
+}
+
 export class GameSelectScene extends Phaser.Scene {
   private unsubscribe?: () => void;
   private unbindHotkeys?: () => void;
   private client?: HostSocketClient;
   private scrollY = 0;
   private maxScroll = 0;
+  private readonly requestedArenaSetupTextures = new Set<string>();
   private readonly handleResize = () => this.renderFromState();
   private readonly handleWheel = (
     _pointer: Phaser.Input.Pointer,
@@ -119,6 +155,19 @@ export class GameSelectScene extends Phaser.Scene {
   ): void {
     this.children.removeAll(true);
     drawArcadeBackdrop(this);
+
+    if (selectedGame?.id === "arena-survivor") {
+      this.renderArenaSurvivorSetup({
+        game: selectedGame,
+        players,
+        error,
+        roomCode,
+        roundActive,
+        language,
+        settings: selectedGameSettings ?? {}
+      });
+      return;
+    }
 
     const text = getHostText(language);
     const autoStartsWithReady = requiresReadyAutoStart(selectedGame);
@@ -267,6 +316,283 @@ export class GameSelectScene extends Phaser.Scene {
 
     renderSceneHeader(this, headerOptions);
     renderScrollBar(this, this.scrollY, this.maxScroll);
+  }
+
+  private queueArenaSurvivorSetupTextures(
+    game: AvailableGameDto,
+    settings: Record<string, string | number | boolean>
+  ): void {
+    const theme = resolveArenaSurvivorSetupTheme(settings);
+    const background = arenaSurvivorSetupBackgrounds[theme];
+    const assets: Array<{ key: string; path: string; svg: boolean }> = [
+      {
+        key: `arena-survivor-setup-background-${theme}`,
+        path: background.path,
+        svg: background.svg
+      }
+    ];
+
+    for (const option of game.playerSetup?.options ?? []) {
+      const path = resolveArenaSurvivorPortraitPath(game, option.id, theme);
+
+      if (path) {
+        assets.push({
+          key: `arena-survivor-setup-character-${theme}-${option.id}`,
+          path,
+          svg: path.endsWith(".svg")
+        });
+      }
+    }
+
+    let queued = false;
+
+    for (const asset of assets) {
+      if (this.textures.exists(asset.key) || this.requestedArenaSetupTextures.has(asset.key)) {
+        continue;
+      }
+
+      this.requestedArenaSetupTextures.add(asset.key);
+      queued = true;
+
+      if (asset.svg) {
+        this.load.svg(asset.key, asset.path);
+      } else {
+        this.load.image(asset.key, asset.path);
+      }
+    }
+
+    if (!queued) {
+      return;
+    }
+
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => this.renderFromState());
+
+    if (!this.load.isLoading()) {
+      this.load.start();
+    }
+  }
+
+  private renderArenaSurvivorSetup(options: {
+    game: AvailableGameDto;
+    players: PlayerSnapshot[];
+    error: string | null;
+    roomCode: string;
+    roundActive: boolean;
+    language: SupportedLanguage;
+    settings: Record<string, string | number | boolean>;
+  }): void {
+    const { game, players, error, roomCode, roundActive, language, settings } = options;
+    const en = language === "en";
+    const text = getHostText(language);
+    const theme = resolveArenaSurvivorSetupTheme(settings);
+    const backgroundKey = `arena-survivor-setup-background-${theme}`;
+    this.queueArenaSurvivorSetupTextures(game, settings);
+
+    if (this.textures.exists(backgroundKey)) {
+      const background = this.add.image(0, 0, backgroundKey).setOrigin(0);
+      const scale = Math.max(this.scale.width / background.width, this.scale.height / background.height);
+      background.setScale(scale);
+      background.setPosition(
+        (this.scale.width - background.displayWidth) / 2,
+        (this.scale.height - background.displayHeight) / 2
+      );
+      background.setAlpha(0.72);
+    }
+
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x050b14, 0.54).setOrigin(0);
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x142033, 0.16).setOrigin(0);
+
+    const { x: contentX, width: contentWidth } = getSceneContentFrame(this);
+    const headerOptions = {
+      title: game.displayName,
+      subtitle: roundActive
+        ? text.gameSelectRoundActiveSubtitle
+        : en
+          ? "Choose your heroes, tune the run and enter the arena together."
+          : "Waehlt eure Helden, stimmt den Run ab und betretet gemeinsam die Arena.",
+      roomCode,
+      language
+    };
+    const headerBottom = measureSceneHeaderBottom(this, headerOptions);
+    const bodyY = headerBottom - this.scrollY;
+    const stacked = contentWidth < 1_020;
+    const gap = 20;
+    const setupWidth = stacked ? contentWidth : Math.min(390, Math.max(330, Math.floor(contentWidth * 0.34)));
+    const squadWidth = stacked ? contentWidth : contentWidth - setupWidth - gap;
+    const squadColumns = squadWidth < 620 || players.length === 1 ? 1 : 2;
+    const squadRows = Math.max(1, Math.ceil(players.length / squadColumns));
+    const squadHeight = 68 + squadRows * 128 + Math.max(0, squadRows - 1) * 12;
+    const squadBottom = this.renderArenaSurvivorSquad({
+      x: contentX,
+      y: bodyY,
+      width: squadWidth,
+      height: squadHeight,
+      game,
+      players,
+      theme,
+      language
+    });
+    const setupX = stacked ? contentX : contentX + squadWidth + gap;
+    const setupY = stacked ? squadBottom + 18 : bodyY;
+    const setupHeight = this.measureLobbySetupHeight(game, setupWidth);
+
+    this.renderLobbySetupControls({
+      x: setupX,
+      y: setupY,
+      width: setupWidth,
+      height: setupHeight,
+      game,
+      settings,
+      disabled: roundActive,
+      language
+    });
+
+    const selectedCount = players.filter((player) => player.selectedCharacterId !== null).length;
+    const confirmed = settings.arenaSurvivorSetupConfirmed === true;
+    const infoY = stacked ? setupY + setupHeight + 16 : bodyY + setupHeight + 16;
+    const infoX = stacked ? contentX : setupX;
+    const infoWidth = stacked ? contentWidth : setupWidth;
+    const infoHeight = 132;
+    renderInfoPanel(this, {
+      x: infoX,
+      y: infoY,
+      width: infoWidth,
+      height: infoHeight,
+      title: confirmed
+        ? (en ? "Run unlocked" : "Run freigegeben")
+        : (en ? "Prepare the run" : "Run vorbereiten"),
+      lines: [
+        en
+          ? `${selectedCount}/${players.length} characters selected`
+          : `${selectedCount}/${players.length} Charaktere gewaehlt`,
+        selectedCount < players.length
+          ? text.arenaNeedsCharacterLine
+          : confirmed
+            ? text.arenaReadyLine
+            : (game.lobbySetup?.description ?? text.setupControlsLine)
+      ],
+      accent: theme === "frostfire-saga" ? 0xfb923c : getVisualAccent(game.id),
+      language,
+      error
+    });
+
+    const contentBottom = Math.max(squadBottom, setupY + setupHeight, infoY + infoHeight) + this.scrollY;
+
+    if (this.updateScrollBounds(contentBottom)) {
+      return;
+    }
+
+    renderSceneHeader(this, headerOptions);
+    renderScrollBar(this, this.scrollY, this.maxScroll);
+  }
+
+  private renderArenaSurvivorSquad(options: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    game: AvailableGameDto;
+    players: PlayerSnapshot[];
+    theme: string;
+    language: SupportedLanguage;
+  }): number {
+    const { x, y, width, height, game, players, theme, language } = options;
+    const en = language === "en";
+    const text = getHostText(language);
+    this.add
+      .rectangle(x, y, width, height, 0x07111d, 0.9)
+      .setOrigin(0)
+      .setStrokeStyle(2, theme === "frostfire-saga" ? 0xfb923c : 0x38bdf8, 0.38);
+    this.add.text(x + 20, y + 16, en ? "Your squad" : "Euer Trupp", {
+      fontFamily: hostTheme.titleFont,
+      fontSize: "26px",
+      color: hostTheme.text
+    });
+
+    if (players.length === 0) {
+      this.add.text(x + 20, y + 70, text.noPlayersJoined, {
+        fontFamily: hostTheme.bodyFont,
+        fontSize: "18px",
+        color: "#cbd5e1",
+        wordWrap: { width: width - 40 }
+      });
+      return y + height;
+    }
+
+    const columns = width < 620 || players.length === 1 ? 1 : 2;
+    const cardGap = 12;
+    const cardWidth = Math.floor((width - 40 - cardGap * (columns - 1)) / columns);
+    const rows = Math.ceil(players.length / columns);
+    const availableHeight = height - 68 - Math.max(0, rows - 1) * cardGap;
+    const cardHeight = Math.max(112, Math.floor(availableHeight / rows));
+
+    players.forEach((player, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      const cardX = x + 20 + column * (cardWidth + cardGap);
+      const cardY = y + 56 + row * (cardHeight + cardGap);
+      const character = player.selectedCharacterId
+        ? game.playerSetup?.options.find((entry) => entry.id === player.selectedCharacterId)
+        : undefined;
+      const playerColor = Number.parseInt(player.color.replace("#", ""), 16) || 0x38bdf8;
+      const accent = character ? playerColor : 0xf59e0b;
+
+      this.add
+        .rectangle(cardX, cardY, cardWidth, cardHeight, character ? 0x0b1725 : 0x121722, 0.96)
+        .setOrigin(0)
+        .setStrokeStyle(character ? 2 : 1, accent, character ? 0.72 : 0.48);
+
+      const portraitSize = Math.min(cardHeight - 20, 112);
+      const portraitX = cardX + 10;
+      const portraitY = cardY + (cardHeight - portraitSize) / 2;
+      this.add
+        .rectangle(portraitX, portraitY, portraitSize, portraitSize, 0x050b14, 0.9)
+        .setOrigin(0)
+        .setStrokeStyle(1, accent, 0.34);
+
+      if (character && player.selectedCharacterId) {
+        const textureKey = `arena-survivor-setup-character-${theme}-${player.selectedCharacterId}`;
+
+        if (this.textures.exists(textureKey)) {
+          this.add
+            .image(portraitX + portraitSize / 2, portraitY + portraitSize / 2, textureKey)
+            .setDisplaySize(portraitSize - 8, portraitSize - 8);
+        }
+      } else {
+        this.add.text(portraitX + portraitSize / 2, portraitY + portraitSize / 2, "?", {
+          fontFamily: hostTheme.titleFont,
+          fontSize: `${Math.round(portraitSize * 0.5)}px`,
+          color: "#fbbf24"
+        }).setOrigin(0.5);
+      }
+
+      const copyX = portraitX + portraitSize + 14;
+      const copyWidth = Math.max(70, cardX + cardWidth - copyX - 12);
+      this.add.text(copyX, cardY + 18, player.name, {
+        fontFamily: hostTheme.titleFont,
+        fontSize: "21px",
+        color: hostTheme.text,
+        wordWrap: { width: copyWidth }
+      });
+      this.add.text(
+        copyX,
+        cardY + 50,
+        character?.name ?? (en ? "Choosing a character" : "Waehlt noch einen Charakter"),
+        {
+          fontFamily: hostTheme.bodyFont,
+          fontSize: "14px",
+          color: character ? "#fed7aa" : "#fbbf24",
+          wordWrap: { width: copyWidth }
+        }
+      );
+      this.add.text(copyX, cardY + cardHeight - 28, player.isReady ? text.ready : text.waiting, {
+        fontFamily: hostTheme.monoFont,
+        fontSize: "12px",
+        color: player.isReady ? "#86efac" : "#cbd5e1"
+      });
+    });
+
+    return y + height;
   }
 
   private measureLobbySetupHeight(game: AvailableGameDto, width: number): number {
