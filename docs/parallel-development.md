@@ -28,6 +28,8 @@ git worktree add ../lan-party-qa -b codex/qa-offline-smoke origin/main
 
 Never attach two active agents to the same worktree. Never develop directly on protected `main`. Rebase or merge the latest `origin/main` before final verification according to the maintainer's preferred history policy.
 
+All PR titles, descriptions, review summaries, and reviewer-facing notes must be written in English. Keep the exact section headers supplied by `.github/PULL_REQUEST_TEMPLATE.md` so automation and repository conventions remain stable.
+
 ## Task contract
 
 Every parallel task must state:

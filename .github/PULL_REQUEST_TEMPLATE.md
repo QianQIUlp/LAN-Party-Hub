@@ -2,19 +2,19 @@
 
 ## 做了什么
 
-- 一句话概括变更（不超过 3 个要点）
+- Summarize the change in no more than three concise bullets.
 
 ## 为什么
 
-- Closes #N / Refs #N；没有 Issue 时说明触发原因
-- 写明任务所有者（Integration / Platform / Game:<id> / QA / Docs-Legal）及是否修改共享协议
+- Use `Closes #N` only when the PR fully resolves an issue; otherwise use `Refs #N` or state the trigger when no issue exists.
+- State the task owner (`Integration`, `Platform`, `Game:<id>`, `QA`, or `Docs-Legal`) and whether shared contracts changed.
 
 ## 怎么测
 
-- [ ] 写出 reviewer 可以实际运行、点击或检查的命令与路径
-- [ ] 已运行适用的 `npm run legal:check`、游戏检查、`npm run verify` 或 `npm run test:e2e`
-- [ ] 新增代码、资产、题库或第三方内容的来源与权利已记录；不涉及则明确写“不涉及”
+- [ ] List commands, URLs, interactions, or files a reviewer can actually verify.
+- [ ] Run the applicable legal check, game checks, `npm run verify`, or `npm run test:e2e`.
+- [ ] Document provenance and rights for new code, assets, word lists, or third-party content; otherwise state `Not applicable`.
 
 ## 截图（如有视觉改动）
 
-无视觉变更
+No visual changes.

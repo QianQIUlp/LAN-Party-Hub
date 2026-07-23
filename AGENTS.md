@@ -57,6 +57,7 @@ Do not reintroduce these without maintainer approval:
 
 ## Contribution Rules
 
+- Write all pull request titles, descriptions, review summaries, and reviewer-facing notes in English. Preserve the repository template's exact section headers.
 - Keep changes small enough to review.
 - Prefer vertical slices: server, protocol, host, controller, and docs together when behavior changes.
 - Update `docs/project-status.md` when functionality or limitations change.

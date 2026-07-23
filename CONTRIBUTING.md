@@ -19,13 +19,14 @@ If those terms do not work for you, please discuss before contributing.
 
 1. Open an issue first for large gameplay, architecture, licensing, or asset changes.
 2. Create a short-lived `codex/` branch in its own worktree; protected `main` accepts changes only through PRs.
-3. Declare one task owner and writable/forbidden paths. Game tasks own exactly one `games/<game-id>/**` directory.
-4. Keep PRs focused and request shared interface changes before editing shared packages from a game branch.
-5. Include screenshots or short clips for host/controller UI changes when useful.
-6. Mention whether AI tools helped produce the change.
-7. Preserve modification notices and provenance; run `npm run legal:check -- --base <target-ref>`.
-8. Run `npm run typecheck` and the task-specific tests.
-9. Run `npm run build` for shared, runtime, or release-affecting changes.
+3. Write the PR title, description, review summary, and reviewer-facing notes in English; preserve the exact section headers from the repository template.
+4. Declare one task owner and writable/forbidden paths. Game tasks own exactly one `games/<game-id>/**` directory.
+5. Keep PRs focused and request shared interface changes before editing shared packages from a game branch.
+6. Include screenshots or short clips for host/controller UI changes when useful.
+7. Mention whether AI tools helped produce the change.
+8. Preserve modification notices and provenance; run `npm run legal:check -- --base <target-ref>`.
+9. Run `npm run typecheck` and the task-specific tests.
+10. Run `npm run build` for shared, runtime, or release-affecting changes.
 
 See `docs/parallel-development.md` for worktree ownership and merge order, and `docs/licensing-and-attribution.md` for required license, NOTICE, modification-marker, and third-party-content handling.
 
