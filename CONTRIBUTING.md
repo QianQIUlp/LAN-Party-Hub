@@ -20,13 +20,17 @@ If those terms do not work for you, please discuss before contributing.
 1. Open an issue first for large gameplay, architecture, licensing, or asset changes.
 2. Create a short-lived `codex/` branch in its own worktree; protected `main` accepts changes only through PRs.
 3. Write the PR title, description, review summary, and reviewer-facing notes in English; preserve the exact section headers from the repository template.
-4. Declare one task owner and writable/forbidden paths. Game tasks own exactly one `games/<game-id>/**` directory.
-5. Keep PRs focused and request shared interface changes before editing shared packages from a game branch.
-6. Include screenshots or short clips for host/controller UI changes when useful.
-7. Mention whether AI tools helped produce the change.
-8. Preserve modification notices and provenance; run `npm run legal:check -- --base <target-ref>`.
-9. Run `npm run typecheck` and the task-specific tests.
-10. Run `npm run build` for shared, runtime, or release-affecting changes.
+4. Format the PR title as `type(scope): subject`, such as `fix(release): publish Windows assets at release root`. Accepted types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`, `perf`, `style`, and `revert`. Use a lowercase scope and start the subject with a lowercase letter or digit.
+5. Do not type a PR number into the title. GitHub appends `(#123)` when the PR is squash-merged.
+6. Declare one task owner and writable/forbidden paths. Game tasks own exactly one `games/<game-id>/**` directory.
+7. Keep PRs focused and request shared interface changes before editing shared packages from a game branch.
+8. Include screenshots or short clips for host/controller UI changes when useful.
+9. Mention whether AI tools helped produce the change.
+10. Preserve modification notices and provenance; run `npm run legal:check -- --base <target-ref>`.
+11. Run `npm run typecheck` and the task-specific tests.
+12. Run `npm run build` for shared, runtime, or release-affecting changes.
+
+Maintainers merge PRs with **Squash and merge** only. The repository uses the PR title as the final commit title, leaves the squash body blank, and automatically deletes the merged branch. A PR titled `fix(release): publish Windows assets at release root` therefore lands on `main` as `fix(release): publish Windows assets at release root (#123)`.
 
 See `docs/parallel-development.md` for worktree ownership and merge order, and `docs/licensing-and-attribution.md` for required license, NOTICE, modification-marker, and third-party-content handling.
 
