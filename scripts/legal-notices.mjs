@@ -10,6 +10,7 @@ const command = process.argv[2] ?? "check";
 const baseIndex = process.argv.indexOf("--base");
 const base = baseIndex >= 0 ? process.argv[baseIndex + 1] : null;
 const ledgerPath = resolve(root, "config/upstream-modified-files.json");
+const baselinePath = resolve(root, "config/upstream-derived-files.json");
 
 function git(args) {
   const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
@@ -38,6 +39,10 @@ function isExcluded(path) {
 
 async function readLedger() {
   return JSON.parse(await readFile(ledgerPath, "utf8"));
+}
+
+async function readBaseline() {
+  return new Set(JSON.parse(await readFile(baselinePath, "utf8")));
 }
 
 async function addNotice(path) {
@@ -70,8 +75,9 @@ async function changedExistingFiles(baseRef) {
 async function mark() {
   if (!base) throw new Error("mark requires --base <git-ref>");
   const ledger = await readLedger();
+  const baseline = await readBaseline();
   const paths = new Set([
-    ...(await changedExistingFiles(base)),
+    ...(await changedExistingFiles(base)).filter((path) => baseline.has(path)),
     ...ledger.filter((entry) => entry.noticeMode === "inline").map((entry) => entry.path)
   ]);
   let changed = 0;
@@ -88,6 +94,7 @@ async function check() {
   const sources = await readFile(resolve(root, "THIRD_PARTY_SOURCES.md"), "utf8");
   const knownGames = JSON.parse(await readFile(resolve(root, "config/known-games.json"), "utf8"));
   const ledger = await readLedger();
+  const baseline = await readBaseline();
 
   if (!license.includes("Apache License") || !license.includes("Version 2.0, January 2004")) errors.push("Root LICENSE is not the expected Apache-2.0 text.");
   if (!notice.includes("Upstream Open Party Lab notice (preserved)") || !notice.includes("independently maintained derivative")) errors.push("NOTICE.md is missing preserved upstream or derivative attribution.");
@@ -101,6 +108,9 @@ async function check() {
   }
 
   const ledgerPaths = new Set(ledger.map((entry) => entry.path));
+  if (baseline.size === 0 || !baseline.has("LICENSE") || !baseline.has("apps/server/src/app.ts")) {
+    errors.push("Upstream-derived baseline is empty or invalid.");
+  }
   for (const entry of ledger) {
     const path = resolve(root, entry.path);
     if (!existsSync(path)) {
@@ -116,6 +126,7 @@ async function check() {
   }
 
   for (const path of await changedExistingFiles(base)) {
+    if (!baseline.has(path) && !ledgerPaths.has(path)) continue;
     if (isExcluded(path)) continue;
     const expectedComment = commentFor(path);
     if (!expectedComment) {

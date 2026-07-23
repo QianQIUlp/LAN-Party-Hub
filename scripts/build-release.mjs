@@ -95,6 +95,10 @@ await cp(
   path.join(projectRoot, "config", "upstream-modified-files.json"),
   path.join(outputRoot, "config", "upstream-modified-files.json")
 );
+await cp(
+  path.join(projectRoot, "config", "upstream-derived-files.json"),
+  path.join(outputRoot, "config", "upstream-derived-files.json")
+);
 await cp(path.join(projectRoot, "docs", "release-build.md"), path.join(outputRoot, "README.md"));
 
 if (process.platform === "win32") {

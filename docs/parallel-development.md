@@ -1,5 +1,3 @@
-<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
-
 # Parallel development with agents and worktrees
 
 The unit of parallel work is one independent game or one bounded platform feature. Multiple agents must not freely edit the same worktree or shared protocol.

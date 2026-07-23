@@ -68,7 +68,8 @@ jobs:
             "app/packages/games/imposter/package.json",
             "THIRD_PARTY_SOURCES.md",
             "CHANGES.md",
-            "config/upstream-modified-files.json"
+            "config/upstream-modified-files.json",
+            "config/upstream-derived-files.json"
           )
           foreach ($path in $required) {
             if (-not (Test-Path (Join-Path $root $path))) { throw "Missing release file: $path" }

@@ -5,6 +5,11 @@
     "reason": "JSON does not support comments; bundled-game provenance and release metadata were added."
   },
   {
+    "path": "config/upstream-derived-files.json",
+    "noticeMode": "ledger",
+    "reason": "Machine-readable immutable path snapshot of the original fork baseline; JSON does not support comments."
+  },
+  {
     "path": "package.json",
     "noticeMode": "ledger",
     "reason": "JSON does not support comments; workspaces and verification scripts were changed."

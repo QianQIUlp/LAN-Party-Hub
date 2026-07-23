@@ -1,5 +1,3 @@
-<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
-
 # Changes from Open Party Lab
 
 LAN Party Hub is an independently maintained derivative of Open Party Lab. This file is the high-level modification record required by the project's attribution policy; Git history remains the detailed record.

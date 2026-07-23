@@ -1,5 +1,3 @@
-<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
-
 # Licensing and attribution policy
 
 This is an engineering policy for this repository, not legal advice.
@@ -20,7 +18,9 @@ For a comment-capable file, retain existing notices and add this near the top:
 Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 ```
 
-Use the file's normal comment syntax. `npm run legal:mark -- --base origin/main` can add the standard notice mechanically to changed existing text files.
+Use the file's normal comment syntax. `npm run legal:mark -- --base origin/main` can add the standard notice mechanically to changed files that belong to the recorded Open Party Lab baseline. Files created natively for LAN Party Hub do not need an upstream modification notice.
+
+The exact file set inherited from the original fork is frozen in `config/upstream-derived-files.json`. CI applies the modification-notice rule only to that baseline and to explicitly recorded third-party files; LAN Party Hub-native files are not mislabeled as upstream modifications.
 
 JSON, generated lockfiles, images, and other formats that cannot safely carry comments must be recorded in `config/upstream-modified-files.json` with a reason. Do not add fake JSON keys solely as legal comments.
 
