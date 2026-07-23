@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { SupportedLanguage } from "@open-party-lab/game-core";
 import type { RoomSnapshot } from "../dto/room.js";
 import type { PlayerSetupValue, PlayerSnapshot } from "../dto/player.js";
@@ -126,6 +127,15 @@ export interface RoomLanguageSuccess {
   room: RoomSnapshot;
 }
 
+export interface RoomJoinOriginRequest {
+  roomCode: string;
+  origin: string;
+}
+
+export interface RoomJoinOriginSuccess {
+  room: RoomSnapshot;
+}
+
 export interface ClientToServerEvents {
   "room:create": (
     payload: CreateRoomRequest,
@@ -150,6 +160,10 @@ export interface ClientToServerEvents {
   "room:set-language": (
     payload: RoomLanguageRequest,
     ack: (result: AckResult<RoomLanguageSuccess>) => void
+  ) => void;
+  "room:set-join-origin": (
+    payload: RoomJoinOriginRequest,
+    ack: (result: AckResult<RoomJoinOriginSuccess>) => void
   ) => void;
   "player:ready": (payload: PlayerReadyRequest) => void;
   "player:select-character": (payload: PlayerSelectCharacterRequest) => void;

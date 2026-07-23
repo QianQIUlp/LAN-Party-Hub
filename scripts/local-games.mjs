@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { existsSync } from "node:fs";
 import {
   cp,
@@ -47,6 +48,10 @@ async function readKnownGames() {
 }
 
 function resolveLocalPath(game) {
+  if (game.distribution === "bundled" && game.bundledPath) {
+    return path.resolve(projectRoot, game.bundledPath);
+  }
+
   const candidatePaths = [
     game.defaultLocalPath,
     ...(game.alternateLocalPaths ?? [])
@@ -56,6 +61,10 @@ function resolveLocalPath(game) {
 }
 
 function resolveDisplayPaths(game) {
+  if (game.distribution === "bundled" && game.bundledPath) {
+    return [path.resolve(projectRoot, game.bundledPath)];
+  }
+
   return [
     game.defaultLocalPath,
     ...(game.alternateLocalPaths ?? [])
@@ -312,7 +321,7 @@ async function listGames() {
     const linked = existsSync(linkPath);
     const status = localExists ? (linked ? "linked" : "not installed") : "missing";
 
-    console.log(`${game.id}: ${status}`);
+    console.log(`${game.id}: ${status} (${game.distribution ?? "optional"})`);
     console.log(`  repo: ${game.repo}`);
     console.log(`  local: ${displayPaths[0]}`);
 
@@ -320,7 +329,7 @@ async function listGames() {
       console.log(`  alternates: ${displayPaths.slice(1).join(", ")}`);
     }
 
-    if (!localExists) {
+    if (!localExists && game.distribution !== "bundled") {
       console.log(`  clone: git clone ${game.repo} ${displayPaths[0]}`);
     }
   }
@@ -337,7 +346,13 @@ async function syncLocalGames() {
     if (!existsSync(localPath)) {
       await removePackageLink(game);
       await removePublicAssets(game);
-      console.log(`[games] ${game.id}: missing, skipped.`);
+
+      if (game.distribution === "bundled") {
+        failedGameIds.push(game.id);
+        console.warn(`[games] ${game.id}: bundled source missing.`);
+      } else {
+        console.log(`[games] ${game.id}: missing, skipped.`);
+      }
       continue;
     }
 

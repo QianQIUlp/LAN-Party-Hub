@@ -1,6 +1,7 @@
-# Playtesting Open Party Lab
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
+# Playtesting LAN Party Hub
 
-Playtesting is one of the most useful ways to help Open Party Lab. Many games are playable alpha or beta versions, but rules, pacing, scoring, controller feedback, and balancing still need real sessions.
+Playtesting is one of the most useful ways to help LAN Party Hub. The bundled games are playable alpha versions, but rules, pacing, scoring, controller feedback, and balancing still need real sessions.
 
 ## What To Test
 

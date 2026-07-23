@@ -1,78 +1,37 @@
-# Open Party Lab
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
+# LAN Party Hub / 局域网派对中心
 
-Open Party Lab is a local-first browser party-game platform for shared screens and phone controllers. It is also an experiment in AI-assisted software development: the platform is structured so humans and coding agents can improve games, docs, tests, and tooling in small reviewable steps.
+LAN Party Hub 是一个本地优先的浏览器派对游戏平台：Windows 电脑运行权威服务器并显示共享主屏，2–4 名玩家用同一 Wi‑Fi 下的手机浏览器扫码加入。默认简体中文，不需要账号、云服务或公网连接。
 
-![Open Party Lab host game selection](docs/screenshots/host-game-selection-en.png)
+> 当前状态：首个可玩版本的代码与自动化基线。四款游戏仍为 alpha，发布前还需要 Windows、Android、iPhone 和真人聚会验收。详见 [项目状态](docs/project-status.md)。
 
-## Current Status
+## 首版内置游戏
 
-This is a playable local prototype, not a hosted production service. It is designed for devices on the same LAN.
+| 游戏 | 人数 | 大致时长 | 内容 |
+| --- | ---: | ---: | --- |
+| 疯狂点击 `tap-race` | 2–4 | 20 秒内 | 全年龄；率先完成 50 次有效点击 |
+| 你画我猜 `zeichnen-und-erraten` | 2–4 | 约 1–2 分钟 | 全年龄默认；成人词库需主机明确选择 |
+| 估个大概 `schaetzorama` | 2–4 | 约 2–3 分钟 | 全年龄；数字、百分比、排序与归类 |
+| 谁是卧底 `imposter` | 3–4 | 约 2 分钟 | 全年龄默认；成人词库需主机明确选择 |
 
-Most games are still alpha or beta. The recommended set is already suitable for local sessions, but rules, pacing, scoring, content, UI, and balancing will continue to evolve.
+所有游戏源码都固定在本仓库的 `games/` 中。新克隆可以直接构建四款游戏，Release 不会临时下载游戏仓库。上游来源、提交号和修改说明见 [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md)。
 
-## Game Showcase
+## Windows 便携版
 
-### Arena Survivor — three complete visual themes
+GitHub Release 产物名为 `LAN-Party-Hub-windows-x64.zip`：
 
-Arena Survivor is a cooperative survival run with character selection, escalating enemy waves, upgrades, and three synchronized host/controller art sets. The theme changes the complete presentation without changing game balance.
+1. 完整解压 ZIP。
+2. 双击 `LAN-Party-Hub.exe`。
+3. 电脑主屏自动打开；手机连接同一 Wi‑Fi 后扫码加入。
+4. 退出时右键托盘图标并选择“退出”。
 
-| Frostfire Saga | Obsidian Relay | Classic Arena |
-| --- | --- | --- |
-| ![Arena Survivor Frostfire Saga theme](docs/screenshots/arena-survivor-frostfire-saga.jpg) | ![Arena Survivor Obsidian Relay theme](docs/screenshots/arena-survivor-obsidian-relay.jpg) | ![Arena Survivor Classic Arena theme](docs/screenshots/arena-survivor-classic.jpg) |
+便携包包含 Node.js 和全部运行资源，不要求安装开发工具。启动器支持单实例和 3000–3010 动态端口。房间数据与日志保存在发行目录的 `data/`。当前程序未签名，Windows 可能显示 SmartScreen 和防火墙提示；请允许专用网络访问。
 
-### All recommended games
+更完整的运行说明见 [Windows 便携版文档](docs/release-build.md)。
 
-Arena Survivor remains recommended alongside the complete existing set. The gallery below shows every other recommended game; none of the earlier recommendations were removed.
+## 从源码运行
 
-| Magic Arena | Magic Duell |
-| --- | --- |
-| ![Magic Arena match](docs/screenshots/magic-arena.png) | ![Magic Duell match](docs/screenshots/magic-duell.png) |
-| **MinionsTD** | **Chaos-Kommando** |
-| ![MinionsTD tower-defense match in progress](docs/screenshots/minions-td-ingame.jpg) | ![Chaos-Kommando artillery match in progress](docs/screenshots/chaos-kommando-ingame.jpg) |
-| **Zeichnen & Erraten** | **Schaetzorama** |
-| ![Zeichnen und Erraten drawing round](docs/screenshots/zeichnen-und-erraten.png) | ![Schaetzorama estimation round](docs/screenshots/schaetzorama.png) |
-| **Word Tiles** | **Drift Racer** |
-| ![Word Tiles shared board](docs/screenshots/word-tiles.png) | ![Drift Racer race](docs/screenshots/drift-racer.png) |
-
-The recommended collection covers arena combat, duels, cooperative survival, tower defense, drawing, estimation, artillery, word play, and arcade racing. Every game uses the shared-screen host and phone-controller flow.
-
-## How It Works
-
-Open Party Lab runs three apps together:
-
-- `apps/server`: authoritative Socket.IO room, round, score, and game-state server
-- `apps/host`: Phaser host screen for a TV, monitor, projector, or shared computer
-- `apps/controller`: React phone controller used by players in the browser
-
-Shared platform code lives in workspace packages:
-
-- `packages/protocol`: socket events, DTOs, and shared room/game-state contracts
-- `packages/game-core`: game manifests, shared game types, round helpers, and layout keys
-- `packages/ui-kit`: shared visual tokens
-- `packages/utils`: small shared utilities
-
-The platform supports optional multi-repo games. The core platform stays here; individual games can live in separate Git repos under `local-games/`. Missing optional games are normal and are skipped by the generator.
-
-## Quick Start
-
-### Download a portable Windows build
-
-GitHub Releases provide `Open-Party-Lab-windows-x64.zip`. It contains the server, host, phone controller, every known game, and its own Node.js runtime:
-
-1. Download and extract the complete ZIP.
-2. Double-click `Open-Party-Lab.exe`.
-3. The host opens in the default browser; players join from phones on the same LAN/Wi-Fi using the QR code.
-
-No Node.js or npm installation is required for the portable build. Windows may show a SmartScreen warning because community builds are currently not code-signed. Port 3000 must be free, and Windows Firewall must allow private-network access.
-
-### Run from source
-
-Requirements:
-
-- Node.js 20+
-- npm 10+
-
-From a fresh clone:
+要求 Node.js 20+、npm 10+。
 
 ```bash
 npm ci
@@ -80,13 +39,13 @@ npm run games:list
 npm run build
 ```
 
-Run locally on Windows:
+Windows 上可一次启动开发环境：
 
-```bash
+```powershell
 npm run dev:all
 ```
 
-Run locally on any platform with three terminals:
+其他平台可分别启动三个进程：
 
 ```bash
 npm run dev:server
@@ -94,161 +53,52 @@ npm run dev:host
 npm run dev:controller
 ```
 
-Default local URLs:
+默认开发地址：服务器 `http://localhost:3000`、主屏 `http://localhost:5173`、手机控制器 `http://localhost:5174`。手机必须通过电脑的局域网 IPv4 地址访问；主屏会列出服务端检测到的候选地址。
 
-- Server: `http://localhost:3000`
-- Host: `http://localhost:5173`
-- Controller: `http://localhost:5174`
+## 架构
 
-For phone controllers, open the host through the computer's LAN address and make sure the QR code points to the same address, for example `http://192.168.0.156:5174`. On Windows, `npm run dev:all` tries to detect this automatically. If the QR code shows the wrong IP, restart the stack with an explicit LAN IP:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\dev-all.ps1 -LanIp 192.168.0.156
+```text
+apps/server       权威房间、计时、规则、计分、持久化
+apps/host         共享屏幕与主机操作，不决定游戏结果
+apps/controller   手机 UI，只发送玩家意图并显示私人状态
+packages/protocol 三端共享的房间与 Socket.IO 契约
+packages/game-core 游戏 manifest、生命周期与目录文本
+games/            首版四款固定版本的内置游戏
+local-games/      可选外部游戏，仅用于本地开发，不进入源码控制
 ```
 
-If a dev port is already occupied, stop the running stack first:
+服务重启后会恢复房间、玩家身份、游戏设置和累计分数。为了避免不可靠的实时状态复活，未完成的一局会安全中止，玩家重连后回到该游戏的准备页。
+
+## 验证
 
 ```bash
-npm run dev:stop
+npm run test       # Vitest：平台恢复和游戏规则
+npm run test:e2e   # Playwright：主屏 + 独立手机浏览器上下文
+npm run typecheck  # 平台与四款内置游戏
+npm run build      # 完整生产构建
+npm run verify     # test → typecheck → build
 ```
 
-## Recommended Games
+Playwright 冒烟测试会拦截公网请求，验证离线加入、刷新恢复、人数限制，以及三人连续启动并切换全部四款游戏。CI 也会执行这些检查；Windows Release 工作流负责组装 ZIP 和 SHA-256。
 
-Clone the recommended game repos into `local-games/`:
+## 可选游戏与新游戏
+
+`config/known-games.json` 仍记录其他可选上游游戏。它们可以克隆到 `local-games/<game-id>`，再运行：
 
 ```bash
-npm run games:clone-recommended
 npm run games:sync-local
 ```
 
-Recommended optional local game repos:
+缺少可选游戏是正常情况。不要为可能不存在的游戏加入静态 import；注册表由脚本生成。新游戏请先阅读 [小游戏 SDK](docs/minigame-sdk.md)、[多仓库游戏](docs/multi-repo-games.md) 和 [创建游戏](docs/create-a-game.md)。
 
-| Game | Status | Local path |
-| --- | --- | --- |
-| Magic Arena | recommended alpha | `local-games/magic-arena` |
-| Magic Duell | recommended alpha | `local-games/magic-duell` |
-| Arena Survivor | beta, recommended | `local-games/arena-survivor` |
-| MinionsTD | beta, recommended | `local-games/minions-td` |
-| Zeichnen & Erraten | beta, recommended | `local-games/zeichnen-und-erraten` |
-| Schaetzorama | beta, recommended | `local-games/schaetzorama` |
-| Chaos-Kommando | alpha, recommended | `local-games/chaos-kommando` |
-| Word Tiles | alpha, recommended | `local-games/word-tiles` |
-| Drift Racer | alpha, recommended | `local-games/drift-racer` |
+## 贡献与许可
 
-Other optional local game repos:
+行为修改应保持服务端、协议、主屏、控制器、测试和文档的垂直一致。开始前请阅读 [AGENTS.md](AGENTS.md) 与 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-| Game | Notes | Local path |
-| --- | --- | --- |
-| Tap Race | playable prototype | `local-games/tap-race` |
-| Pantomime | playable prototype | `local-games/pantomime` |
-| Air Hockey | playable prototype | `local-games/air-hockey` |
-| Tabu | playable prototype | `local-games/tabu` |
-| Imposter | playable prototype | `local-games/imposter` |
-| Light Trails | playable prototype | `local-games/light-trails` |
+代码采用 Apache License 2.0，见 [LICENSE](LICENSE)。品牌、素材、词库和第三方依赖的说明见 [NOTICE.md](NOTICE.md)。
 
-Manual clone example:
+版权、修改标记和第三方来源规则见 [许可与署名政策](docs/licensing-and-attribution.md)；多 Agent 的分支、worktree、文件所有权和共享接口流程见 [并行开发规范](docs/parallel-development.md)。
 
-```bash
-git clone https://github.com/Hartwich/magic-arena.git local-games/magic-arena
-git clone https://github.com/Hartwich/magic-duell.git local-games/magic-duell
-npm run games:sync-local
-```
+## Acknowledgements
 
-`games:sync-local` builds and links only the local game repos it finds. You do not need every game repo.
-
-New game repos should use the short game name as the repo and folder name, for example `tap-race`, not an `open-party-game-` prefix. Package names can still use the scoped npm shape, for example `@open-party-lab/game-tap-race`.
-
-## Useful Scripts
-
-```bash
-npm run games:list
-npm run games:sync-local
-npm run games:clear-local
-npm run games:clone-recommended
-npm run games:clone-all
-npm run ai:controllers
-npm run screenshots:readme
-npm run dev:all
-npm run dev:stop
-npm run typecheck
-npm run build
-npm run release:windows
-```
-
-For AI browser checks, use virtual controllers instead of opening multiple phone browser windows:
-
-```bash
-npm run ai:controllers -- --room DEBU --players 4 --ready true --hold-ms 600000
-```
-
-To refresh README screenshots, start the server and host first, then run:
-
-```bash
-npm run screenshots:readme
-```
-
-The screenshot script captures the English host game-selection screen and builds a recommended-games collage from local game screenshots.
-
-## LAN Setup
-
-Phones must reach the server and controller app through the host machine's LAN IP.
-
-Example PowerShell setup:
-
-```powershell
-$env:PUBLIC_CONTROLLER_ORIGIN="http://192.168.178.20:5174"
-$env:VITE_SERVER_URL="http://192.168.178.20:3000"
-```
-
-Then start the platform with `npm run dev:all`, open the host app on the shared screen, and scan the QR code from each phone.
-
-## Browser Notes
-
-Use a Chromium-based browser or Safari for phone controllers when possible. Firefox can work, but controller sessions may sometimes have issues with fullscreen behavior, reconnect/session handling, or touch input timing.
-
-The host screen is intended for a desktop browser. The controller is intended for phone-sized browser windows on the same network as the server.
-
-## Contributing
-
-Good contributions are usually small and vertical:
-
-- playtest one game and open a focused report;
-- improve controller text, layout, or feedback on phones;
-- improve host-screen readability for a TV or monitor;
-- propose balance, pacing, scoring, or rule-clarity improvements;
-- add screenshots, docs, setup notes, or small smoke tests;
-- build a new mini-game repo using the Mini-Game SDK.
-
-When behavior changes, update the server logic, protocol types, host view, controller model, and docs together when needed.
-
-Start with:
-
-- [AGENTS.md](AGENTS.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [docs/agent-task-guide.md](docs/agent-task-guide.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/minigame-sdk.md](docs/minigame-sdk.md)
-- [docs/multi-repo-games.md](docs/multi-repo-games.md)
-- [docs/create-a-game.md](docs/create-a-game.md)
-- [docs/playtesting.md](docs/playtesting.md)
-- [docs/project-status.md](docs/project-status.md)
-- [docs/roadmap.md](docs/roadmap.md)
-
-Recommended verification:
-
-```bash
-npm run games:list
-npm run games:sync-local
-npm run typecheck
-npm run build
-```
-
-Keep generated output, logs, temporary browser profiles, and build artifacts out of source control. If a check cannot be run, state that clearly in the pull request.
-
-Contributions are voluntary and unpaid. The maintainer may publish official builds, including a possible Steam release, to reach a larger player base. See [CONTRIBUTING.md](CONTRIBUTING.md) and [NOTICE.md](NOTICE.md).
-
-## License
-
-Code is licensed under the Apache License 2.0. See [LICENSE](LICENSE).
-
-Assets, names, generated media, third-party references, and store distribution rights need separate care. See [NOTICE.md](NOTICE.md). This repository is not legal advice; get proper legal review before commercial distribution.
+LAN Party Hub is based on [Hartwich/Open-Party-Lab](https://github.com/Hartwich/Open-Party-Lab), originally maintained by Hartwich. This repository is an independent derivative and is not an official or endorsed Open Party Lab release. Upstream and derivative notices are distributed under the Apache License 2.0 as described in [NOTICE.md](NOTICE.md) and [CHANGES.md](CHANGES.md).

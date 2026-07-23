@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server as HttpServer, type ServerResponse } from "node:http";
@@ -157,7 +158,23 @@ async function handlePerfLogRequest(request: IncomingMessage, response: ServerRe
   }
 }
 
-export function createHttpServer(env: AppEnv): HttpServer {
+export interface ServerDiagnostics {
+  roomCode: string | null;
+  joinUrl: string | null;
+  joinOrigins: string[];
+  persistencePath: string;
+}
+
+export function createHttpServer(
+  env: AppEnv,
+  getDiagnostics: () => ServerDiagnostics = () => ({
+    roomCode: null,
+    joinUrl: null,
+    joinOrigins: [],
+    persistencePath: env.jsonSnapshotPath
+  }),
+  requestShutdown?: () => void
+): HttpServer {
   return createServer((request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
 
@@ -181,7 +198,27 @@ export function createHttpServer(env: AppEnv): HttpServer {
     }
 
     if (url.pathname === "/health") {
-      writeJson(response, 200, { status: "ok", port: env.port });
+      writeJson(response, 200, {
+        product: "LAN Party Hub",
+        status: "ok",
+        port: env.port,
+        ...getDiagnostics()
+      });
+      return;
+    }
+
+    if (url.pathname === "/control/shutdown" && request.method === "POST") {
+      const remoteAddress = request.socket.remoteAddress ?? "";
+      const isLoopback = remoteAddress === "127.0.0.1" || remoteAddress === "::1" || remoteAddress === "::ffff:127.0.0.1";
+      const token = request.headers["x-lan-party-hub-token"];
+
+      if (!isLoopback || !env.launcherControlToken || token !== env.launcherControlToken) {
+        writeJson(response, 403, { ok: false, error: "forbidden" });
+        return;
+      }
+
+      writeJson(response, 202, { ok: true });
+      setImmediate(() => requestShutdown?.());
       return;
     }
 
@@ -195,7 +232,7 @@ export function createHttpServer(env: AppEnv): HttpServer {
     }
 
     writeJson(response, 200, {
-      name: "open-party-lab-server",
+      name: "lan-party-hub-server",
       status: "running",
       controllerOrigin: env.publicControllerOrigin
     });

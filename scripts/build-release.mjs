@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { spawnSync } from "node:child_process";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -6,9 +7,10 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDir, "..");
-const outputRoot = path.resolve(projectRoot, process.argv[2] ?? "artifacts/Open-Party-Lab-windows-x64");
+const outputRoot = path.resolve(projectRoot, process.argv[2] ?? "artifacts/LAN-Party-Hub-windows-x64");
 const appRoot = path.join(outputRoot, "app");
-const knownGames = JSON.parse(await readFile(path.join(projectRoot, "config", "known-games.json"), "utf8"));
+const releaseGames = JSON.parse(await readFile(path.join(projectRoot, "config", "known-games.json"), "utf8"))
+  .filter((game) => game.includeInRelease === true);
 const platformPackages = ["game-core", "protocol", "ui-kit", "utils"];
 
 function run(command, args, cwd = projectRoot) {
@@ -63,15 +65,15 @@ const dependencies = {
   "socket.io": "^4.8.1"
 };
 
-for (const game of knownGames) {
-  const sourceRoot = path.join(projectRoot, game.defaultLocalPath);
+for (const game of releaseGames) {
+  const sourceRoot = path.join(projectRoot, game.bundledPath ?? game.defaultLocalPath);
   const targetRoot = path.join(appRoot, "packages", "games", game.id);
   await copyRuntimePackage(sourceRoot, targetRoot, ["@open-party-lab/game-core"]);
   dependencies[game.package] = `file:packages/games/${game.id}`;
 }
 
 await writeFile(path.join(appRoot, "package.json"), JSON.stringify({
-  name: "open-party-lab-portable",
+  name: "lan-party-hub-portable",
   version: "0.1.0",
   private: true,
   type: "module",
@@ -86,12 +88,19 @@ await mkdir(path.join(outputRoot, "runtime"), { recursive: true });
 await cp(process.execPath, path.join(outputRoot, "runtime", process.platform === "win32" ? "node.exe" : "node"));
 await cp(path.join(projectRoot, "LICENSE"), path.join(outputRoot, "LICENSE.txt"));
 await cp(path.join(projectRoot, "NOTICE.md"), path.join(outputRoot, "NOTICE.md"));
+await cp(path.join(projectRoot, "CHANGES.md"), path.join(outputRoot, "CHANGES.md"));
+await cp(path.join(projectRoot, "THIRD_PARTY_SOURCES.md"), path.join(outputRoot, "THIRD_PARTY_SOURCES.md"));
+await mkdir(path.join(outputRoot, "config"), { recursive: true });
+await cp(
+  path.join(projectRoot, "config", "upstream-modified-files.json"),
+  path.join(outputRoot, "config", "upstream-modified-files.json")
+);
 await cp(path.join(projectRoot, "docs", "release-build.md"), path.join(outputRoot, "README.md"));
 
 if (process.platform === "win32") {
   const launcherSource = path.join(projectRoot, "scripts", "release", "Launcher.cs");
-  const launcherTarget = path.join(outputRoot, "Open-Party-Lab.exe");
-  const command = `Add-Type -Path '${launcherSource.replaceAll("'", "''")}' -ReferencedAssemblies System.Windows.Forms -OutputAssembly '${launcherTarget.replaceAll("'", "''")}' -OutputType WindowsApplication`;
+  const launcherTarget = path.join(outputRoot, "LAN-Party-Hub.exe");
+  const command = `Add-Type -Path '${launcherSource.replaceAll("'", "''")}' -ReferencedAssemblies System.Windows.Forms,System.Drawing -OutputAssembly '${launcherTarget.replaceAll("'", "''")}' -OutputType WindowsApplication`;
   run("powershell.exe", ["-NoProfile", "-Command", command]);
 }
 

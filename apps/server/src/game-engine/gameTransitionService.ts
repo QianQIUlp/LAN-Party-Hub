@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import {
   resolveRoundPhaseTimings,
   roundPhaseDurations,
@@ -47,7 +48,9 @@ export class GameTransitionService {
       state = transitionRoundState(state, "countdown", now, {
         durationMs: phaseDurations.countdownMs,
         message:
-          context.language === "en"
+          context.language === "zh-CN"
+            ? `${selectedGameName} 即将开始。`
+            : context.language === "en"
             ? `${selectedGameName} starts soon.`
             : `${selectedGameName} startet gleich.`
       });
@@ -71,7 +74,7 @@ export class GameTransitionService {
     if (state.phase === "playing" && game.isRoundFinished(state as never, buildContext(deltaMs))) {
       state = transitionRoundState(state, "locked", now, {
         durationMs: phaseDurations.lockedMs,
-        message: state.message ?? (context.language === "en" ? "Round locked." : "Runde gesperrt.")
+        message: state.message ?? (context.language === "zh-CN" ? "本局已锁定。" : context.language === "en" ? "Round locked." : "Runde gesperrt.")
       });
       stateChanged = true;
     }
@@ -92,11 +95,11 @@ export class GameTransitionService {
         state =
           entry.manifest.roundCompletionMode === "wait_for_ready"
             ? transitionRoundState(state, "finished", now, {
-                message: state.message ?? (context.language === "en" ? "Ready for the next round" : "Bereit fuer die naechste Runde")
+                message: state.message ?? (context.language === "zh-CN" ? "准备下一局" : context.language === "en" ? "Ready for the next round" : "Bereit fuer die naechste Runde")
               })
             : transitionRoundState(state, "result", now, {
                 durationMs: phaseDurations.resultMs,
-                message: state.message ?? (context.language === "en" ? "Result" : "Ergebnis")
+                message: state.message ?? (context.language === "zh-CN" ? "结果" : context.language === "en" ? "Result" : "Ergebnis")
               });
         this.roundManager.replaceState(room, state);
         stateChanged = true;
@@ -106,7 +109,7 @@ export class GameTransitionService {
     if (state.phase === "result" && state.phaseEndsAt !== null && now >= state.phaseEndsAt) {
       state = transitionRoundState(state, "scoreboard", now, {
         durationMs: phaseDurations.scoreboardMs,
-        message: context.language === "en" ? "Scoreboard" : "Punktestand"
+        message: context.language === "zh-CN" ? "积分榜" : context.language === "en" ? "Scoreboard" : "Punktestand"
       });
       this.roundManager.replaceState(room, state);
       stateChanged = true;
@@ -114,7 +117,7 @@ export class GameTransitionService {
 
     if (state.phase === "scoreboard" && state.phaseEndsAt !== null && now >= state.phaseEndsAt) {
       state = transitionRoundState(state, "finished", now, {
-        message: context.language === "en" ? "Round finished" : "Runde beendet"
+        message: context.language === "zh-CN" ? "本局结束" : context.language === "en" ? "Round finished" : "Runde beendet"
       });
       this.roundManager.replaceState(room, state);
       stateChanged = true;

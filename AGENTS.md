@@ -1,6 +1,25 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # AI Agent Guide
 
 This file is for AI coding agents and humans using them.
+
+## Parallel Ownership (Mandatory)
+
+- Every task uses its own `codex/` branch and Git worktree. Never attach two active agents to one worktree and never develop on protected `main`.
+- The Integration owner controls merge order, shared contracts, release readiness, and repository-wide fixes.
+- A Platform agent may modify `apps/**`, `packages/**`, platform scripts, and matching tests/docs only within its assigned feature.
+- A Game agent owns exactly one `games/<game-id>/**` directory. It may read shared packages but must not modify `apps/**`, `packages/**`, another game, or generated registries.
+- A QA agent defaults to `tests/**` and test tooling. It reports core defects or fixes them on a separate `codex/fix-*` branch with Platform ownership.
+- If a game needs a shared API, stop and open the shared-interface request. Platform lands the contract and tests before the game branch synchronizes and continues.
+- Full role, worktree, merge-order, task-contract, and verification rules are in `docs/parallel-development.md`.
+
+## License and Provenance (Mandatory)
+
+- Never remove or replace `LICENSE`, the preserved upstream section of `NOTICE.md`, relevant copyright/license headers, bundled-game licenses, or `THIRD_PARTY_SOURCES.md` entries.
+- Existing upstream-derived files changed for LAN Party Hub must retain the standard modification notice near the top. Comment-free formats must be recorded in `config/upstream-modified-files.json`.
+- New assets, fonts, audio, word lists, datasets, generated media, and third-party code require source and rights documentation before they enter a public release.
+- Run `npm run legal:check`; on a branch that changes an existing unmarked file, run `npm run legal:mark -- --base <target-ref>` and review the result.
+- Detailed policy is in `docs/licensing-and-attribution.md`.
 
 ## Mental Model
 
@@ -59,6 +78,7 @@ Do not reintroduce these without maintainer approval:
 Run at least:
 
 ```bash
+npm run legal:check
 npm run typecheck
 ```
 

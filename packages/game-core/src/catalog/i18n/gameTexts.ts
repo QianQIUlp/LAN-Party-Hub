@@ -1,4 +1,5 @@
-﻿import type { LocalizedGameTextMap } from "../../i18n/text.js";
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import type { LocalizedGameTextMap } from "../../i18n/text.js";
 import { lightTrailsText } from "./games/lightTrails.js";
 import { airHockeyText } from "./games/airHockey.js";
 import { arenaSurvivorText } from "./games/arenaSurvivor.js";
@@ -9,8 +10,10 @@ import { zeichnenUndErratenText } from "./games/zeichnenUndErraten.js";
 import { driftRacerText } from "./games/driftRacer.js";
 import { schaetzoramaText } from "./games/schaetzorama.js";
 import { wordTilesText } from "./games/wordTiles.js";
+import { tapRaceText } from "./games/tapRace.js";
 
 const gameTextCatalog = {
+  "tap-race": tapRaceText,
   "zeichnen-und-erraten": zeichnenUndErratenText,
   "arena-survivor": arenaSurvivorText,
   imposter: imposterText,

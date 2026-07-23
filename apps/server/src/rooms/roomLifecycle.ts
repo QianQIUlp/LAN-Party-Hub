@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type {
   AvailableGameDto,
   RoomLifecycle,
@@ -176,26 +177,31 @@ export function explainCannotStartRound(
   room: RoomRecord,
   selectedGame: AvailableGameDto | undefined
 ): string | null {
+  const zh = room.language === "zh-CN";
   const en = room.language === "en";
 
   if (!room.selectedGameId || !selectedGame) {
-    return en ? "Please choose a game first." : "Bitte zuerst ein Spiel auswaehlen.";
+    return zh ? "请先选择一个游戏。" : en ? "Please choose a game first." : "Bitte zuerst ein Spiel auswaehlen.";
   }
 
   if (room.currentRound && room.currentRound.phase !== "finished") {
-    return en ? "The current round is still running." : "Die aktuelle Runde laeuft noch.";
+    return zh ? "当前一局仍在进行。" : en ? "The current round is still running." : "Die aktuelle Runde laeuft noch.";
   }
 
   const players = [...room.players.values()];
 
   if (players.length < selectedGame.minPlayers) {
-    return en
+    return zh
+      ? `${selectedGame.displayName} 至少需要 ${selectedGame.minPlayers} 名玩家。`
+      : en
       ? `${selectedGame.displayName} needs at least ${selectedGame.minPlayers} players.`
       : `${selectedGame.displayName} braucht mindestens ${selectedGame.minPlayers} Spieler.`;
   }
 
   if (players.length > selectedGame.maxPlayers) {
-    return en
+    return zh
+      ? `${selectedGame.displayName} 最多支持 ${selectedGame.maxPlayers} 名玩家。`
+      : en
       ? `${selectedGame.displayName} allows at most ${selectedGame.maxPlayers} players.`
       : `${selectedGame.displayName} erlaubt hoechstens ${selectedGame.maxPlayers} Spieler.`;
   }
@@ -203,7 +209,9 @@ export function explainCannotStartRound(
   const waitingPlayers = players.filter((player) => !player.isReady);
 
   if (waitingPlayers.length > 0) {
-    return en
+    return zh
+      ? `还有玩家没有准备：${waitingPlayers.map((player) => player.name).join("、")}。`
+      : en
       ? `Not everyone is ready yet: ${waitingPlayers.map((player) => player.name).join(", ")}.`
       : `Es sind noch nicht alle bereit: ${waitingPlayers.map((player) => player.name).join(", ")}.`;
   }
@@ -214,13 +222,17 @@ export function explainCannotStartRound(
       .map((player) => player.name)
       .join(", ");
 
-    return en
+    return zh
+      ? `这些玩家还需要完成设置：${missingChoices}。`
+      : en
       ? `These players need to choose their setup first: ${missingChoices}.`
       : `Diese Spieler muessen erst ihre Auswahl treffen: ${missingChoices}.`;
   }
 
   if (!isLobbySetupConfirmed(room, selectedGame)) {
-    return en
+    return zh
+      ? "主机需要先确认游戏设置。"
+      : en
       ? "The host needs to confirm the game setup first."
       : "Der Host muss das Spiel-Setup erst bestaetigen.";
   }
@@ -239,6 +251,7 @@ export function toRoomSnapshot(
     code: room.code,
     createdAt: room.createdAt,
     joinUrl: room.joinUrl,
+    joinOrigins: room.joinOrigins,
     language: room.language,
     hostConnected: room.hostSocketId !== null,
     lifecycle: deriveRoomLifecycle(room),

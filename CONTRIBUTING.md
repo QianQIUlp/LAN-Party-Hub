@@ -1,3 +1,4 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Contributing
 
 Thanks for helping. This project explicitly welcomes contributions from people using AI coding agents, as long as the resulting work is understandable, reviewable, and responsibly sourced.
@@ -17,19 +18,24 @@ If those terms do not work for you, please discuss before contributing.
 ## Workflow
 
 1. Open an issue first for large gameplay, architecture, licensing, or asset changes.
-2. Keep PRs focused.
-3. Include screenshots or short clips for host/controller UI changes when useful.
-4. Mention whether AI tools helped produce the change.
-5. Run `npm run typecheck`.
-6. Run `npm run build` for shared, runtime, or release-affecting changes.
+2. Create a short-lived `codex/` branch in its own worktree; protected `main` accepts changes only through PRs.
+3. Declare one task owner and writable/forbidden paths. Game tasks own exactly one `games/<game-id>/**` directory.
+4. Keep PRs focused and request shared interface changes before editing shared packages from a game branch.
+5. Include screenshots or short clips for host/controller UI changes when useful.
+6. Mention whether AI tools helped produce the change.
+7. Preserve modification notices and provenance; run `npm run legal:check -- --base <target-ref>`.
+8. Run `npm run typecheck` and the task-specific tests.
+9. Run `npm run build` for shared, runtime, or release-affecting changes.
+
+See `docs/parallel-development.md` for worktree ownership and merge order, and `docs/licensing-and-attribution.md` for required license, NOTICE, modification-marker, and third-party-content handling.
 
 ## Game Changes
 
 All games are currently alpha. Balance, pacing, scoring, and content may change substantially, and contributions that make the games easier to understand, fairer, or more fun are welcome.
 
-Games live in optional repos under `local-games/` during local development. A game repo owns its server logic, protocol types, host scene, controller model, assets, manifest, README, and package entrypoints.
+The four release games live under `games/<game-id>/`; optional experiments may be linked from ignored `local-games/` directories. A game task owns its server logic, protocol types, host scene, controller model, content, manifest, README, and package entrypoints inside exactly one assigned game directory.
 
-The Platform owns common room lifecycle, generated optional game registries, reusable controller layouts, generic setup rendering, and shared DTO/socket contracts. Add a game to `config/known-games.json`, then run `npm run games:sync-local` so the generated registries import only locally available games.
+The Platform owns common room lifecycle, generated game registries, reusable controller layouts, generic setup rendering, and shared DTO/socket contracts. Game agents must request those changes from the Integration/Platform owner. Add a game to `config/known-games.json`, then run `npm run games:sync-local` so generated registries import only configured games.
 
 The server must remain authoritative. Controllers should send input, not decide winners. Before adding a controller layout, check whether an existing layout can be reused or extended.
 
@@ -38,6 +44,8 @@ User-facing text should be prepared for multiple languages from the start. Prefe
 ## Assets And Names
 
 Only add assets that are original, generated with clear rights, or explicitly licensed for this project. Avoid names that imply affiliation with existing commercial games, platforms, brands, or stores.
+
+Do not remove upstream licenses or attribution. Imported code/content must record its source, exact revision/version, license, retained license location, and modification scope. Existing upstream-derived files changed in a PR must carry the LAN Party Hub modification notice or be listed in the comment-free modification ledger.
 
 ## Recommended GitHub Labels
 

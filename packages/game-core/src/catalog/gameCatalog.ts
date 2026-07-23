@@ -1,4 +1,5 @@
-﻿import type { GameManifest } from "../types/GameManifest.js";
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import type { GameManifest } from "../types/GameManifest.js";
 import { defaultLanguage, normalizeLanguage, type SupportedLanguage } from "../i18n/language.js";
 import { gameTextById } from "./i18n/gameTexts.js";
 
@@ -16,16 +17,50 @@ export function localizeGameManifest(
   manifest: GameManifest,
   language: SupportedLanguage = defaultLanguage
 ): GameManifest {
-  const text = gameTextById[manifest.id]?.[normalizeLanguage(language)] ?? gameTextById[manifest.id]?.[defaultLanguage];
+  const texts = gameTextById[manifest.id];
+  const text = texts?.[normalizeLanguage(language)] ?? texts?.en ?? texts?.de;
 
   if (!text) {
     return manifest;
   }
 
+  const localizedLobbySetup = manifest.lobbySetup && text.lobbySetup
+    ? {
+        ...manifest.lobbySetup,
+        title: text.lobbySetup.title ?? manifest.lobbySetup.title,
+        description: text.lobbySetup.description ?? manifest.lobbySetup.description,
+        fields: manifest.lobbySetup.fields.map((field) => {
+          const localizedField = text.lobbySetup?.fields?.[field.id];
+          return {
+            ...field,
+            label: localizedField?.label ?? field.label,
+            description: localizedField?.description ?? field.description,
+            ...(field.kind === "select"
+              ? {
+                  options: field.options.map((option) => ({
+                    ...option,
+                    label: localizedField?.options?.[option.id]?.label ?? option.label,
+                    description: localizedField?.options?.[option.id]?.description ?? option.description
+                  }))
+                }
+              : {})
+          };
+        }),
+        confirmation: manifest.lobbySetup.confirmation
+          ? {
+              ...manifest.lobbySetup.confirmation,
+              label: text.lobbySetup.confirmation?.label ?? manifest.lobbySetup.confirmation.label,
+              description: text.lobbySetup.confirmation?.description ?? manifest.lobbySetup.confirmation.description
+            }
+          : undefined
+      }
+    : manifest.lobbySetup;
+
   return {
     ...manifest,
     displayName: text.displayName,
-    description: text.description
+    description: text.description,
+    lobbySetup: localizedLobbySetup
   };
 }
 

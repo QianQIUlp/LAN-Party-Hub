@@ -1,4 +1,5 @@
-﻿import {
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import {
   defaultLanguage,
   localizeGameManifest,
   type GameManifest,
@@ -63,6 +64,7 @@ export class GameRegistry {
       controllerLayout: manifest.controllerLayout,
       supportsTeams: manifest.supportsTeams,
       estimatedRoundDurationMs: manifest.estimatedRoundDurationMs,
+      contentRating: manifest.contentRating,
       roundCompletionMode: manifest.roundCompletionMode,
       lobbySetup: manifest.lobbySetup,
       playerSetup: manifest.playerSetup

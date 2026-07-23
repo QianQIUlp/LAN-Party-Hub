@@ -1,36 +1,20 @@
-## Summary
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 
-Describe the change in a few sentences.
+## 做了什么
 
-## Type of change
+- 一句话概括变更（不超过 3 个要点）
 
-- [ ] Bug fix
-- [ ] Feature or gameplay change
-- [ ] Balance/pacing change
-- [ ] UI/UX polish
-- [ ] Documentation/onboarding
-- [ ] Build/test/tooling
-- [ ] Other
+## 为什么
 
-## Affected areas
+- Closes #N / Refs #N；没有 Issue 时说明触发原因
+- 写明任务所有者（Integration / Platform / Game:<id> / QA / Docs-Legal）及是否修改共享协议
 
-- [ ] Server
-- [ ] Host screen
-- [ ] Phone controller
-- [ ] Shared protocol/packages
-- [ ] Game repo integration
-- [ ] Documentation
-- [ ] Assets/media
+## 怎么测
 
-## Verification
+- [ ] 写出 reviewer 可以实际运行、点击或检查的命令与路径
+- [ ] 已运行适用的 `npm run legal:check`、游戏检查、`npm run verify` 或 `npm run test:e2e`
+- [ ] 新增代码、资产、题库或第三方内容的来源与权利已记录；不涉及则明确写“不涉及”
 
-- [ ] I ran `npm run typecheck`.
-- [ ] I ran `npm run build`, or this change does not affect runtime, bundling, shared packages, or release-facing behavior.
-- [ ] I updated `docs/project-status.md` if functionality or limitations changed.
-- [ ] I added screenshots, clips, or a visual QA note for UI changes.
-- [ ] I checked host and phone-controller layouts where relevant.
+## 截图（如有视觉改动）
 
-## Assets and rights
-
-- [ ] This PR does not add assets, generated media, word lists, or third-party content.
-- [ ] This PR adds such content, and the source/rights are documented in the PR.
+无视觉变更

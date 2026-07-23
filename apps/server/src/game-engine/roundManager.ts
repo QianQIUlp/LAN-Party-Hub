@@ -1,8 +1,13 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { BaseRoundState, ScoreEntry } from "@open-party-lab/game-core";
 import type { RoomRecord, RoundRecord } from "../rooms/roomStore.js";
 
 export class RoundManager {
   openRound(room: RoomRecord, gameId: string, state: BaseRoundState): RoundRecord {
+    if (room.currentRound?.phase === "finished") {
+      room.previousRound = room.currentRound;
+    }
+
     const round: RoundRecord = {
       gameId,
       roundNumber: room.roundCounter + 1,

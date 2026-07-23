@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 export interface SocketSessionRecord {
   reconnectToken: string;
   roomCode: string;
@@ -13,6 +14,10 @@ export class SocketSessionStore {
   upsert(record: SocketSessionRecord): SocketSessionRecord {
     this.sessions.set(record.reconnectToken, record);
     return record;
+  }
+
+  clear(): void {
+    this.sessions.clear();
   }
 
   get(reconnectToken: string): SocketSessionRecord | undefined {

@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import Phaser from "phaser";
 import type { AvailableGameDto, PlayerSnapshot, SupportedLanguage } from "@open-party-lab/protocol";
 import { bindGameSelectionHotkeys } from "../app/gameHotkeys.js";
@@ -128,6 +129,7 @@ export class LobbyScene extends Phaser.Scene {
       y: bodyY,
       width: mainWidth,
       variant: "lobby",
+      playerCount: players.length,
       language,
       onSelect: (gameId) => this.client?.selectGame(gameId)
     });

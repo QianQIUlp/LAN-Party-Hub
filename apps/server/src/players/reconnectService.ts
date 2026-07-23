@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { createId } from "../core/ids/createId.js";
 import { SocketSessionStore } from "../network/socket/socketSessionStore.js";
 import type { PlayerRecord } from "../rooms/roomStore.js";
@@ -19,6 +20,17 @@ export class ReconnectService {
       playerId: player.id,
       deviceId: player.deviceId,
       socketId,
+      updatedAt: this.getNow()
+    });
+  }
+
+  restorePlayer(player: PlayerRecord, roomCode: string): void {
+    this.sessionStore.upsert({
+      reconnectToken: player.reconnectToken,
+      roomCode,
+      playerId: player.id,
+      deviceId: player.deviceId,
+      socketId: null,
       updatedAt: this.getNow()
     });
   }

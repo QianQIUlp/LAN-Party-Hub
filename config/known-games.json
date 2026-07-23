@@ -4,6 +4,8 @@
     "package": "@open-party-lab/game-magic-arena",
     "repo": "https://github.com/Hartwich/magic-arena.git",
     "defaultLocalPath": "local-games/magic-arena",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../magic-arena"
     ]
@@ -13,6 +15,8 @@
     "package": "@open-party-lab/game-magic-duell",
     "repo": "https://github.com/Hartwich/magic-duell.git",
     "defaultLocalPath": "local-games/magic-duell",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../magic-duell"
     ]
@@ -21,6 +25,11 @@
     "id": "tap-race",
     "package": "@open-party-lab/game-tap-race",
     "repo": "https://github.com/Hartwich/tap-race.git",
+    "sourceRepo": "https://github.com/Hartwich/tap-race",
+    "sourceRevision": "54ba192db787e4bd3862181d0381e1df6dad8730",
+    "distribution": "bundled",
+    "bundledPath": "games/tap-race",
+    "includeInRelease": true,
     "defaultLocalPath": "local-games/tap-race",
     "alternateLocalPaths": [
       "../tap-race"
@@ -31,6 +40,8 @@
     "package": "@open-party-lab/game-pantomime",
     "repo": "https://github.com/Hartwich/pantomime.git",
     "defaultLocalPath": "local-games/pantomime",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../pantomime"
     ]
@@ -40,6 +51,8 @@
     "package": "@open-party-lab/game-air-hockey",
     "repo": "https://github.com/Hartwich/air-hockey.git",
     "defaultLocalPath": "local-games/air-hockey",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../air-hockey"
     ]
@@ -49,6 +62,8 @@
     "package": "@open-party-lab/game-tabu",
     "repo": "https://github.com/Hartwich/tabu.git",
     "defaultLocalPath": "local-games/tabu",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../tabu"
     ]
@@ -57,6 +72,11 @@
     "id": "imposter",
     "package": "@open-party-lab/game-imposter",
     "repo": "https://github.com/Hartwich/imposter.git",
+    "sourceRepo": "https://github.com/Hartwich/imposter",
+    "sourceRevision": "d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667",
+    "distribution": "bundled",
+    "bundledPath": "games/imposter",
+    "includeInRelease": true,
     "defaultLocalPath": "local-games/imposter",
     "alternateLocalPaths": [
       "../imposter"
@@ -66,6 +86,11 @@
     "id": "schaetzorama",
     "package": "@open-party-lab/game-schaetzorama",
     "repo": "https://github.com/Hartwich/schaetzorama.git",
+    "sourceRepo": "https://github.com/Hartwich/schaetzorama",
+    "sourceRevision": "d5c52c63769d00657deb1f4437b25adb10cf401a",
+    "distribution": "bundled",
+    "bundledPath": "games/schaetzorama",
+    "includeInRelease": true,
     "defaultLocalPath": "local-games/schaetzorama",
     "alternateLocalPaths": [
       "../schaetzorama"
@@ -76,6 +101,8 @@
     "package": "@open-party-lab/game-light-trails",
     "repo": "https://github.com/Hartwich/light-trails.git",
     "defaultLocalPath": "local-games/light-trails",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../light-trails"
     ]
@@ -85,6 +112,8 @@
     "package": "@open-party-lab/game-drift-racer",
     "repo": "https://github.com/Hartwich/drift-racer.git",
     "defaultLocalPath": "local-games/drift-racer",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../drift-racer"
     ]
@@ -94,6 +123,8 @@
     "package": "@open-party-lab/game-word-tiles",
     "repo": "https://github.com/Hartwich/word-tiles.git",
     "defaultLocalPath": "local-games/word-tiles",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../word-tiles"
     ]
@@ -102,6 +133,11 @@
     "id": "zeichnen-und-erraten",
     "package": "@open-party-lab/game-zeichnen-und-erraten",
     "repo": "https://github.com/Hartwich/zeichnen-und-erraten.git",
+    "sourceRepo": "https://github.com/Hartwich/zeichnen-und-erraten",
+    "sourceRevision": "bb9b1dca148ccca644ff6b970a60f21789263684",
+    "distribution": "bundled",
+    "bundledPath": "games/zeichnen-und-erraten",
+    "includeInRelease": true,
     "defaultLocalPath": "local-games/zeichnen-und-erraten",
     "alternateLocalPaths": [
       "../zeichnen-und-erraten"
@@ -112,6 +148,8 @@
     "package": "@open-party-lab/game-arena-survivor",
     "repo": "https://github.com/Hartwich/arena-survivor.git",
     "defaultLocalPath": "local-games/arena-survivor",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../arena-survivor"
     ]
@@ -121,6 +159,8 @@
     "package": "@open-party-lab/game-minions-td",
     "repo": "https://github.com/Hartwich/minions-td.git",
     "defaultLocalPath": "local-games/minions-td",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../minions-td"
     ]
@@ -130,6 +170,8 @@
     "package": "@open-party-lab/game-chaos-kommando",
     "repo": "https://github.com/Hartwich/chaos-kommando.git",
     "defaultLocalPath": "local-games/chaos-kommando",
+    "distribution": "optional",
+    "includeInRelease": false,
     "alternateLocalPaths": [
       "../chaos-kommando"
     ]

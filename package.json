@@ -6,6 +6,7 @@
   "type": "module",
   "workspaces": [
     "apps/*",
+    "games/*",
     "packages/*"
   ],
   "scripts": {
@@ -18,6 +19,7 @@
     "ai:controllers": "node scripts/virtual-controllers.mjs",
     "postinstall": "node scripts/local-games.mjs ensure-generated",
     "build:packages": "tsc -b packages/utils packages/ui-kit packages/game-core packages/protocol",
+    "typecheck:games": "npm run typecheck --workspace @open-party-lab/game-tap-race --workspace @open-party-lab/game-zeichnen-und-erraten --workspace @open-party-lab/game-schaetzorama --workspace @open-party-lab/game-imposter",
     "watch:packages": "tsc -b packages/utils packages/ui-kit packages/game-core packages/protocol -w",
     "dev:all": "powershell -ExecutionPolicy Bypass -File ./scripts/dev-all.ps1",
     "dev:stop": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-dev.ps1",
@@ -26,11 +28,16 @@
     "dev:controller": "npm run build:packages && npm run games:sync-local && npm run dev --workspace @open-party-lab/controller",
     "build": "npm run build:packages && npm run games:sync-local && npm run build --workspace @open-party-lab/server && npm run build --workspace @open-party-lab/host && npm run build --workspace @open-party-lab/controller",
     "release:windows": "node scripts/build-release.mjs",
-    "typecheck": "npm run build:packages && npm run games:sync-local && npm run typecheck --workspace @open-party-lab/utils && npm run typecheck --workspace @open-party-lab/ui-kit && npm run typecheck --workspace @open-party-lab/game-core && npm run typecheck --workspace @open-party-lab/protocol && npm run typecheck --workspace @open-party-lab/server && npm run typecheck --workspace @open-party-lab/host && npm run typecheck --workspace @open-party-lab/controller",
-    "verify": "npm run typecheck && npm run build",
+    "legal:check": "node scripts/legal-notices.mjs check",
+    "legal:mark": "node scripts/legal-notices.mjs mark",
+    "test": "vitest run",
+    "test:e2e": "node scripts/prepare-e2e.mjs && npm run build:packages && npm run games:sync-local && playwright test",
+    "typecheck": "npm run build:packages && npm run games:sync-local && npm run typecheck:games && npm run typecheck --workspace @open-party-lab/utils && npm run typecheck --workspace @open-party-lab/ui-kit && npm run typecheck --workspace @open-party-lab/game-core && npm run typecheck --workspace @open-party-lab/protocol && npm run typecheck --workspace @open-party-lab/server && npm run typecheck --workspace @open-party-lab/host && npm run typecheck --workspace @open-party-lab/controller",
+    "verify": "npm run legal:check && npm run test && npm run typecheck && npm run build",
     "lint": "npm run typecheck"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
@@ -38,6 +45,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vite": "^6.0.5",
+    "vitest": "^4.1.10",
     "ws": "^8.21.0"
   }
 }

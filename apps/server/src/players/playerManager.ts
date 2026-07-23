@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import {
   canManagePlayerRoster,
   type JoinRoomRequest,
@@ -186,7 +187,9 @@ export class PlayerManager {
   removePlayer(room: RoomRecord, playerId: string): RemovePlayerOutcome {
     if (!canManagePlayerRoster(room)) {
       return {
-        error: room.language === "en"
+        error: room.language === "zh-CN"
+          ? "只能在大厅或两局之间移除玩家。"
+          : room.language === "en"
           ? "Players can only be removed while no active round is running."
           : "Spieler koennen nur entfernt werden, solange keine aktive Runde laeuft."
       };
@@ -196,7 +199,9 @@ export class PlayerManager {
 
     if (!player) {
       return {
-        error: room.language === "en" ? "Player not found." : "Spieler nicht gefunden."
+        error: room.language === "zh-CN"
+          ? "找不到玩家。"
+          : room.language === "en" ? "Player not found." : "Spieler nicht gefunden."
       };
     }
 

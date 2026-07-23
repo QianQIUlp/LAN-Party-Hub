@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
@@ -101,7 +102,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`Capture README screenshots for Open Party Lab.
+  console.log(`Capture README screenshots for LAN Party Hub.
 
 Usage:
   npm run screenshots:readme
@@ -482,7 +483,7 @@ async function createCollageHtml() {
       <h1>Recommended Games</h1>
       <p>Playable alpha and beta games loaded from optional local repos.</p>
     </div>
-    <div class="badge">Open Party Lab</div>
+    <div class="badge">LAN Party Hub</div>
   </header>
   <main class="grid">
     ${cards}

@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { networkInterfaces } from "node:os";
 
 export interface AppEnv {
@@ -10,6 +11,7 @@ export interface AppEnv {
   jsonSnapshotPath: string;
   fixedPrimaryRoomCode: string | null;
   webRoot: string | null;
+  launcherControlToken: string | null;
 }
 
 function readNumber(value: string | undefined, fallbackValue: number): number {
@@ -25,20 +27,37 @@ function isPrivateIPv4(address: string): boolean {
   );
 }
 
-function findLanIPv4(): string | null {
-  for (const networkInterface of Object.values(networkInterfaces())) {
+function isPrivateLanOrigin(origin: string): boolean {
+  try {
+    return isPrivateIPv4(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export interface LanIPv4Candidate {
+  interfaceName: string;
+  address: string;
+}
+
+export function findLanIPv4Candidates(): LanIPv4Candidate[] {
+  const candidates: LanIPv4Candidate[] = [];
+
+  for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces())) {
     for (const addressInfo of networkInterface ?? []) {
       if (
         addressInfo.family === "IPv4" &&
         !addressInfo.internal &&
         isPrivateIPv4(addressInfo.address)
       ) {
-        return addressInfo.address;
+        candidates.push({ interfaceName, address: addressInfo.address });
       }
     }
   }
 
-  return null;
+  return candidates.filter(
+    (candidate, index, all) => all.findIndex((entry) => entry.address === candidate.address) === index
+  );
 }
 
 function readHost(source: NodeJS.ProcessEnv): string {
@@ -52,7 +71,7 @@ function readPublicControllerOrigin(source: NodeJS.ProcessEnv): string {
     return configuredOrigin.replace(/\/$/, "");
   }
 
-  const lanIPv4 = findLanIPv4();
+  const lanIPv4 = findLanIPv4Candidates()[0]?.address ?? null;
 
   if (source.OPEN_PARTY_LAB_WEB_ROOT) {
     const port = source.PORT?.trim() || "3000";
@@ -60,6 +79,21 @@ function readPublicControllerOrigin(source: NodeJS.ProcessEnv): string {
   }
 
   return `http://${lanIPv4 ?? "localhost"}:5174`;
+}
+
+export function listPublicControllerOrigins(env: AppEnv): string[] {
+  const candidates = findLanIPv4Candidates();
+  const generated = candidates.map(({ address }) =>
+    env.webRoot
+      ? `http://${address}:${env.port}/controller`
+      : `http://${address}:5174`
+  );
+  const configured = env.publicControllerOrigin.replace(/\/$/, "");
+  const all = [
+    ...(isPrivateLanOrigin(configured) ? [configured] : []),
+    ...generated
+  ];
+  return all.filter((origin, index) => all.indexOf(origin) === index);
 }
 
 function readFixedPrimaryRoomCode(source: NodeJS.ProcessEnv): string | null {
@@ -78,10 +112,11 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     host: readHost(source),
     publicControllerOrigin: readPublicControllerOrigin(source),
     connectionRecoveryMs: readNumber(source.CONNECTION_RECOVERY_MS, 120_000),
-    playerReconnectWindowMs: readNumber(source.PLAYER_RECONNECT_WINDOW_MS, 45_000),
+    playerReconnectWindowMs: readNumber(source.PLAYER_RECONNECT_WINDOW_MS, 120_000),
     roundTickMs: readNumber(source.ROUND_TICK_MS, 16),
     jsonSnapshotPath: source.JSON_SNAPSHOT_PATH ?? "./data/room-snapshots.json",
     fixedPrimaryRoomCode: readFixedPrimaryRoomCode(source),
-    webRoot: source.OPEN_PARTY_LAB_WEB_ROOT?.trim() || null
+    webRoot: source.OPEN_PARTY_LAB_WEB_ROOT?.trim() || null,
+    launcherControlToken: source.LAN_PARTY_HUB_CONTROL_TOKEN?.trim() || null
   };
 }

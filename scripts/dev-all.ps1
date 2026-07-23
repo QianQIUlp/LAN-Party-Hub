@@ -1,3 +1,4 @@
+# Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 param(
   [string]$LanIp
 )
@@ -51,27 +52,27 @@ try {
 
 $jobs = @(
   @{
-    Title = "Open Party Lab Server"
+    Title = "LAN Party Hub Server"
     Command = @"
-`$Host.UI.RawUI.WindowTitle = 'Open Party Lab Server'
+`$Host.UI.RawUI.WindowTitle = 'LAN Party Hub Server'
 Set-Location '$projectRoot'
 `$env:PUBLIC_CONTROLLER_ORIGIN = '$controllerOrigin'
 npm run dev --workspace @open-party-lab/server
 "@
   },
   @{
-    Title = "Open Party Lab Host"
+    Title = "LAN Party Hub Host"
     Command = @"
-`$Host.UI.RawUI.WindowTitle = 'Open Party Lab Host'
+`$Host.UI.RawUI.WindowTitle = 'LAN Party Hub Host'
 Set-Location '$projectRoot'
 `$env:VITE_SERVER_URL = '$serverUrl'
 npm run dev --workspace @open-party-lab/host
 "@
   },
   @{
-    Title = "Open Party Lab Controller"
+    Title = "LAN Party Hub Controller"
     Command = @"
-`$Host.UI.RawUI.WindowTitle = 'Open Party Lab Controller'
+`$Host.UI.RawUI.WindowTitle = 'LAN Party Hub Controller'
 Set-Location '$projectRoot'
 `$env:VITE_SERVER_URL = '$serverUrl'
 npm run dev --workspace @open-party-lab/controller
