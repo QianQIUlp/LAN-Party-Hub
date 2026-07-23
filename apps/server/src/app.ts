@@ -1,4 +1,5 @@
-import { loadEnv, type AppEnv } from "./core/config/env.js";
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import { listPublicControllerOrigins, loadEnv, type AppEnv } from "./core/config/env.js";
 import { logger } from "./core/logger/logger.js";
 import { now } from "./core/time/now.js";
 import { GameRegistry } from "./game-engine/gameRegistry.js";
@@ -13,6 +14,7 @@ import { buildJoinUrl } from "./network/qr/buildJoinUrl.js";
 import { createIo } from "./network/socket/createIo.js";
 import { registerSocketHandlers } from "./network/socket/registerSocketHandlers.js";
 import { SocketSessionStore } from "./network/socket/socketSessionStore.js";
+import { RoomPersistenceService } from "./persistence/roomPersistenceService.js";
 import { PlayerManager } from "./players/playerManager.js";
 import { PlayerPresenceTracker } from "./players/playerPresenceTracker.js";
 import { PlayerStore } from "./players/playerStore.js";
@@ -21,20 +23,37 @@ import { RoomManager } from "./rooms/roomManager.js";
 import { RoomStore } from "./rooms/roomStore.js";
 
 export function createApp(environment: AppEnv = loadEnv()) {
-  const httpServer = createHttpServer(environment);
+  const roomStore = new RoomStore();
+  let handleControlShutdown: (() => void) | undefined;
+  const httpServer = createHttpServer(environment, () => {
+    const room = roomStore.first();
+    return {
+      roomCode: room?.code ?? null,
+      joinUrl: room?.joinUrl ?? null,
+      joinOrigins: room?.joinOrigins ?? listPublicControllerOrigins(environment),
+      persistencePath: environment.jsonSnapshotPath
+    };
+  }, () => handleControlShutdown?.());
   const io = createIo(httpServer, environment);
 
-  const roomStore = new RoomStore();
   const playerStore = new PlayerStore();
   const sessionStore = new SocketSessionStore();
+  const createJoinUrl = (roomCode: string) => buildJoinUrl(environment.publicControllerOrigin, roomCode);
   const roomManager = new RoomManager(
     roomStore,
-    (roomCode) => buildJoinUrl(environment.publicControllerOrigin, roomCode),
+    createJoinUrl,
+    () => listPublicControllerOrigins(environment),
     now,
     environment.fixedPrimaryRoomCode
   );
-  const primaryRoom = roomManager.ensurePrimaryRoom("Party Room");
   const reconnectService = new ReconnectService(sessionStore, now);
+  const persistenceService = new RoomPersistenceService(
+    environment.jsonSnapshotPath,
+    roomStore,
+    reconnectService,
+    createJoinUrl,
+    () => listPublicControllerOrigins(environment)
+  );
   const playerPresenceTracker = new PlayerPresenceTracker(
     environment.playerReconnectWindowMs,
     now
@@ -80,11 +99,21 @@ export function createApp(environment: AppEnv = loadEnv()) {
     stateBroadcaster
   });
 
-  return {
+  let started = false;
+  let stopping = false;
+
+  const app = {
     env: environment,
     httpServer,
     io,
     async start(): Promise<void> {
+      if (started) {
+        return;
+      }
+
+      await persistenceService.restore();
+      const primaryRoom = roomManager.ensurePrimaryRoom("LAN Party Hub");
+
       await new Promise<void>((resolve, reject) => {
         const handleListenError = (error: NodeJS.ErrnoException) => {
           if (error.code === "EADDRINUSE") {
@@ -107,6 +136,8 @@ export function createApp(environment: AppEnv = loadEnv()) {
       });
 
       roundTimerService.start();
+      persistenceService.start();
+      started = true;
 
       logger.info("Party platform server listening.", {
         host: environment.host,
@@ -116,6 +147,30 @@ export function createApp(environment: AppEnv = loadEnv()) {
         reconnectWindowMs: environment.playerReconnectWindowMs,
         roundTickMs: environment.roundTickMs
       });
+    },
+    async stop(): Promise<void> {
+      if (stopping) {
+        return;
+      }
+
+      stopping = true;
+      roundTimerService.stop();
+      await persistenceService.stop();
+
+      if (started) {
+        await new Promise<void>((resolve) => {
+          io.close(() => resolve());
+        });
+      }
+
+      started = false;
+      logger.info("LAN Party Hub server stopped.");
     }
   };
+
+  handleControlShutdown = () => {
+    void app.stop();
+  };
+
+  return app;
 }

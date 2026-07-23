@@ -1,36 +1,20 @@
-## Summary
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 
-Describe the change in a few sentences.
+## 做了什么
 
-## Type of change
+- Summarize the change in no more than three concise bullets.
 
-- [ ] Bug fix
-- [ ] Feature or gameplay change
-- [ ] Balance/pacing change
-- [ ] UI/UX polish
-- [ ] Documentation/onboarding
-- [ ] Build/test/tooling
-- [ ] Other
+## 为什么
 
-## Affected areas
+- Use `Closes #N` only when the PR fully resolves an issue; otherwise use `Refs #N` or state the trigger when no issue exists.
+- State the task owner (`Integration`, `Platform`, `Game:<id>`, `QA`, or `Docs-Legal`) and whether shared contracts changed.
 
-- [ ] Server
-- [ ] Host screen
-- [ ] Phone controller
-- [ ] Shared protocol/packages
-- [ ] Game repo integration
-- [ ] Documentation
-- [ ] Assets/media
+## 怎么测
 
-## Verification
+- [ ] List commands, URLs, interactions, or files a reviewer can actually verify.
+- [ ] Run the applicable legal check, game checks, `npm run verify`, or `npm run test:e2e`.
+- [ ] Document provenance and rights for new code, assets, word lists, or third-party content; otherwise state `Not applicable`.
 
-- [ ] I ran `npm run typecheck`.
-- [ ] I ran `npm run build`, or this change does not affect runtime, bundling, shared packages, or release-facing behavior.
-- [ ] I updated `docs/project-status.md` if functionality or limitations changed.
-- [ ] I added screenshots, clips, or a visual QA note for UI changes.
-- [ ] I checked host and phone-controller layouts where relevant.
+## 截图（如有视觉改动）
 
-## Assets and rights
-
-- [ ] This PR does not add assets, generated media, word lists, or third-party content.
-- [ ] This PR adds such content, and the source/rights are documented in the PR.
+No visual changes.

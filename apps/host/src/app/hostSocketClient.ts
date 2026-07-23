@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type {
   LightTrailsHostPatch,
   AvailableGameDto,
@@ -183,6 +184,22 @@ export class HostSocketClient {
         preferredLanguage: result.data.room.language,
         error: null
       });
+    });
+  }
+
+  setJoinOrigin(origin: string): void {
+    const roomCode = this.state.room?.code;
+    if (!roomCode) {
+      return;
+    }
+
+    this.socket.emit("room:set-join-origin", { roomCode, origin }, (result) => {
+      if (!result.ok) {
+        this.updateState({ error: result.error });
+        return;
+      }
+
+      this.updateState({ room: result.data.room, error: null });
     });
   }
 

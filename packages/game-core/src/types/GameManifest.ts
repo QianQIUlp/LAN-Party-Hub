@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { ControllerLayoutKey } from "../layouts/ControllerLayoutKey.js";
 import type { RoundPhaseTimings } from "../state/RoundPhaseTimings.js";
 
@@ -100,6 +101,7 @@ export interface GameManifest {
   controllerLayout: ControllerLayoutKey;
   supportsTeams: boolean;
   estimatedRoundDurationMs: number;
+  contentRating?: "family" | "optional-adult";
   phaseDurations?: Partial<RoundPhaseTimings>;
   roundCompletionMode?: "standard" | "wait_for_ready";
   lobbySetup?: GameLobbySetupDefinition;

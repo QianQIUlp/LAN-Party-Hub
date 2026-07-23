@@ -1,6 +1,7 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Architecture
 
-Open Party Lab is a TypeScript npm-workspace monorepo for local browser party games.
+LAN Party Hub is a TypeScript npm-workspace monorepo for local browser party games, derived from Open Party Lab.
 
 ## Applications
 

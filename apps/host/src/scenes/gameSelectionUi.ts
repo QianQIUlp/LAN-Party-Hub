@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import Phaser from "phaser";
 import type { AvailableGameDto, PlayerSnapshot, SupportedLanguage } from "@open-party-lab/protocol";
 import { hostTheme } from "../ui/theme/theme.js";
@@ -21,6 +22,7 @@ interface GameCardGridOptions {
   y: number;
   width: number;
   variant: GameCardVariant;
+  playerCount: number;
   language?: SupportedLanguage;
   onSelect?: (gameId: string) => void;
 }
@@ -484,11 +486,18 @@ function renderGameCard(
   height: number,
   variant: GameCardVariant,
   index: number,
+  playerCount: number,
   language: SupportedLanguage | undefined,
   onSelect?: (gameId: string) => void
 ): void {
   const text = getHostText(language);
   const visual = getGameVisual(game.id);
+  const estimatedMinutes = Math.max(1, Math.ceil(game.estimatedRoundDurationMs / 60_000));
+  const unavailableReason = playerCount < game.minPlayers
+    ? text.needsPlayers(game.minPlayers)
+    : playerCount > game.maxPlayers
+      ? text.tooManyPlayers(game.maxPlayers)
+      : null;
   const container = scene.add.container(x, y);
   const shadow = scene.add.rectangle(6, 10, width, height, 0x020617, 0.34).setOrigin(0);
   const glow = scene.add
@@ -544,6 +553,18 @@ function renderGameCard(
     });
     container.add(title);
     fitTextToBox(title, game.displayName, titleMaxWidth, titleMaxHeight);
+    const details = scene.add.text(
+      104,
+      66,
+      `${text.estimatedMinutes(estimatedMinutes)} · ${text.contentScale(game.contentRating)}`,
+      {
+        fontFamily: hostTheme.bodyFont,
+        fontSize: "12px",
+        color: "#cbd5e1",
+        wordWrap: { width: Math.max(42, width - 122), useAdvancedWrap: true }
+      }
+    );
+    container.add(details);
   }
 
   const shortcut = drawPill(scene, width - 54, variant === "compact" ? 14 : 18, `${index + 1}`, 0x0f172a);
@@ -552,6 +573,10 @@ function renderGameCard(
   if (selected) {
     const badge = drawPill(scene, 18, height - 36, text.selected, visual.accent, "#08111f");
     container.add(badge);
+  } else if (unavailableReason) {
+    const badge = drawPill(scene, 18, height - 36, unavailableReason, 0x7f1d1d);
+    container.add(badge);
+    container.setAlpha(0.58);
   } else if (variant === "lobby") {
     const meta = drawPill(
       scene,
@@ -565,7 +590,7 @@ function renderGameCard(
 
   const clickZone = scene.add.zone(x, y, width, height).setOrigin(0);
 
-  if (onSelect) {
+  if (onSelect && !unavailableReason) {
     clickZone.setInteractive({ useHandCursor: true });
     clickZone.on("pointerdown", () => onSelect(game.id));
     clickZone.on("pointerover", () => {
@@ -720,7 +745,7 @@ export function renderSceneHeader(
 }
 
 export function renderGameCardGrid(scene: Phaser.Scene, options: GameCardGridOptions): number {
-  const { games, selectedGameId, x, y, width, variant, language, onSelect } = options;
+  const { games, selectedGameId, x, y, width, variant, playerCount, language, onSelect } = options;
   const gap = variant === "compact" ? 12 : 18;
   const columns = getColumns(width, variant, games.length);
   const cardHeight = variant === "compact" ? 106 : 178;
@@ -741,6 +766,7 @@ export function renderGameCardGrid(scene: Phaser.Scene, options: GameCardGridOpt
       cardHeight,
       variant,
       index,
+      playerCount,
       language,
       onSelect
     );

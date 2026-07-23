@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { ReadyPanel } from "../common/ReadyPanel.js";
 import type { DrawingGuessLayoutModel } from "./models.js";
@@ -13,6 +14,7 @@ function clamp01(value: number) {
 export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [guess, setGuess] = useState("");
+  const zh = model.language === "zh-CN";
   const en = model.language === "en";
 
   const recentGuesses = useMemo(() => model.guessFeed.slice(-5).reverse(), [model.guessFeed]);
@@ -42,12 +44,12 @@ export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
     <div style={{ display: "grid", gap: 12 }}>
       <div style={{ color: "var(--text-muted)", fontSize: 14 }}>
         {model.isDrawer
-          ? `${en ? "Your word" : "Dein Wort"}: ${model.secretWord ?? "..."}`
-          : `${en ? "Word" : "Wort"}: ${model.wordMask}`}
+          ? `${zh ? "你的词语" : en ? "Your word" : "Dein Wort"}: ${model.secretWord ?? "..."}`
+          : `${zh ? "词语" : en ? "Word" : "Wort"}: ${model.wordMask}`}
       </div>
       {model.winnerName ? (
         <div style={{ color: "#4ade80", fontWeight: 700 }}>
-          {en ? "Winner" : "Gewinner"}: {model.winnerName}
+          {zh ? "猜中者" : en ? "Winner" : "Gewinner"}: {model.winnerName}
         </div>
       ) : null}
 
@@ -56,7 +58,7 @@ export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
       {model.isDrawer ? (
         <>
           <div style={{ display: "grid", gap: 8 }}>
-            <div style={{ color: "var(--text-muted)", fontSize: 13 }}>{en ? "Choose color" : "Farbe waehlen"}</div>
+            <div style={{ color: "var(--text-muted)", fontSize: 13 }}>{zh ? "选择颜色" : en ? "Choose color" : "Farbe waehlen"}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               {(model.availableColors ?? []).map((color) => {
                 const selected = color === (model.currentColor ?? model.availableColors?.[0]);
@@ -66,7 +68,7 @@ export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
                     type="button"
                     onClick={() => model.onSelectColor?.(color)}
                     disabled={model.disabled}
-                    aria-label={`${en ? "Color" : "Farbe"} ${color}`}
+                    aria-label={`${zh ? "颜色" : en ? "Color" : "Farbe"} ${color}`}
                     style={{
                       width: 34,
                       height: 34,
@@ -169,7 +171,7 @@ export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
               padding: "12px 16px"
             }}
           >
-            {en ? "Clear drawing" : "Zeichnung loeschen"}
+            {zh ? "清空画板" : en ? "Clear drawing" : "Zeichnung loeschen"}
           </button>
         </>
       ) : (
@@ -190,7 +192,8 @@ export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
             value={guess}
             onChange={(event) => setGuess(event.target.value)}
             disabled={model.disabled}
-            placeholder={en ? "Your guess..." : "Dein Tipp..."}
+            placeholder={zh ? "输入你的答案……" : en ? "Your guess..." : "Dein Tipp..."}
+            maxLength={40}
             style={{
               padding: "14px 16px",
               borderRadius: 12,
@@ -213,14 +216,14 @@ export function DrawingGuessLayout({ model }: DrawingGuessLayoutProps) {
               padding: "12px 16px"
             }}
           >
-            {en ? "Send guess" : "Tipp senden"}
+            {zh ? "提交答案" : en ? "Send guess" : "Tipp senden"}
           </button>
         </form>
       )}
 
       <div style={{ display: "grid", gap: 6 }}>
         {recentGuesses.length === 0 ? (
-          <small style={{ color: "var(--text-muted)" }}>{en ? "No guesses yet." : "Noch keine Tipps."}</small>
+          <small style={{ color: "var(--text-muted)" }}>{zh ? "还没有人猜。" : en ? "No guesses yet." : "Noch keine Tipps."}</small>
         ) : (
           recentGuesses.map((entry, index) => (
             <small key={`${entry.playerName}-${index}`} style={{ color: entry.correct ? "#4ade80" : "var(--text-muted)" }}>

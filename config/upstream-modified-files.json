@@ -1,0 +1,46 @@
+[
+  {
+    "path": "config/known-games.json",
+    "noticeMode": "ledger",
+    "reason": "JSON does not support comments; bundled-game provenance and release metadata were added."
+  },
+  {
+    "path": "config/upstream-derived-files.json",
+    "noticeMode": "ledger",
+    "reason": "Machine-readable immutable path snapshot of the original fork baseline; JSON does not support comments."
+  },
+  {
+    "path": "package.json",
+    "noticeMode": "ledger",
+    "reason": "JSON does not support comments; workspaces and verification scripts were changed."
+  },
+  {
+    "path": "package-lock.json",
+    "noticeMode": "ledger",
+    "reason": "Generated lockfile; modification notice is carried by package.json and this ledger."
+  },
+  { "path": "games/tap-race/AGENTS.md", "noticeMode": "inline", "origin": "tap-race@54ba192db787e4bd3862181d0381e1df6dad8730" },
+  { "path": "games/tap-race/src/controller/index.ts", "noticeMode": "inline", "origin": "tap-race@54ba192db787e4bd3862181d0381e1df6dad8730" },
+  { "path": "games/tap-race/src/host/TapRaceRenderer.ts", "noticeMode": "inline", "origin": "tap-race@54ba192db787e4bd3862181d0381e1df6dad8730" },
+  { "path": "games/tap-race/src/manifest.ts", "noticeMode": "inline", "origin": "tap-race@54ba192db787e4bd3862181d0381e1df6dad8730" },
+  { "path": "games/tap-race/src/protocol.ts", "noticeMode": "inline", "origin": "tap-race@54ba192db787e4bd3862181d0381e1df6dad8730" },
+  { "path": "games/tap-race/src/server/index.ts", "noticeMode": "inline", "origin": "tap-race@54ba192db787e4bd3862181d0381e1df6dad8730" },
+  { "path": "games/zeichnen-und-erraten/src/controller/index.ts", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/zeichnen-und-erraten/AGENTS.md", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/zeichnen-und-erraten/src/host/ZeichnenUndErratenRenderer.ts", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/zeichnen-und-erraten/src/host/index.ts", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/zeichnen-und-erraten/src/manifest.ts", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/zeichnen-und-erraten/src/server/index.ts", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/zeichnen-und-erraten/src/server/zeichnenUndErratenConfig.ts", "noticeMode": "inline", "origin": "zeichnen-und-erraten@bb9b1dca148ccca644ff6b970a60f21789263684" },
+  { "path": "games/schaetzorama/src/controller/index.ts", "noticeMode": "inline", "origin": "schaetzorama@d5c52c63769d00657deb1f4437b25adb10cf401a" },
+  { "path": "games/schaetzorama/AGENTS.md", "noticeMode": "inline", "origin": "schaetzorama@d5c52c63769d00657deb1f4437b25adb10cf401a" },
+  { "path": "games/schaetzorama/src/host/index.ts", "noticeMode": "inline", "origin": "schaetzorama@d5c52c63769d00657deb1f4437b25adb10cf401a" },
+  { "path": "games/schaetzorama/src/manifest.ts", "noticeMode": "inline", "origin": "schaetzorama@d5c52c63769d00657deb1f4437b25adb10cf401a" },
+  { "path": "games/schaetzorama/src/server/index.ts", "noticeMode": "inline", "origin": "schaetzorama@d5c52c63769d00657deb1f4437b25adb10cf401a" },
+  { "path": "games/imposter/src/controller/index.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
+  { "path": "games/imposter/AGENTS.md", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
+  { "path": "games/imposter/src/host/ImposterRenderer.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
+  { "path": "games/imposter/src/manifest.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
+  { "path": "games/imposter/src/protocol.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
+  { "path": "games/imposter/src/server/index.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" }
+]

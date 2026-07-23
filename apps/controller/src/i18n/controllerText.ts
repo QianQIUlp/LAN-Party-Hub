@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import {
   defaultLanguage,
   normalizeLanguage,
@@ -51,6 +52,8 @@ export interface ControllerText {
   fullscreenHint: string;
   exitFullscreenHint: string;
   score: string;
+  lobbyTitle: (roomCode: string) => string;
+  noGameSelected: string;
   lobbySelected: (gameName: string) => string;
   lobbyWaitingHost: string;
   leaveRoom: string;
@@ -84,6 +87,78 @@ export interface ControllerText {
 }
 
 const controllerText = {
+  "zh-CN": {
+    joinTitle: "加入房间",
+    joinSubtitle: "让手机连接到大屏幕上的房间。",
+    roomCode: "房间码",
+    name: "昵称",
+    joinRoom: "加入",
+    connectingController: "正在连接服务器……",
+    serverConnected: "服务器已连接。",
+    serverNotConnected: "尚未连接服务器。",
+    reconnectTitle: "恢复游戏",
+    reconnectSubtitle: "这台设备保存了上次的玩家身份。",
+    continueSession: "继续上次游戏",
+    discardLocalSession: "放弃并重新加入",
+    room: "房间",
+    notFoundTitle: "页面不存在",
+    notFoundSubtitle: "无法打开手机控制器。",
+    notFoundBody: "请刷新页面或重新扫码加入。",
+    controllerTitle: "手机控制器",
+    preparingGameView: "正在准备游戏画面。",
+    unsupportedGame: "主机还没有启动可用的游戏。",
+    phase: "阶段",
+    unknown: "未知",
+    logout: "退出房间",
+    fullscreen: "全屏",
+    exitFullscreen: "退出全屏",
+    fullscreenHint: "点击或按 F 进入全屏",
+    exitFullscreenHint: "按 Esc 或 F 退出全屏",
+    score: "得分",
+    lobbyTitle: (roomCode: string) => `房间 ${roomCode}`,
+    noGameSelected: "尚未选择游戏",
+    lobbySelected: (gameName: string) => `已选择：${gameName}`,
+    lobbyWaitingHost: "等待主机选择游戏。",
+    leaveRoom: "离开房间",
+    ready: "准备",
+    notReady: "取消准备",
+    chooseCharacterFirst: "请先选择角色",
+    chooseSetupFirst: "请先完成设置",
+    setup: "设置",
+    setupChooseTitle: "选择设置",
+    selectionCount: (selected: number, min: number, max: number) => `已选 ${selected}/${max}，至少选择 ${min} 个`,
+    characterChooseTitle: "选择角色",
+    characterChooseDescription: "请先选择本局角色，然后点击准备。",
+    yourCharacter: "你的角色",
+    select: "选择",
+    chosenBy: (names: string) => `${names} 已选择`,
+    stillFree: "无人选择",
+    players: "玩家",
+    minRequired: (minPlayers: number) => `至少需要 ${minPlayers} 人`,
+    needsMorePlayers: "人数还不够。",
+    readyCount: "已准备",
+    character: "角色",
+    noCharacter: "未选角色",
+    connectedReady: "已准备",
+    connectedWaiting: "等待中",
+    nextRound: "下一局",
+    nextRoundDescription: (readyCount: number, playerCount: number) => `已有 ${readyCount}/${playerCount} 人准备。`,
+    readyForNextRound: "准备下一局",
+    readyForNextRoundQuestion: "准备好开始下一局了吗？",
+    waitForPlayers: (readyCount: number, playerCount: number) => `等待其他玩家，${readyCount}/${playerCount} 人已准备。`,
+    formatPhase: (phase: PublicGamePhase | string | undefined) => {
+      switch (phase) {
+        case "round_intro": return "准备";
+        case "countdown": return "倒计时";
+        case "playing": return "游戏中";
+        case "locked": return "已锁定";
+        case "result": return "结果";
+        case "scoreboard": return "积分榜";
+        case "finished": return "已结束";
+        default: return "等待中";
+      }
+    }
+  },
   de: {
     joinTitle: "Beitreten",
     joinSubtitle: "Verbinde dein Handy mit dem Raum auf dem grossen Bildschirm.",
@@ -112,6 +187,8 @@ const controllerText = {
     fullscreenHint: "Klick oder F startet den Vollbildmodus",
     exitFullscreenHint: "Esc oder F beendet den Vollbildmodus",
     score: "Score",
+    lobbyTitle: (roomCode: string) => `Lobby ${roomCode}`,
+    noGameSelected: "Noch kein Spiel",
     lobbySelected: (gameName: string) => `Ausgewaehlt: ${gameName}`,
     lobbyWaitingHost: "Der Host waehlt gleich ein Spiel.",
     leaveRoom: "Raum verlassen",
@@ -193,6 +270,8 @@ const controllerText = {
     fullscreenHint: "Click or press F to enter fullscreen",
     exitFullscreenHint: "Esc or F exits fullscreen",
     score: "Score",
+    lobbyTitle: (roomCode: string) => `Lobby ${roomCode}`,
+    noGameSelected: "No game selected",
     lobbySelected: (gameName: string) => `Selected: ${gameName}`,
     lobbyWaitingHost: "The host is about to pick a game.",
     leaveRoom: "Leave room",

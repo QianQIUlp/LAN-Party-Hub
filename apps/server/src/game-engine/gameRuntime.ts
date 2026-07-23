@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { localizeGameManifest } from "@open-party-lab/game-core";
 import type {
   BaseRoundState,
@@ -63,13 +64,14 @@ export class GameRuntime {
 
     const game = this.gameRegistry.require(room.selectedGameId);
     const roundNumber = room.roundCounter + 1;
-    const previousRound: PreviousRoundContext | null = room.currentRound
+    const previousRoundRecord = room.currentRound ?? room.previousRound;
+    const previousRound: PreviousRoundContext | null = previousRoundRecord
       ? {
-          gameId: room.currentRound.gameId,
-          roundNumber: room.currentRound.roundNumber,
-          phase: room.currentRound.phase,
-          state: room.currentRound.state,
-          updatedAt: room.currentRound.updatedAt
+          gameId: previousRoundRecord.gameId,
+          roundNumber: previousRoundRecord.roundNumber,
+          phase: previousRoundRecord.phase,
+          state: previousRoundRecord.state,
+          updatedAt: previousRoundRecord.updatedAt
         }
       : null;
     const initialContext = this.buildContext(room, roundNumber, game.manifest, 0, previousRound);

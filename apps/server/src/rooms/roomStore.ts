@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { ScoreEntry, SupportedLanguage } from "@open-party-lab/game-core";
 import type { PlayerSetupValue, PublicGamePhase } from "@open-party-lab/protocol";
 import { MemoryStore } from "../persistence/memoryStore.js";
@@ -40,6 +41,7 @@ export interface RoomRecord {
   code: string;
   createdAt: number;
   joinUrl: string;
+  joinOrigins: string[];
   language: SupportedLanguage;
   hostName: string;
   hostSocketId: string | null;
@@ -48,6 +50,7 @@ export interface RoomRecord {
   roundCounter: number;
   players: Map<string, PlayerRecord>;
   currentRound: RoundRecord | null;
+  previousRound: RoundRecord | null;
 }
 
 export class RoomStore {

@@ -1,6 +1,7 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Create A New Mini-Game
 
-Open Party Lab supports optional game repos. A game can live in its own repository and be linked into the platform only when present locally.
+LAN Party Hub supports optional game repos. A game can live in its own repository and be linked into the platform only when present locally.
 
 ## Mental Model
 
@@ -29,7 +30,7 @@ The server must remain authoritative. Controllers should send player intent, not
 Use a short game id as the repository and folder name:
 
 ```text
-Open-Party-Lab/
+LAN-Party-Hub/
   local-games/
     example-game/
 ```

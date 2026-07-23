@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import Phaser from "phaser";
 import {
   hasActiveRound,
@@ -192,6 +193,7 @@ export class GameSelectScene extends Phaser.Scene {
       y: bodyY,
       width: contentWidth,
       variant: "compact",
+      playerCount: players.length,
       language,
       onSelect: roundActive ? undefined : (gameId) => this.client?.selectGame(gameId)
     });

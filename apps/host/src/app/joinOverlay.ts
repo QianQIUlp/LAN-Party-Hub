@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { getRoomPhase } from "@open-party-lab/protocol";
 import QRCode from "qrcode";
 import type { HostSocketClient } from "./hostSocketClient.js";
@@ -133,6 +134,33 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
   link.style.wordBreak = "break-all";
   card.appendChild(link);
 
+  const originLabel = document.createElement("label");
+  originLabel.style.display = "grid";
+  originLabel.style.gap = "6px";
+  originLabel.style.fontSize = "12px";
+  originLabel.style.color = "#475569";
+  card.appendChild(originLabel);
+
+  const originLabelText = document.createElement("span");
+  originLabel.appendChild(originLabelText);
+
+  const originSelect = document.createElement("select");
+  applyStyles(originSelect, {
+    width: "100%",
+    border: hostChrome.border.paper,
+    borderRadius: hostChrome.radius.section,
+    padding: "8px 10px",
+    background: "#ffffff",
+    color: "#0f172a",
+    fontSize: "12px"
+  });
+  originLabel.appendChild(originSelect);
+
+  const originHint = document.createElement("small");
+  originHint.style.color = "#475569";
+  originHint.style.lineHeight = "1.4";
+  card.appendChild(originHint);
+
   const hint = document.createElement("small");
   hint.textContent = "Wenn am Handy die Host-Seite erscheint, stattdessen den QR-Code oder Port 5174 nutzen.";
   hint.style.color = "#475569";
@@ -159,6 +187,10 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
     renderMinimizedState(true);
   });
 
+  originSelect.addEventListener("change", () => {
+    client.setJoinOrigin(originSelect.value);
+  });
+
   document.body.appendChild(overlay);
 
   const unsubscribe = client.subscribe((state) => {
@@ -171,6 +203,8 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
     title.textContent = text.phoneController;
     minimizeButton.textContent = text.hide;
     hint.textContent = text.hostPageHint;
+    originLabelText.textContent = text.joinAddress;
+    originHint.textContent = text.joinAddressHint;
 
     renderMinimizedState(showOverlay);
 
@@ -184,12 +218,27 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
       hint.style.display = "none";
       link.textContent = "";
       link.removeAttribute("href");
+      originLabel.style.display = "none";
+      originHint.style.display = "none";
       const context = canvas.getContext("2d");
       context?.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
 
     if (!showOverlay) {
+      return;
+    }
+
+    if (room.joinOrigins.length === 0) {
+      status.textContent = text.noLanAddress;
+      roomCode.textContent = room.code;
+      canvas.style.display = "none";
+      link.style.display = "none";
+      originLabel.style.display = "none";
+      originHint.style.display = "none";
+      hint.style.display = "none";
+      const context = canvas.getContext("2d");
+      context?.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
 
@@ -200,6 +249,19 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
     hint.style.display = "block";
     link.textContent = room.joinUrl;
     link.href = room.joinUrl;
+    originLabel.style.display = room.joinOrigins.length > 1 ? "grid" : "none";
+    originHint.style.display = room.joinOrigins.length > 1 ? "block" : "none";
+
+    const selectedOrigin = room.joinOrigins.find((origin) => room.joinUrl.startsWith(origin)) ?? room.joinOrigins[0] ?? "";
+    originSelect.replaceChildren(
+      ...room.joinOrigins.map((origin) => {
+        const option = document.createElement("option");
+        option.value = origin;
+        option.textContent = origin;
+        option.selected = origin === selectedOrigin;
+        return option;
+      })
+    );
 
     void QRCode.toCanvas(canvas, room.joinUrl, {
       margin: 1,

@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import Phaser from "phaser";
 import type { HostSocketClient } from "./hostSocketClient.js";
 
@@ -21,9 +22,14 @@ export function bindGameSelectionHotkeys(
 
   for (const [index, keyName] of digitKeys.entries()) {
     const handler = () => {
-      const availableGame = client.getState().room?.availableGames[index];
+      const room = client.getState().room;
+      const availableGame = room?.availableGames[index];
 
-      if (availableGame) {
+      if (
+        availableGame &&
+        room.players.length >= availableGame.minPlayers &&
+        room.players.length <= availableGame.maxPlayers
+      ) {
         client.selectGame(availableGame.id);
       }
     };

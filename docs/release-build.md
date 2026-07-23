@@ -1,12 +1,39 @@
-# Open Party Lab – Portable Windows Build
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
+# LAN Party Hub 便携版
 
-1. Extract the complete ZIP archive to a normal folder.
-2. Double-click `Open-Party-Lab.exe`.
-3. The shared host screen opens automatically in your browser.
-4. Players scan the QR code and open the controller page on phones connected to the same LAN/Wi-Fi.
+1. 将 ZIP **完整解压**到普通文件夹，不要直接在压缩包中运行。
+2. 双击 `LAN-Party-Hub.exe`。
+3. 共享主屏会在默认浏览器中自动打开。
+4. 让手机和电脑连接同一个 Wi-Fi，扫描主屏二维码并输入昵称。
 
-The portable build contains the server, host, controller, all game repositories, and its own Node.js runtime. Node.js and npm do not need to be installed.
+便携包内含 Node.js、服务器、主屏、手机控制器和四款内置游戏。运行时不需要安装开发工具、注册账号或连接公网。
 
-Windows may show a SmartScreen warning because this community build is not code-signed. You can inspect the Apache-2.0 source at https://github.com/Hartwich/Open-Party-Lab before running it.
+## 使用与退出
 
-If startup fails, check `open-party-lab.log`. Port 3000 must be available, and Windows Firewall must allow private-network access so phones can connect.
+- 重复双击启动器会打开已经运行的主屏，不会启动第二个服务。
+- 启动器优先使用端口 3000；如被占用，会依次尝试 3001–3010。
+- 右键系统托盘中的 LAN Party Hub 图标，可以打开主屏、复制手机加入地址、查看日志或正常退出。
+- 房间数据和日志位于发行目录的 `data/`。退出前会保存房间、玩家、游戏选择和累计分数。
+
+## Windows 提示
+
+当前便携版未做代码签名，Windows SmartScreen 可能显示警告。Windows 防火墙弹窗中请选择允许“专用网络”，否则同一 Wi-Fi 下的手机无法连接。
+
+如果二维码无法访问：
+
+1. 确认手机与电脑连接同一个局域网，且不是启用了客户端隔离的访客 Wi-Fi。
+2. 在主屏的“手机加入地址”中切换到与手机同网段的 IPv4 地址。
+3. 暂停 VPN，或排除 VPN/虚拟机网卡地址。
+4. 检查 Windows 网络类型是否为“专用网络”，并允许防火墙访问。
+
+如果没有检测到可用局域网地址，主屏仍可在电脑本机打开，但手机不能加入。
+
+## 故障排查
+
+- 日志：`data/lan-party-hub.log`
+- 持久化数据：`data/room-snapshots.json`
+- 端口全部占用：关闭占用 3000–3010 的程序后重试。
+- 服务异常退出：重新启动后会恢复房间和累计分数；未结束的一局会安全中止并回到准备阶段。
+- 文件缺失：重新完整解压 ZIP，不要单独复制 EXE。
+
+本项目采用 Apache-2.0 许可。内置游戏来源和固定版本见 `THIRD_PARTY_SOURCES.md`。

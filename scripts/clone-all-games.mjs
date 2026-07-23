@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { existsSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -6,7 +7,8 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const games = JSON.parse(await readFile(path.join(projectRoot, "config", "known-games.json"), "utf8"));
+const games = JSON.parse(await readFile(path.join(projectRoot, "config", "known-games.json"), "utf8"))
+  .filter((game) => game.distribution !== "bundled");
 await mkdir(path.join(projectRoot, "local-games"), { recursive: true });
 
 for (const game of games) {
@@ -26,4 +28,4 @@ for (const game of games) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-console.log(`All ${games.length} known games are available locally.`);
+console.log(`All ${games.length} optional games are available locally.`);

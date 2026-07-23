@@ -1,72 +1,48 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Project Status
 
-Snapshot date: 2026-07-21
+Snapshot date: 2026-07-23
 
-## Available In This Public Cut
+## 首个可玩版本已实现的基线
 
-Platform:
+- 简体中文为默认语言；平台保留英文和德语兼容。
+- 新克隆包含四款固定源码版本的内置游戏：疯狂点击、你画我猜、估个大概、谁是卧底。
+- 服务端、共享主屏和手机控制器使用服务端权威的 Socket.IO 协议。
+- Windows 便携发行包包含 Node.js 和全部运行资源；构建不再临时克隆游戏仓库。
+- 便携启动器支持单实例、3000–3010 动态端口、托盘菜单、日志、复制加入地址和优雅退出。
+- 房间使用版本化 JSON 持久化；原子写入并保留最后一份备份。
+- 服务重启可恢复房间、玩家身份、重连令牌、游戏设置、题目历史和累计分数；活跃局不会恢复，而是返回未准备状态。
+- 重连窗口默认 2 分钟；玩家显式离开或被踢后旧令牌失效。
+- 主屏可在多个私有 IPv4 地址之间切换二维码目标；健康接口提供网络和持久化诊断。
+- Vitest 覆盖平台恢复和四款游戏的关键规则；Playwright 覆盖阻断公网后的双手机初始开局、控制器刷新恢复、三人连续启动并切换全部四款内置游戏，以及两人不能选择谁是卧底。
 
-- local room creation
-- room code and QR join flow
-- phone controller app
-- Phaser host screen
-- Canvas-backed Phaser rendering so SVG game art remains visible across Chromium/WebGL driver combinations
-- authoritative Socket.IO server
-- reconnect/session recovery
-- shared round lifecycle
-- scoreboards
-- host controls for language, FPS, and player moderation outside active rounds
-- optional local game-repo discovery through `npm run games:list` and `npm run games:sync-local`
-- virtual controller helper for AI browser checks through `npm run ai:controllers`
-- host DEV automation bridge for browser checks exposed only by the Vite dev host
-- portable Windows release assembly with a one-click launcher, bundled Node.js runtime, same-origin host/controller assets, and all known games
+## 四款内置游戏
 
-Optional local game repos:
+- `tap-race`：2–4 人，50 次点击或 20 秒结束；服务端限制异常点击频率。
+- `zeichnen-und-erraten`：2–4 人，中文全年龄词库不少于 200 条、成人词库不少于 60 条；秘密词只发送给画手，并限制猜测和绘图输入。
+- `schaetzorama`：2–4 人，数字、百分比、排序、归类各至少 12 道中文题；运行时不访问题目来源 URL，并验证完整答案结构。
+- `imposter`：3–4 人；普通玩家看到秘密词，卧底只看到分类；中文全年龄词包不少于 150 条、成人词包不少于 50 条，并验证私人状态、投票和最终猜词权限。
 
-- Magic Arena can be loaded from `local-games/magic-arena` when cloned locally. It is currently recommended alpha and playable.
-- Magic Duell can be loaded from `local-games/magic-duell` when cloned locally. It is currently recommended alpha and playable.
-- Arena Survivor can be loaded from `local-games/arena-survivor` when cloned locally. It is currently beta and recommended.
-- MinionsTD can be loaded from `local-games/minions-td` when cloned locally. It is currently beta and recommended.
-- Zeichnen & Erraten can be loaded from `local-games/zeichnen-und-erraten` when cloned locally. It is currently beta and recommended.
-- Schaetzorama can be loaded from `local-games/schaetzorama` when cloned locally. It is currently beta and recommended; the answer-setting phase has no timer, repeated question IDs are avoided within a 10-round session, and directly math-solvable prompts are excluded from the active pool.
-- Tap Race can be loaded from `local-games/tap-race` when cloned locally.
-- Pantomime can be loaded from `local-games/pantomime` when cloned locally.
-- Air Hockey can be loaded from `local-games/air-hockey` when cloned locally.
-- Tabu can be loaded from `local-games/tabu` when cloned locally.
-- Imposter can be loaded from `local-games/imposter` when cloned locally.
-- Light Trails can be loaded from `local-games/light-trails` when cloned locally.
-- Drift Racer can be loaded from `local-games/drift-racer` when cloned locally. It is recommended alpha; its phone controller uses a left virtual drive stick plus Boost, Fire, and Drift action buttons.
-- Word Tiles can be loaded from `local-games/word-tiles` when cloned locally. It is recommended alpha, supports multiple accepted word placements per turn, and uses table-driven word challenges instead of an internal dictionary check.
-- Chaos-Kommando can be loaded from `local-games/chaos-kommando` when cloned locally. It is recommended alpha. Its host uses a continuous modular toasted-marshmallow rig with a fixed world pivot, aim-tracking eyes, procedural locomotion, weapon-specific hand grips, and dedicated carry art for all 16 weapons.
+四款游戏均为 alpha，仍需要真人聚会测试来调整节奏、难度、题库质量和移动端误触。
 
-Lobby/setup:
+## 自动化验证
 
-- common setup controls are rendered by the platform from `manifest.lobbySetup`;
-- common controller-side player setup is rendered from `manifest.playerSetup` with `choice` and `multi-select` support;
-- player setup portraits can react to a selected lobby setting through `portraitPathBySetting`, allowing phones to mirror host-selected visual themes before a round starts;
-- Arena Survivor uses a dedicated themed host setup lobby that shows every joined player, the selected character portrait, and a clear pending-selection state without keeping the shared game catalog visible;
-- the host background-music controller can select a theme-specific Arena Survivor profile from the current room settings while retaining its shared audio unlock and crossfade behavior;
-- game repos keep their own setup field declarations and server-side validation.
+- `npm run test`：纯逻辑与 Socket.IO 重启恢复测试。
+- `npm run test:e2e`：Chromium 独立上下文模拟主屏和两台手机，并阻断公网请求。
+- `npm run typecheck`：平台及四款内置游戏类型检查。
+- `npm run build`：同一源码树构建平台与内置游戏。
+- `npm run verify`：依次执行测试、类型检查和完整构建。
 
-## Not Production-Ready Yet
+CI 在 Ubuntu 上执行上述自动化；Windows Release 工作流编译启动器、组装 ZIP 并生成 SHA-256。
 
-- most included games are still alpha and may need rule, pacing, scoring, UI, and balancing changes;
-- Magic Arena, Magic Duell, Arena Survivor, MinionsTD, Zeichnen & Erraten, Schaetzorama, Chaos-Kommando, Word Tiles, and Drift Racer are the recommended alpha/beta set, but still need normal playtesting and refinement;
-- persistent storage is not wired for production use;
-- no hosted deployment configuration is included;
-- no formal end-to-end test suite exists yet;
-- controller bundles can be split further;
-- several games need deeper playtesting and balancing;
-- Firefox phone controllers can sometimes show controller issues around fullscreen behavior, reconnect/session handling, or touch input timing;
-- asset and word-list rights need review before any store release.
+## 尚需真实环境验收
 
-## Good Next Contributions
+- Windows 10 与 Windows 11 上的 SmartScreen、防火墙、托盘和动态端口行为。
+- Android Chrome 与 iPhone Safari 的锁屏、Wi-Fi 切换、软键盘和安全区表现。
+- 家庭路由器、访客网络、VPN 和虚拟网卡组合下的地址选择。
+- 四人高频点击、长时间绘图、连续十局切换与多人真人玩法平衡。
+- 当前便携程序没有代码签名、安装器、自动更新、云端中继、账号、遥测或公网匹配。
 
-- add E2E smoke tests for join, reconnect, round start, and round end;
-- expand AI browser-check recipes around the generic virtual controller helper;
-- improve persistence and restore behavior;
-- split controller code by game;
-- add more incremental host rendering paths;
-- improve docs for each game;
-- improve balancing, round pacing, scoring clarity, and player feedback for alpha games;
-- add playtest checklists and fixture rooms.
+## 可选游戏开发
+
+其他上游游戏仍可放入 `local-games/`，运行 `npm run games:sync-local` 后用于开发，但它们不进入首版菜单、CI 或发行包。缺少可选游戏仓库属于正常状态。

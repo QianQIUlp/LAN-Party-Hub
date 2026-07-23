@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { AvailableGameDto, PublicGamePhase } from "./gameState.js";
 import type { SupportedLanguage } from "@open-party-lab/game-core";
 import type { PlayerSnapshot } from "./player.js";
@@ -28,6 +29,7 @@ export interface RoomSnapshot {
   code: string;
   createdAt: number;
   joinUrl: string;
+  joinOrigins: string[];
   language: SupportedLanguage;
   hostConnected: boolean;
   lifecycle: RoomLifecycle;

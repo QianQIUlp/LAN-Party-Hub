@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import { useEffect, useMemo, useState } from "react";
 import type {
   SchaetzoramaAnswerSet,
   SchaetzoramaAssignQuestion,
@@ -24,6 +25,7 @@ type JokerDraft = {
 const categoryOrder: SchaetzoramaCategoryId[] = ["number", "percent", "rank", "assign"];
 
 export function SchaetzoramaLayout({ model }: SchaetzoramaLayoutProps) {
+  const zh = model.language === "zh-CN";
   const en = model.language === "en";
   const initialAnswers = useMemo(() => buildInitialAnswers(model), [model]);
   const initialJoker = useMemo(() => buildInitialJoker(model), [model]);
@@ -36,7 +38,7 @@ export function SchaetzoramaLayout({ model }: SchaetzoramaLayoutProps) {
   }, [initialAnswers, initialJoker, model.resetKey]);
 
   if (!model.roundContent) {
-    return <p style={{ margin: 0, color: "var(--text-muted)" }}>{en ? "The quiz panel is warming up." : "Das Quiz-Pult wird aufgewarmt."}</p>;
+    return <p style={{ margin: 0, color: "var(--text-muted)" }}>{zh ? "正在准备问答面板……" : en ? "The quiz panel is warming up." : "Das Quiz-Pult wird aufgewarmt."}</p>;
   }
 
   const answered = Object.keys(model.ownAnswers).length > 0;
@@ -86,7 +88,7 @@ export function SchaetzoramaLayout({ model }: SchaetzoramaLayoutProps) {
               opacity: canSubmit ? 1 : 0.55
             }}
           >
-            {answered ? en ? "Panel locked" : "Pult verriegelt" : en ? "Lock in panel" : "Pult einloggen"}
+            {answered ? zh ? "答案已提交" : en ? "Panel locked" : "Pult verriegelt" : zh ? "提交全部答案" : en ? "Lock in panel" : "Pult einloggen"}
           </button>
         </>
       )}
@@ -127,6 +129,7 @@ function renderQuestionBody(
   disabled: boolean,
   onChange: (answer: NonNullable<SchaetzoramaAnswerSet[SchaetzoramaCategoryId]>) => void
 ) {
+  const zh = language === "zh-CN";
   const en = language === "en";
 
   if (question.kind === "number" || question.kind === "percent") {
@@ -144,7 +147,7 @@ function renderQuestionBody(
           onChange={(event) => onChange({ kind: "number", value: Number(event.currentTarget.value) })}
         />
         <label style={numberInputWrapStyle}>
-          <span>{question.kind === "percent" ? en ? "Percent" : "Prozent" : en ? "Number" : "Zahl"}</span>
+          <span>{question.kind === "percent" ? zh ? "百分比" : en ? "Percent" : "Prozent" : zh ? "数字" : en ? "Number" : "Zahl"}</span>
           <input
             type="number"
             min={numericQuestion.min}
@@ -178,7 +181,7 @@ function renderQuestionBody(
                   style={miniButtonStyle}
                   onClick={() => onChange({ kind: "rank", order: move(order, index, -1) })}
                 >
-                  {en ? "Up" : "Hoch"}
+                  {zh ? "上移" : en ? "Up" : "Hoch"}
                 </button>
                 <button
                   type="button"
@@ -186,7 +189,7 @@ function renderQuestionBody(
                   style={miniButtonStyle}
                   onClick={() => onChange({ kind: "rank", order: move(order, index, 1) })}
                 >
-                  {en ? "Down" : "Runter"}
+                  {zh ? "下移" : en ? "Down" : "Runter"}
                 </button>
               </div>
             </div>
@@ -206,7 +209,7 @@ function renderQuestionBody(
     <>
       <div style={assignLegendStyle}>
         <span>{assignQuestion.leftLabel}</span>
-        <span>{en ? "Both" : "Beides"}</span>
+        <span>{zh ? "两者" : en ? "Both" : "Beides"}</span>
         <span>{assignQuestion.rightLabel}</span>
       </div>
       <div style={{ display: "grid", gap: 8 }}>
@@ -254,6 +257,7 @@ function CopyReviewView({
   draft: JokerDraft;
   onDraftChange: (draft: JokerDraft) => void;
 }) {
+  const zh = model.language === "zh-CN";
   const en = model.language === "en";
   const preview = model.ownJokerPreview;
   const categoryId = preview?.categoryId ?? draft.categoryId;
@@ -268,8 +272,8 @@ function CopyReviewView({
   if (!model.canSubmitJoker) {
     return (
       <section style={copyPanelStyle}>
-        <strong>{en ? "Copy" : "Abschreiben"}</strong>
-        <p style={helperStyle}>{en ? "Choice locked. Waiting for the other panels." : "Entscheidung eingeloggt. Warte auf die anderen Pulte."}</p>
+        <strong>{zh ? "参考答案" : en ? "Copy" : "Abschreiben"}</strong>
+        <p style={helperStyle}>{zh ? "选择已锁定，正在等待其他玩家。" : en ? "Choice locked. Waiting for the other panels." : "Entscheidung eingeloggt. Warte auf die anderen Pulte."}</p>
       </section>
     );
   }
@@ -277,14 +281,14 @@ function CopyReviewView({
   if (!preview && (copyUsesLeft <= 0 || model.copyTargets.length === 0)) {
     return (
       <section style={copyPanelStyle}>
-        <strong>{en ? "Copy" : "Abschreiben"}</strong>
+        <strong>{zh ? "参考答案" : en ? "Copy" : "Abschreiben"}</strong>
         <p style={helperStyle}>
           {copyUsesLeft <= 0
-            ? en ? "No copy uses left. Keep your own answers for this round." : "Du hast kein Abschreiben mehr uebrig. Diese Runde bleiben deine Antworten."
-            : en ? "No other panel is available to copy from." : "Es gibt kein anderes Pult zum Abschreiben."}
+            ? zh ? "本轮没有剩余参考次数，将保留自己的答案。" : en ? "No copy uses left. Keep your own answers for this round." : "Du hast kein Abschreiben mehr uebrig. Diese Runde bleiben deine Antworten."
+            : zh ? "没有其他玩家的答案可供参考。" : en ? "No other panel is available to copy from." : "Es gibt kein anderes Pult zum Abschreiben."}
         </p>
         <button type="button" onClick={() => model.onChooseJoker(null)} style={secondaryActionStyle}>
-          {en ? "Keep mine" : "Eigene behalten"}
+          {zh ? "保留我的答案" : en ? "Keep mine" : "Eigene behalten"}
         </button>
       </section>
     );
@@ -292,13 +296,13 @@ function CopyReviewView({
 
   return (
     <section style={copyPanelStyle}>
-      <strong>{en ? `Copy (${copyUsesLeft} left)` : `Abschreiben (${copyUsesLeft} uebrig)`}</strong>
+      <strong>{zh ? `参考答案（剩余 ${copyUsesLeft} 次）` : en ? `Copy (${copyUsesLeft} left)` : `Abschreiben (${copyUsesLeft} uebrig)`}</strong>
       {!preview ? (
         <>
-          <p style={helperStyle}>{en ? "Choose exactly one player and one task. The answer is revealed after you lock this choice." : "Waehle genau eine Person und eine Aufgabe. Erst danach wird diese Antwort sichtbar."}</p>
+          <p style={helperStyle}>{zh ? "选择一名玩家和一道题，确认后才能看到对方答案。" : en ? "Choose exactly one player and one task. The answer is revealed after you lock this choice." : "Waehle genau eine Person und eine Aufgabe. Erst danach wird diese Antwort sichtbar."}</p>
           <div style={copySelectGridStyle}>
             <label style={selectLabelStyle}>
-              {en ? "Task" : "Aufgabe"}
+              {zh ? "题目" : en ? "Task" : "Aufgabe"}
               <select
                 value={categoryId}
                 onChange={(event) => onDraftChange({ ...draft, kind: "copy", categoryId: event.currentTarget.value as SchaetzoramaCategoryId, targetPlayerId })}
@@ -312,7 +316,7 @@ function CopyReviewView({
               </select>
             </label>
             <label style={selectLabelStyle}>
-              {en ? "From whom?" : "Bei wem?"}
+              {zh ? "参考谁？" : en ? "From whom?" : "Bei wem?"}
               <select
                 value={targetPlayerId}
                 onChange={(event) => onDraftChange({ ...draft, kind: "copy", categoryId, targetPlayerId: event.currentTarget.value })}
@@ -328,7 +332,7 @@ function CopyReviewView({
           </div>
           <div style={copyButtonGridStyle}>
             <button type="button" onClick={() => model.onChooseJoker(null)} style={secondaryActionStyle}>
-              {en ? "Skip copy" : "Nicht abschreiben"}
+              {zh ? "跳过参考" : en ? "Skip copy" : "Nicht abschreiben"}
             </button>
             <button
               type="button"
@@ -346,24 +350,26 @@ function CopyReviewView({
                 opacity: canChoosePreview ? 1 : 0.5
               }}
             >
-              {en ? "Reveal this answer" : "Diese Antwort ansehen"}
+              {zh ? "查看这个答案" : en ? "Reveal this answer" : "Diese Antwort ansehen"}
             </button>
           </div>
         </>
       ) : (
         <>
           <p style={helperStyle}>
-            {en
+            {zh
+              ? `${target?.name ?? "其他玩家"} 的${model.categoryLabels[categoryId]}答案已显示，请做出选择。`
+              : en
               ? `${target?.name ?? "Other"} on ${model.categoryLabels[categoryId]} is revealed. Decide now.`
               : `${target?.name ?? "Andere"} bei ${model.categoryLabels[categoryId]} ist sichtbar. Entscheide jetzt.`}
           </p>
           <div style={answerCompareGridStyle}>
-            <AnswerPreview title={en ? "Your answer" : "Deine Antwort"} text={formatControllerAnswer(model, categoryId, ownAnswer)} />
-            <AnswerPreview title={`${target?.name ?? (en ? "Other" : "Andere")} ${en ? "answer" : "Antwort"}`} text={formatControllerAnswer(model, categoryId, targetAnswer)} />
+            <AnswerPreview title={zh ? "你的答案" : en ? "Your answer" : "Deine Antwort"} text={formatControllerAnswer(model, categoryId, ownAnswer)} />
+            <AnswerPreview title={zh ? `${target?.name ?? "其他玩家"}的答案` : `${target?.name ?? (en ? "Other" : "Andere")} ${en ? "answer" : "Antwort"}`} text={formatControllerAnswer(model, categoryId, targetAnswer)} />
           </div>
           <div style={copyButtonGridStyle}>
             <button type="button" onClick={() => model.onChooseJoker(null)} style={secondaryActionStyle}>
-              {en ? "Keep mine" : "Eigene behalten"}
+              {zh ? "保留我的答案" : en ? "Keep mine" : "Eigene behalten"}
             </button>
             <button
               type="button"
@@ -381,7 +387,7 @@ function CopyReviewView({
                 opacity: canCopy ? 1 : 0.5
               }}
             >
-              {en ? "Copy answer" : "Abschreiben"}
+              {zh ? "采用对方答案" : en ? "Copy answer" : "Abschreiben"}
             </button>
           </div>
         </>
@@ -400,17 +406,18 @@ function AnswerPreview({ title, text }: { title: string; text: string }) {
 }
 
 function ResultView({ model }: { model: SchaetzoramaLayoutModel }) {
+  const zh = model.language === "zh-CN";
   const en = model.language === "en";
   const sorted = [...model.results].sort((left, right) => right.total - left.total);
 
   return (
     <section style={resultsPanelStyle}>
-      <strong>{en ? "Round score" : "Rundenwertung"}</strong>
+      <strong>{zh ? "本局得分" : en ? "Round score" : "Rundenwertung"}</strong>
       <div style={{ display: "grid", gap: 8 }}>
         {sorted.map((result, index) => (
           <div key={result.playerId} style={resultRowStyle}>
             <span>{index + 1}. {result.name}</span>
-            <strong>{result.total} {en ? "pts" : "P"}</strong>
+            <strong>{result.total} {zh ? "分" : en ? "pts" : "P"}</strong>
           </div>
         ))}
       </div>
@@ -427,6 +434,7 @@ function ResultView({ model }: { model: SchaetzoramaLayoutModel }) {
 }
 
 function LeaderboardStrip({ model }: { model: SchaetzoramaLayoutModel }) {
+  const zh = model.language === "zh-CN";
   const en = model.language === "en";
   if (model.standings.length === 0) {
     return null;
@@ -436,7 +444,7 @@ function LeaderboardStrip({ model }: { model: SchaetzoramaLayoutModel }) {
     <div style={leaderboardStyle}>
       {model.standings.slice(0, 4).map((standing, index) => (
         <span key={standing.playerId} style={{ ...leaderboardPillStyle, borderColor: standing.color }}>
-          {index + 1}. {standing.name} {standing.projectedScore} {en ? "pts" : "P"}
+          {index + 1}. {standing.name} {standing.projectedScore} {zh ? "分" : en ? "pts" : "P"}
         </span>
       ))}
     </div>
@@ -540,6 +548,10 @@ function move(order: string[], index: number, offset: number): string[] {
 }
 
 function zoneLabel(zone: SchaetzoramaAssignmentZone, language: SchaetzoramaLayoutModel["language"]): string {
+  if (language === "zh-CN") {
+    return zone === "left" ? "左类" : zone === "right" ? "右类" : "两者";
+  }
+
   if (language === "en") {
     return zone === "left" ? "Left" : zone === "right" ? "Right" : "Both";
   }
@@ -552,8 +564,8 @@ function formatTimer(model: SchaetzoramaLayoutModel): string {
 
   if (!end || model.stage === "revealed") {
     return model.stage === "revealed"
-      ? (model.language === "en" ? "Reveal" : "Auswertung")
-      : (model.language === "en" ? "No limit" : "Ohne Limit");
+      ? (model.language === "zh-CN" ? "揭晓" : model.language === "en" ? "Reveal" : "Auswertung")
+      : (model.language === "zh-CN" ? "不限时" : model.language === "en" ? "No limit" : "Ohne Limit");
   }
 
   const seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
@@ -580,7 +592,7 @@ function formatSolution(model: SchaetzoramaLayoutModel, categoryId: Schaetzorama
 
   if (solution.kind === "assign" && question.kind === "assign") {
     return question.terms
-      .map((term) => `${term.label}: ${solution.assignments[term.id] === "left" ? question.leftLabel : solution.assignments[term.id] === "right" ? question.rightLabel : model.language === "en" ? "Both" : "Beides"}`)
+      .map((term) => `${term.label}: ${solution.assignments[term.id] === "left" ? question.leftLabel : solution.assignments[term.id] === "right" ? question.rightLabel : model.language === "zh-CN" ? "两者" : model.language === "en" ? "Both" : "Beides"}`)
       .join(" | ");
   }
 
@@ -612,7 +624,7 @@ function formatControllerAnswer(
     return question.terms
       .map((term) => {
         const zone = answer.assignments[term.id];
-        const label = zone === "left" ? question.leftLabel : zone === "right" ? question.rightLabel : model.language === "en" ? "Both" : "Beides";
+        const label = zone === "left" ? question.leftLabel : zone === "right" ? question.rightLabel : model.language === "zh-CN" ? "两者" : model.language === "en" ? "Both" : "Beides";
         return `${term.label}: ${label}`;
       })
       .join(" | ");

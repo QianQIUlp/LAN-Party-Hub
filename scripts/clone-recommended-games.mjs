@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -28,16 +29,6 @@ const recommendedGames = [
     id: "minions-td",
     repo: "https://github.com/Hartwich/minions-td.git",
     path: "local-games/minions-td"
-  },
-  {
-    id: "zeichnen-und-erraten",
-    repo: "https://github.com/Hartwich/zeichnen-und-erraten.git",
-    path: "local-games/zeichnen-und-erraten"
-  },
-  {
-    id: "schaetzorama",
-    repo: "https://github.com/Hartwich/schaetzorama.git",
-    path: "local-games/schaetzorama"
   },
   {
     id: "chaos-kommando",

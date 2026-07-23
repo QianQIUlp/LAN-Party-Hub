@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { defaultLanguage, normalizeLanguage, type SupportedLanguage } from "@open-party-lab/game-core";
 import { createRoomCode } from "./roomCode.js";
 import type { RoomRecord } from "./roomStore.js";
@@ -7,6 +8,7 @@ export class RoomManager {
   constructor(
     private readonly roomStore: RoomStore,
     private readonly createJoinUrl: (roomCode: string) => string,
+    private readonly listJoinOrigins: () => string[],
     private readonly getNow: () => number,
     private readonly fixedPrimaryRoomCode: string | null = null
   ) {}
@@ -34,6 +36,7 @@ export class RoomManager {
       code,
       createdAt: this.getNow(),
       joinUrl: this.createJoinUrl(code),
+      joinOrigins: this.listJoinOrigins(),
       language: normalizeLanguage(language),
       hostName,
       hostSocketId: null,
@@ -41,7 +44,8 @@ export class RoomManager {
       gameSettingsByGameId: {},
       roundCounter: 0,
       players: new Map(),
-      currentRound: null
+      currentRound: null,
+      previousRound: null
     });
   }
 
@@ -77,6 +81,16 @@ export class RoomManager {
 
   setLanguage(room: RoomRecord, language: SupportedLanguage): RoomRecord {
     room.language = normalizeLanguage(language, room.language);
+    return room;
+  }
+
+  setJoinOrigin(room: RoomRecord, origin: string): RoomRecord | null {
+    const normalizedOrigin = origin.trim().replace(/\/$/, "");
+    if (!room.joinOrigins.includes(normalizedOrigin)) {
+      return null;
+    }
+
+    room.joinUrl = `${normalizedOrigin}/#join?room=${room.code}`;
     return room;
   }
 

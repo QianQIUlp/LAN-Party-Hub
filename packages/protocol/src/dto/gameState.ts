@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { ControllerLayoutKey, GameManifest, RoundPhase } from "@open-party-lab/game-core";
 
 export type PublicGamePhase = RoundPhase;
@@ -13,6 +14,7 @@ export interface AvailableGameDto {
   controllerLayout: ControllerLayoutKey;
   supportsTeams: boolean;
   estimatedRoundDurationMs: number;
+  contentRating?: GameManifest["contentRating"];
   roundCompletionMode?: GameManifest["roundCompletionMode"];
   lobbySetup?: GameManifest["lobbySetup"];
   playerSetup?: GameManifest["playerSetup"];

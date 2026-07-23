@@ -1,0 +1,44 @@
+name: Shared interface request
+description: Request a protocol, game-core, shared controller, room, or transport change before a game branch edits shared code
+title: "[interface] "
+labels: ["needs-design"]
+body:
+  - type: input
+    id: requesting-task
+    attributes:
+      label: Requesting task or game
+      placeholder: codex/game-imposter-voting
+    validations:
+      required: true
+  - type: textarea
+    id: local-need
+    attributes:
+      label: Concrete local need
+      description: Describe the behavior that cannot be implemented cleanly inside the owning game or task.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-contract
+    attributes:
+      label: Proposed contract
+      description: Include types, events, state visibility, authority, migration, and failure behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: consumers
+    attributes:
+      label: Expected consumers
+      description: Name at least two consumers if claiming the abstraction is shared.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Boundary acknowledgement
+      options:
+        - label: The requesting branch has not edited `apps/**` or `packages/**` to work around this request.
+          required: true
+        - label: Identity, security, timing, scoring, and private state remain server-authoritative.
+          required: true
+        - label: Integration/Platform approval is required before implementation resumes.
+          required: true

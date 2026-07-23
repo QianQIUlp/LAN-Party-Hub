@@ -1,13 +1,14 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Multi-Repo Games
 
-Open Party Lab supports optional local game repos. You do not need every game repo. The platform loads only games that exist locally and are linked by `npm run games:sync-local`.
+LAN Party Hub supports optional local game repos. You do not need every game repo. The platform always loads its four bundled games and additionally loads optional games present under `local-games/` after `npm run games:sync-local`.
 
 ## Recommended Layout
 
 Use child repos inside the platform working tree:
 
 ```text
-Open-Party-Lab/
+LAN-Party-Hub/
   local-games/
     tap-race/
 ```
@@ -20,7 +21,7 @@ The generator also accepts the older sibling layout as a fallback:
 
 ```text
 OpenParty/
-  Open-Party-Lab/
+  LAN-Party-Hub/
   tap-race/
 ```
 

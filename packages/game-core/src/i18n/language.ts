@@ -1,10 +1,12 @@
-export const supportedLanguages = ["de", "en"] as const;
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+export const supportedLanguages = ["zh-CN", "en", "de"] as const;
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
-export const defaultLanguage: SupportedLanguage = "de";
+export const defaultLanguage: SupportedLanguage = "zh-CN";
 
 export const languageLabels: Record<SupportedLanguage, string> = {
+  "zh-CN": "简体中文",
   de: "Deutsch",
   en: "English"
 };

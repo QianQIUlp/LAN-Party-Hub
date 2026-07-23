@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { PlayerSetupValue, PlayerSnapshot, RoomSnapshot } from "@open-party-lab/protocol";
 import { ControllerFrame } from "../controller-ui/layout/ControllerFrame.js";
 import { getControllerText } from "../i18n/controllerText.js";
@@ -444,7 +445,7 @@ export function LobbyPage({
   const currentPlayer = room?.players.find((entry) => entry.id === player?.id) ?? player;
   const selectedGame =
     room?.availableGames.find((game) => game.id === room.selectedGameId);
-  const selectedGameName = selectedGame?.displayName ?? "Noch kein Spiel";
+  const selectedGameName = selectedGame?.displayName ?? text.noGameSelected;
   const playerCount = room?.players.length ?? 0;
   const readyCount = (room?.players ?? []).filter((entry) => entry.isReady).length;
   const enoughPlayers = selectedGame ? playerCount >= selectedGame.minPlayers : false;
@@ -457,7 +458,7 @@ export function LobbyPage({
 
   return (
     <ControllerFrame
-      title={`Lobby ${room?.code ?? "----"}`}
+      title={text.lobbyTitle(room?.code ?? "----")}
       subtitle={room?.selectedGameId ? text.lobbySelected(selectedGameName) : text.lobbyWaitingHost}
       footer={error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
     >

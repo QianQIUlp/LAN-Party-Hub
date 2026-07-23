@@ -1,0 +1,80 @@
+export type ImposterContentPack = "standard" | "adult" | "all";
+
+export interface ZhSecretWordEntry {
+  category: string;
+  word: string;
+}
+
+// 原创整理的简体中文卧底词库，分类键沿用协议中的稳定内部标识。
+export const zhStandardSecretWordEntries: ZhSecretWordEntry[] = [
+  { category: "Essen", word: "火锅" }, { category: "Essen", word: "饺子" }, { category: "Essen", word: "披萨" },
+  { category: "Essen", word: "汉堡" }, { category: "Essen", word: "寿司" }, { category: "Essen", word: "面条" },
+  { category: "Essen", word: "蛋糕" }, { category: "Essen", word: "冰淇淋" }, { category: "Essen", word: "奶茶" },
+  { category: "Essen", word: "烧烤" }, { category: "Essen", word: "爆米花" }, { category: "Essen", word: "三明治" },
+  { category: "Essen", word: "巧克力" }, { category: "Essen", word: "西瓜" }, { category: "Essen", word: "咖啡" },
+  { category: "Objekt", word: "雨伞" }, { category: "Objekt", word: "钥匙" }, { category: "Objekt", word: "书包" },
+  { category: "Objekt", word: "水杯" }, { category: "Objekt", word: "枕头" }, { category: "Objekt", word: "遥控器" },
+  { category: "Objekt", word: "行李箱" }, { category: "Objekt", word: "眼镜" }, { category: "Objekt", word: "手电筒" },
+  { category: "Objekt", word: "笔记本" }, { category: "Objekt", word: "锤子" }, { category: "Objekt", word: "茶壶" },
+  { category: "Objekt", word: "扫把" }, { category: "Objekt", word: "麦克风" }, { category: "Objekt", word: "计算器" },
+  { category: "Ort", word: "图书馆" }, { category: "Ort", word: "医院" }, { category: "Ort", word: "学校" },
+  { category: "Ort", word: "火车站" }, { category: "Ort", word: "超市" }, { category: "Ort", word: "博物馆" },
+  { category: "Ort", word: "体育馆" }, { category: "Ort", word: "露营地" }, { category: "Ort", word: "灯塔" },
+  { category: "Ort", word: "动物园" }, { category: "Ort", word: "电影院" }, { category: "Ort", word: "游泳馆" },
+  { category: "Ort", word: "机场" }, { category: "Ort", word: "游乐园" }, { category: "Ort", word: "咖啡店" },
+  { category: "Tier", word: "长颈鹿" }, { category: "Tier", word: "鳄鱼" }, { category: "Tier", word: "海豚" },
+  { category: "Tier", word: "猫头鹰" }, { category: "Tier", word: "狐狸" }, { category: "Tier", word: "松鼠" },
+  { category: "Tier", word: "袋鼠" }, { category: "Tier", word: "树懒" }, { category: "Tier", word: "蝴蝶" },
+  { category: "Tier", word: "刺猬" }, { category: "Tier", word: "海马" }, { category: "Tier", word: "章鱼" },
+  { category: "Tier", word: "孔雀" }, { category: "Tier", word: "水獭" }, { category: "Tier", word: "熊猫" },
+  { category: "Alltag", word: "闹钟" }, { category: "Alltag", word: "洗澡" }, { category: "Alltag", word: "早餐" },
+  { category: "Alltag", word: "周末" }, { category: "Alltag", word: "购物清单" }, { category: "Alltag", word: "午休" },
+  { category: "Alltag", word: "洗衣服" }, { category: "Alltag", word: "倒垃圾" }, { category: "Alltag", word: "做作业" },
+  { category: "Alltag", word: "刷牙" }, { category: "Alltag", word: "打扫房间" }, { category: "Alltag", word: "点外卖" },
+  { category: "Alltag", word: "挤地铁" }, { category: "Alltag", word: "追剧" }, { category: "Alltag", word: "熬夜" },
+  { category: "Sport", word: "篮球" }, { category: "Sport", word: "网球" }, { category: "Sport", word: "排球" },
+  { category: "Sport", word: "骑自行车" }, { category: "Sport", word: "游泳" }, { category: "Sport", word: "攀岩" },
+  { category: "Sport", word: "滑板" }, { category: "Sport", word: "冲浪" }, { category: "Sport", word: "高尔夫" },
+  { category: "Sport", word: "拳击" }, { category: "Sport", word: "羽毛球" }, { category: "Sport", word: "射箭" },
+  { category: "Sport", word: "短跑" }, { category: "Sport", word: "瑜伽" }, { category: "Sport", word: "乒乓球" },
+  { category: "Beruf", word: "老师" }, { category: "Beruf", word: "飞行员" }, { category: "Beruf", word: "医生" },
+  { category: "Beruf", word: "建筑师" }, { category: "Beruf", word: "记者" }, { category: "Beruf", word: "程序员" },
+  { category: "Beruf", word: "设计师" }, { category: "Beruf", word: "厨师" }, { category: "Beruf", word: "警察" },
+  { category: "Beruf", word: "消防员" }, { category: "Beruf", word: "理发师" }, { category: "Beruf", word: "摄影师" },
+  { category: "Beruf", word: "心理咨询师" }, { category: "Beruf", word: "会计" }, { category: "Beruf", word: "翻译" },
+  { category: "Technik", word: "笔记本电脑" }, { category: "Technik", word: "平板电脑" }, { category: "Technik", word: "路由器" },
+  { category: "Technik", word: "无人机" }, { category: "Technik", word: "蓝牙音箱" }, { category: "Technik", word: "智能手表" },
+  { category: "Technik", word: "游戏主机" }, { category: "Technik", word: "耳机" }, { category: "Technik", word: "投影仪" },
+  { category: "Technik", word: "充电宝" }, { category: "Technik", word: "鼠标" }, { category: "Technik", word: "键盘" },
+  { category: "Technik", word: "太阳能板" }, { category: "Technik", word: "虚拟现实眼镜" }, { category: "Technik", word: "机器人" },
+  { category: "Natur", word: "瀑布" }, { category: "Natur", word: "火山" }, { category: "Natur", word: "冰川" },
+  { category: "Natur", word: "彩虹" }, { category: "Natur", word: "雷雨" }, { category: "Natur", word: "沙丘" },
+  { category: "Natur", word: "珊瑚礁" }, { category: "Natur", word: "日出" }, { category: "Natur", word: "极光" },
+  { category: "Natur", word: "溶洞" }, { category: "Natur", word: "潮汐" }, { category: "Natur", word: "沙滩" },
+  { category: "Natur", word: "森林" }, { category: "Natur", word: "草原" }, { category: "Natur", word: "流星" },
+  { category: "Kultur", word: "歌剧" }, { category: "Kultur", word: "芭蕾" }, { category: "Kultur", word: "小说" },
+  { category: "Kultur", word: "诗歌" }, { category: "Kultur", word: "涂鸦" }, { category: "Kultur", word: "雕塑" },
+  { category: "Kultur", word: "爵士乐" }, { category: "Kultur", word: "说唱" }, { category: "Kultur", word: "音乐节" },
+  { category: "Kultur", word: "电影" }, { category: "Kultur", word: "摄影" }, { category: "Kultur", word: "陶艺" },
+  { category: "Kultur", word: "水彩画" }, { category: "Kultur", word: "神话" }, { category: "Kultur", word: "相声" }
+];
+
+export const zhAdultSecretWordEntries: ZhSecretWordEntry[] = [
+  { category: "Essen", word: "鸡尾酒" }, { category: "Essen", word: "香槟" }, { category: "Essen", word: "威士忌" },
+  { category: "Essen", word: "红酒" }, { category: "Essen", word: "宿醉早餐" }, { category: "Essen", word: "深夜烧烤" },
+  { category: "Essen", word: "酒吧小吃" }, { category: "Essen", word: "醒酒汤" }, { category: "Essen", word: "啤酒塔" },
+  { category: "Essen", word: "烛光晚餐" }, { category: "Objekt", word: "高跟鞋" }, { category: "Objekt", word: "口红" },
+  { category: "Objekt", word: "香水" }, { category: "Objekt", word: "订婚戒指" }, { category: "Objekt", word: "眼罩" },
+  { category: "Objekt", word: "手铐" }, { category: "Objekt", word: "情侣睡衣" }, { category: "Objekt", word: "安全套" },
+  { category: "Objekt", word: "按摩油" }, { category: "Objekt", word: "情书" }, { category: "Ort", word: "夜店" },
+  { category: "Ort", word: "酒吧" }, { category: "Ort", word: "酒店房间" }, { category: "Ort", word: "桑拿房" },
+  { category: "Ort", word: "温泉" }, { category: "Ort", word: "赌场" }, { category: "Ort", word: "卡拉OK" },
+  { category: "Ort", word: "舞池" }, { category: "Ort", word: "单身派对" }, { category: "Ort", word: "蜜月旅行" },
+  { category: "Alltag", word: "相亲" }, { category: "Alltag", word: "调情" }, { category: "Alltag", word: "约会" },
+  { category: "Alltag", word: "暧昧短信" }, { category: "Alltag", word: "午夜之吻" }, { category: "Alltag", word: "泡泡浴" },
+  { category: "Alltag", word: "情侣吵架" }, { category: "Alltag", word: "求婚" }, { category: "Alltag", word: "裸泳" },
+  { category: "Alltag", word: "角色扮演" }, { category: "Kultur", word: "钢管舞" }, { category: "Kultur", word: "脱衣舞" },
+  { category: "Kultur", word: "歌舞秀" }, { category: "Kultur", word: "身体彩绘" }, { category: "Kultur", word: "成人用品店" },
+  { category: "Kultur", word: "膝上舞" }, { category: "Kultur", word: "派对大巴" }, { category: "Kultur", word: "调酒表演" },
+  { category: "Kultur", word: "蒙眼游戏" }, { category: "Kultur", word: "情侣游戏" }
+];

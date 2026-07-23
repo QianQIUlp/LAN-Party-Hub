@@ -1,3 +1,4 @@
+# Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 name: Agent-ready task
 description: Small, testable task suitable for AI coding agents
 title: "[agent] "
@@ -28,14 +29,31 @@ body:
   - type: textarea
     id: relevant-files
     attributes:
-      label: Relevant files or folders
-      description: List likely files, folders, packages, or game repos.
+      label: Writable paths
+      description: List the only files or folders the assigned agent may modify.
       placeholder: |
-        apps/server/src/...
-        apps/host/src/...
-        apps/controller/src/...
-        packages/protocol/src/...
-        local-games/<game-id>/...
+        games/<assigned-game>/**
+    validations:
+      required: true
+
+  - type: textarea
+    id: forbidden-files
+    attributes:
+      label: Forbidden paths
+      description: List shared or concurrently owned paths that must remain read-only.
+      value: |
+        apps/**
+        packages/**
+        games/<other-game>/**
+        generated registries and build output
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: Existing contract
+      description: State the manifest, input, public/private state, lifecycle, and package entrypoints this task must preserve.
     validations:
       required: true
 
@@ -49,6 +67,8 @@ body:
         - Do not add static imports for optional game repos.
         - Keep changes small and reviewable.
         - Do not add assets or generated media unless their rights are clear.
+        - Preserve LICENSE, NOTICE, source provenance, and modification notices; run `npm run legal:check`.
+        - Request shared interface changes through the integration owner instead of editing shared packages from a game branch.
     validations:
       required: true
 
