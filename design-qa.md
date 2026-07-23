@@ -2,59 +2,47 @@
 
 ## Comparison Setup
 
-- Source visual truth: `/home/qiu/.codex/attachments/47586d48-d308-4220-8089-46f7b9d75895/codex-clipboard-e0f2eba9-ab38-4327-8ad8-9fd1b94ddd96.png`
-- Rendered implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-controller-wide.png`
-- Responsive implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-controller-mobile.png`
-- Combined comparison evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-source-implementation-compare.png`
-- Source pixels: 1191 × 372; normalized with nearest-neighbour sampling to 1192 × 368 for comparison.
-- Implementation viewport and pixels: 1192 × 368 CSS px and 1192 × 368 image px, device scale factor 1.
-- Responsive viewport and pixels: 390 × 844 CSS px and 390 × 844 image px, device scale factor 1.
-- State: Chinese, active player's turn, claimed A selected, one card selected, two-player 26-card hand, empty table pile.
+- User annotation: `/home/qiu/.codex/attachments/8e9d8afb-75d1-40fb-b625-63ff7439a2e3/codex-clipboard-7d09cad7-bf4b-432a-9ba7-1b37b6861d9e.png`
+- Reference-sized implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-reference-size.png`
+- Side-by-side comparison: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-comparison.png`
+- Desktop implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-wide.png`
+- Phone implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-mobile.png`
+- Card-flight evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-flight.png`
+- Check-impact evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-check.png`
+- Automated evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-qa.json`
 
-The source is used only for information hierarchy and element composition. The user explicitly rejected a visual clone, so green felt, the source HUD, illustrated face cards, card-back motif, and palette are not fidelity targets.
+The annotation and reference-sized implementation are both 874 × 522 pixels. The state uses a two-player hand, claim A, and three cards in the active pile. The annotation is the composition target: its arrows request that the right-side pile move into the open table center. It is not a visual-style target, so its red annotations and exact pile placement are not copied as decoration.
 
-## Full-view Comparison Evidence
+## Full-view Comparison
 
-The combined image was inspected at original resolution. Both screens keep the same primary hierarchy—game state, visible hand, sorting controls, face-down pile, and three turn actions—but the implementation deliberately relocates those elements onto an original warm pixel-wood table. It does not reuse the source's deep-green surface, left score rail, character cards, orange card back, or decorative language.
+The combined image was inspected at original resolution. The implementation moves the active pile from the right rail to the horizontal center of the wooden table while keeping the curved hand and turn actions anchored below it. At the matched three-card state, three distinct card backs are visible. The pile remains readable without obscuring the claim rail or action dock.
 
-No separate focused crop was required: at the native 1192 × 368 comparison size, rank labels, sort controls, individual card corners, pile count, and action labels are all readable. A separate 390 × 844 capture was inspected for the responsive state because that behavior is absent from the source image.
+The original wood, plum, coral, gold, indigo, and cream language remains intact. No Balatro artwork, Ace Attorney character, franchise typography, logo, or copied composition is present. The full-screen Check sequence uses an original generated red/cream/black pixel-comic backdrop and project-native typography.
 
-## Required Fidelity Surfaces
+## Motion and Interaction Evidence
 
-- Fonts and typography: the interface uses a system monospace stack with hard pixel-style shadows, strong optical weights for short labels, and compact line heights. Chinese helper copy remains readable at both viewports; no external or copied display font is used.
-- Spacing and layout rhythm: the desktop view fits exactly inside 1192 × 368 with no document overflow; the action dock remains fully visible. The 390 × 844 view also has no document overflow. A long two-player hand scrolls horizontally while keeping the table, pile, and actions fixed.
-- Colors and visual tokens: warm oak, plum, coral, gold, indigo, and cream replace the source's green/cyan/red casino palette. Turn, selection, disabled, and primary-action states remain distinguishable with high-contrast hard borders.
-- Image quality and asset fidelity: the table and card back are original generated pixel assets documented in `games/bullshit/assets/README.md`, downscaled with nearest-neighbour sampling and rendered with pixelated image scaling. The source's illustrated face cards and card back were intentionally not reproduced.
-- Copy and content: Chinese labels communicate hand count, selected count, pile count, fixed claim, rank/suit sorting, play, Check, and pass. The helper text explicitly explains that actual cards may differ from the claim.
+- Pile rendering was exercised at counts 1, 2, 3, 4, 5, and 6. Counts 1–5 render the same number of visible card backs; count 6 renders five, so later pile growth no longer changes the silhouette.
+- A selected card was captured while following a measured arc from its hand position to the centered pile, flipping from face-up to the project card back before the authoritative play input is sent.
+- The original hand card fades only while its animated clone flies. The remaining hand reflows after the server confirms the play.
+- Check was captured during its full-screen sequence: short board shake, red/cream impact art, white flash, large `CHECK!` banner, and localized reveal sublabel. The server input is delayed until the impact beat, then the overlay clears automatically.
+- Turn, stat, helper-message, pile-count, pile-card, hand-deal, selected-card, sorting, button press, and latest-play label transitions were visually inspected.
+- `prefers-reduced-motion: reduce` bypasses the staged action delay and collapses CSS animations and transitions to one millisecond.
+
+## Responsive and Runtime Checks
+
+- Viewports: 1192 × 768 desktop, 874 × 522 reference-sized desktop, and 390 × 844 phone.
+- The centered pile remains centered within two pixels of the board midpoint.
+- Desktop and phone document dimensions exactly match their viewports with no horizontal or vertical document overflow.
+- Exercised: join, ready, choose claim, select cards, six alternating face-down plays, point/suit sorting, Check, and resolution.
+- Browser console errors: none.
+- Host room errors: none.
+- Production controller assets were loaded from the one-port preview at `http://127.0.0.1:3000/controller/`.
 
 ## Comparison History
 
-1. Initial interaction pass — blocked.
-   - [P1] Overlapping visual cards intercepted center clicks on earlier cards.
-   - Fix: separated visual cards from an accessible segmented hit map, added hover/focus lifting, and made long hands horizontally scrollable so hit regions do not overlap.
-   - Post-fix evidence: a 26-card mobile hand exposes approximately 26 px per hit segment; automated clicks select the first card successfully.
-2. Initial responsive capture — blocked.
-   - [P2] The first selected card was clipped at x = -17.30 px on the 390 px viewport, card curves touched the action dock, and the fullscreen control covered a header statistic.
-   - Fix: added responsive fan insets and overflow scrolling, raised the cards 18 px above the dock, reserved header space for the fullscreen control, and removed the duplicate mobile pile statistic.
-   - Post-fix evidence: the selected card begins at x = 57.92 px; document size is exactly 390 × 844; the action dock ends at y = 830 inside the 844 px viewport. On desktop the document is exactly 1192 × 368 and the action dock ends at y = 354.
-3. Final comparison — passed.
-   - No actionable P0, P1, or P2 findings remain.
-   - P3 follow-up: a future polish pass could make horizontal swiping more explicit when a hand exceeds the available width.
-
-## Interaction and Runtime Checks
-
-- Tested: sort by suit, sort by rank, choose claim, select card, play face down, Check the most recent play, and pass.
-- Tested viewports: 1192 × 368 and 390 × 844.
-- Browser console and page errors: none.
-- Persistent controls: visible and inside both viewports.
-
-## Implementation Checklist
-
-- [x] Preserve the reference's useful information hierarchy without copying its visual language.
-- [x] Keep every hand card visible or reachable and make selected cards lift visibly.
-- [x] Support point/rank and suit sorting.
-- [x] Keep pile count and all three turn actions visible.
-- [x] Pass desktop and phone overflow checks.
-- [x] Exercise the complete primary interaction loop.
+1. Existing visual baseline — passed after the original card hit-map and responsive fan fixes.
+2. First motion pass — blocked because the board-level color filter also tinted the Check overlay sepia, muting its intended red impact.
+3. Color correction — removed the parent filter while retaining the shake and overlay-local contrast flash. The final capture is red, cream, black, and gold as intended.
+4. Final comparison — passed with no actionable P0, P1, or P2 findings.
 
 final result: passed

@@ -112,6 +112,7 @@ export interface CardHandLayoutModel {
   isCurrentTurn: boolean;
   tableTextureUrl: string;
   cardBackUrl: string;
+  checkImpactUrl: string;
   cards: CardHandCardModel[];
   rankOptions: CardHandRankOptionModel[];
   activeRank: string | null;
@@ -127,7 +128,10 @@ export interface CardHandLayoutModel {
   rankSortLabel: string;
   suitSortLabel: string;
   playLabel: string;
+  playingLabel: string;
   checkLabel: string;
+  checkDisplayLabel: string;
+  checkSubLabel: string;
   passLabel: string;
   canPlay: boolean;
   canCheck: boolean;

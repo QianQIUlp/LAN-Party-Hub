@@ -1,10 +1,24 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReadyPanel } from "../common/ReadyPanel.js";
 import type { CardHandCardModel, CardHandLayoutModel, CardHandSuit } from "./models.js";
 import "./CardHandLayout.css";
 
 interface CardHandLayoutProps {
   model: CardHandLayoutModel;
+}
+
+interface FlightCard {
+  id: string;
+  rank: string;
+  suit: CardHandSuit;
+  startX: number;
+  startY: number;
+  width: number;
+  height: number;
+  deltaX: number;
+  deltaY: number;
+  delayMs: number;
+  spin: number;
 }
 
 type SortMode = "rank" | "suit";
@@ -44,26 +58,163 @@ function fanStyle(index: number, count: number, selected: boolean): CSSPropertie
   return {
     "--card-left": `${left}%`,
     "--card-left-mobile": `${mobileLeft}%`,
-    zIndex: selected ? 100 + index : 10 + index,
     "--card-angle": `${angle}deg`,
     "--card-curve": `${curve}px`,
-    "--card-lift": selected ? "-24px" : "0px"
+    "--card-lift": selected ? "-24px" : "0px",
+    "--card-deal-delay": `${Math.min(index, 16) * 22}ms`,
+    zIndex: selected ? 100 + index : 10 + index
   } as CSSProperties;
+}
+
+function pileCardStyle(index: number, count: number): CSSProperties {
+  const center = (count - 1) / 2;
+  const distance = index - center;
+  return {
+    "--pile-card-x": `${distance * 9}px`,
+    "--pile-card-y": `${Math.abs(distance) * 2 + index * 1.5}px`,
+    "--pile-card-rotation": `${distance * 4.5 + (index % 2 === 0 ? -1.5 : 1.5)}deg`,
+    "--pile-card-delay": `${index * 55}ms`,
+    zIndex: 20 + index
+  } as CSSProperties;
+}
+
+function reducedMotionPreferred(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function vibrate(pattern: number | number[]): void {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(pattern);
+  }
 }
 
 export function CardHandLayout({ model }: CardHandLayoutProps) {
   const [sortMode, setSortMode] = useState<SortMode>("rank");
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [flightCards, setFlightCards] = useState<FlightCard[]>([]);
+  const [isPlayingCards, setIsPlayingCards] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const pileTargetRef = useRef<HTMLDivElement | null>(null);
+  const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  const timersRef = useRef<number[]>([]);
   const sortedCards = useMemo(
     () => [...model.cards].sort((a, b) => compareCards(a, b, sortMode)),
     [model.cards, sortMode]
   );
+  const visiblePileCount = Math.min(model.pileCount, 5);
   const boardStyle = {
-    "--card-table-texture": `url("${model.tableTextureUrl}")`
+    "--card-table-texture": `url("${model.tableTextureUrl}")`,
+    "--check-impact-texture": `url("${model.checkImpactUrl}")`
   } as CSSProperties;
 
+  useEffect(() => {
+    return () => {
+      for (const timer of timersRef.current) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, []);
+
+  function schedule(callback: () => void, delayMs: number): void {
+    const timer = window.setTimeout(() => {
+      timersRef.current = timersRef.current.filter((entry) => entry !== timer);
+      callback();
+    }, delayMs);
+    timersRef.current.push(timer);
+  }
+
+  function handlePlay(): void {
+    if (!model.canPlay || isPlayingCards || isChecking) {
+      return;
+    }
+
+    const selectedCards = sortedCards.filter((card) => card.selected);
+    if (selectedCards.length === 0 || reducedMotionPreferred()) {
+      model.onPlay();
+      return;
+    }
+
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    const pileRect = pileTargetRef.current?.getBoundingClientRect();
+    if (!boardRect || !pileRect) {
+      model.onPlay();
+      return;
+    }
+
+    const flights = selectedCards.flatMap((card, index) => {
+      const cardRect = cardRefs.current.get(card.id)?.getBoundingClientRect();
+      if (!cardRect) {
+        return [];
+      }
+
+      const startX = cardRect.left - boardRect.left;
+      const startY = cardRect.top - boardRect.top;
+      const targetX = pileRect.left - boardRect.left + pileRect.width / 2 - cardRect.width / 2;
+      const targetY = pileRect.top - boardRect.top + pileRect.height / 2 - cardRect.height / 2;
+      const landingOffset = (index - (selectedCards.length - 1) / 2) * 4;
+
+      return [{
+        id: card.id,
+        rank: card.rank,
+        suit: card.suit,
+        startX,
+        startY,
+        width: cardRect.width,
+        height: cardRect.height,
+        deltaX: targetX - startX + landingOffset,
+        deltaY: targetY - startY + Math.abs(landingOffset) * 0.35,
+        delayMs: Math.min(index, 4) * 70,
+        spin: (index % 2 === 0 ? -1 : 1) * (5 + index * 2)
+      }];
+    });
+
+    if (flights.length === 0) {
+      model.onPlay();
+      return;
+    }
+
+    setHoveredCardId(null);
+    setFlightCards(flights);
+    setIsPlayingCards(true);
+    vibrate(35);
+    schedule(model.onPlay, 430 + Math.min(flights.length - 1, 4) * 70);
+    schedule(() => {
+      setFlightCards([]);
+      setIsPlayingCards(false);
+    }, 980);
+  }
+
+  function handleCheck(): void {
+    if (!model.canCheck || isChecking || isPlayingCards) {
+      return;
+    }
+
+    if (reducedMotionPreferred()) {
+      model.onCheck();
+      return;
+    }
+
+    setIsChecking(true);
+    vibrate([70, 35, 130, 35, 90]);
+    schedule(model.onCheck, 420);
+    schedule(() => setIsChecking(false), 1_320);
+  }
+
+  function handlePass(): void {
+    if (!model.canPass || isChecking || isPlayingCards) {
+      return;
+    }
+    vibrate(18);
+    model.onPass();
+  }
+
   return (
-    <div className="card-hand-board" style={boardStyle}>
+    <div
+      ref={boardRef}
+      className={`card-hand-board ${isPlayingCards ? "is-playing-cards" : ""} ${isChecking ? "is-checking" : ""}`}
+      style={boardStyle}
+    >
       {model.ready ? (
         <div className="card-hand-ready">
           <ReadyPanel ready={model.ready} />
@@ -82,20 +233,20 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
         <dl className="card-hand-stats" aria-label={model.handLabel}>
           <div>
             <dt>{model.handLabel}</dt>
-            <dd>{model.cards.length}</dd>
+            <dd key={`hand-${model.cards.length}`}>{model.cards.length}</dd>
           </div>
           <div>
             <dt>{model.selectedLabel}</dt>
-            <dd>{model.selectedCount}</dd>
+            <dd key={`selected-${model.selectedCount}`}>{model.selectedCount}</dd>
           </div>
           <div>
             <dt>{model.pileLabel}</dt>
-            <dd>{model.pileCount}</dd>
+            <dd key={`pile-${model.pileCount}`}>{model.pileCount}</dd>
           </div>
         </dl>
       </header>
 
-      <div className="card-hand-message" role="status" aria-live="polite">
+      <div key={model.helperText} className="card-hand-message" role="status" aria-live="polite">
         {model.helperText}
       </div>
 
@@ -115,7 +266,7 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
                 aria-pressed={option.selected}
                 aria-label={option.label}
                 className={option.selected ? "is-selected" : ""}
-                disabled={model.disabled || option.disabled}
+                disabled={model.disabled || option.disabled || isPlayingCards || isChecking}
                 onClick={option.onSelect}
               >
                 {option.rank}
@@ -126,6 +277,27 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
       </section>
 
       <main className="card-hand-playfield">
+        <aside className="card-hand-pile-zone" aria-label={model.pileLabel}>
+          <div ref={pileTargetRef} className={`card-hand-pile-stage ${visiblePileCount === 0 ? "is-empty" : ""}`}>
+            <div key={`visible-pile-${visiblePileCount}`} className="card-hand-pile-stack" aria-hidden="true">
+              {Array.from({ length: visiblePileCount }, (_, index) => (
+                <img
+                  key={`pile-card-${index}`}
+                  src={model.cardBackUrl}
+                  alt=""
+                  style={pileCardStyle(index, visiblePileCount)}
+                />
+              ))}
+            </div>
+            {visiblePileCount === 0 ? <span className="card-hand-pile-empty">DROP</span> : null}
+          </div>
+          <div className="card-hand-pile-count">
+            <strong key={`pile-label-${model.pileCount}`}>{model.pileCount}</strong>
+            <span>{model.pileLabel}</span>
+          </div>
+          {model.lastPlayLabel ? <small key={model.lastPlayLabel}>{model.lastPlayLabel}</small> : null}
+        </aside>
+
         <section className="card-hand-hand-zone" aria-label={model.handLabel}>
           <div className="card-hand-sort-row">
             <span>{model.sortLabel}</span>
@@ -134,6 +306,7 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
                 type="button"
                 aria-pressed={sortMode === "rank"}
                 className={sortMode === "rank" ? "is-selected" : ""}
+                disabled={isPlayingCards || isChecking}
                 onClick={() => setSortMode("rank")}
               >
                 {model.rankSortLabel}
@@ -142,6 +315,7 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
                 type="button"
                 aria-pressed={sortMode === "suit"}
                 className={sortMode === "suit" ? "is-selected" : ""}
+                disabled={isPlayingCards || isChecking}
                 onClick={() => setSortMode("suit")}
               >
                 {model.suitSortLabel}
@@ -161,7 +335,14 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
                 return (
                   <div
                     key={card.id}
-                    className={`card-hand-card ${red ? "is-red" : "is-black"} ${card.selected ? "is-selected" : ""} ${hoveredCardId === card.id ? "is-hovered" : ""}`}
+                    ref={(node) => {
+                      if (node) {
+                        cardRefs.current.set(card.id, node);
+                      } else {
+                        cardRefs.current.delete(card.id);
+                      }
+                    }}
+                    className={`card-hand-card ${red ? "is-red" : "is-black"} ${card.selected ? "is-selected" : ""} ${hoveredCardId === card.id ? "is-hovered" : ""} ${isPlayingCards && card.selected ? "is-launching" : ""}`}
                     style={fanStyle(index, sortedCards.length, card.selected)}
                     aria-hidden="true"
                   >
@@ -195,7 +376,7 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
                       } as CSSProperties}
                       aria-label={card.accessibilityLabel}
                       aria-pressed={card.selected}
-                      disabled={model.disabled || card.disabled}
+                      disabled={model.disabled || card.disabled || isPlayingCards || isChecking}
                       onPointerEnter={() => setHoveredCardId(card.id)}
                       onPointerLeave={() => setHoveredCardId((current) => current === card.id ? null : current)}
                       onFocus={() => setHoveredCardId(card.id)}
@@ -210,47 +391,78 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
             </div>
           </div>
         </section>
-
-        <aside className="card-hand-pile-zone" aria-label={model.pileLabel}>
-          <div className="card-hand-pile-stack" aria-hidden="true">
-            <img src={model.cardBackUrl} alt="" />
-            <img src={model.cardBackUrl} alt="" />
-            <img src={model.cardBackUrl} alt="" />
-          </div>
-          <div className="card-hand-pile-count">
-            <strong>{model.pileCount}</strong>
-            <span>{model.pileLabel}</span>
-          </div>
-          {model.lastPlayLabel ? <small>{model.lastPlayLabel}</small> : null}
-        </aside>
       </main>
 
       <footer className="card-hand-actions">
         <button
           type="button"
           className="card-hand-action is-check"
-          disabled={model.disabled || !model.canCheck}
-          onClick={model.onCheck}
+          aria-label={model.checkLabel}
+          disabled={model.disabled || !model.canCheck || isChecking || isPlayingCards}
+          onClick={handleCheck}
         >
-          {model.checkLabel}
+          <strong>{model.checkDisplayLabel}</strong>
+          <span>{model.checkSubLabel}</span>
         </button>
         <button
           type="button"
           className="card-hand-action is-play"
-          disabled={model.disabled || !model.canPlay}
-          onClick={model.onPlay}
+          disabled={model.disabled || !model.canPlay || isPlayingCards || isChecking}
+          onClick={handlePlay}
         >
-          {model.playLabel}
+          {isPlayingCards ? model.playingLabel : model.playLabel}
         </button>
         <button
           type="button"
           className="card-hand-action is-pass"
-          disabled={model.disabled || !model.canPass}
-          onClick={model.onPass}
+          disabled={model.disabled || !model.canPass || isChecking || isPlayingCards}
+          onClick={handlePass}
         >
           {model.passLabel}
         </button>
       </footer>
+
+      {flightCards.length > 0 ? (
+        <div className="card-hand-flight-layer" aria-hidden="true">
+          {flightCards.map((card) => {
+            const symbol = suitSymbols[card.suit];
+            const red = card.suit === "diamonds" || card.suit === "hearts";
+            const style = {
+              left: `${card.startX}px`,
+              top: `${card.startY}px`,
+              width: `${card.width}px`,
+              height: `${card.height}px`,
+              "--flight-mid-x": `${card.deltaX * 0.55}px`,
+              "--flight-mid-y": `${card.deltaY * 0.45 - 70}px`,
+              "--flight-delta-x": `${card.deltaX}px`,
+              "--flight-delta-y": `${card.deltaY}px`,
+              "--flight-delay": `${card.delayMs}ms`,
+              "--flight-spin": `${card.spin}deg`
+            } as CSSProperties;
+            return (
+              <div key={card.id} className="card-hand-flight-card" style={style}>
+                <div className="card-hand-flight-inner">
+                  <div className={`card-hand-flight-face ${red ? "is-red" : ""}`}>
+                    <strong>{card.rank}</strong>
+                    <span>{symbol}</span>
+                  </div>
+                  <img className="card-hand-flight-back" src={model.cardBackUrl} alt="" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {isChecking ? (
+        <div className="card-hand-check-impact" role="alert" aria-live="assertive">
+          <div className="card-hand-check-flash" />
+          <div className="card-hand-check-banner">
+            <strong>{model.checkDisplayLabel}</strong>
+            <span>{model.checkSubLabel}</span>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

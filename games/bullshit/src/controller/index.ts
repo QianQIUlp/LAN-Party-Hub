@@ -19,6 +19,7 @@ interface CardHandLayoutModel {
   isCurrentTurn: boolean;
   tableTextureUrl: string;
   cardBackUrl: string;
+  checkImpactUrl: string;
   cards: Array<{
     id: string;
     rank: string;
@@ -51,7 +52,10 @@ interface CardHandLayoutModel {
   rankSortLabel: string;
   suitSortLabel: string;
   playLabel: string;
+  playingLabel: string;
   checkLabel: string;
+  checkDisplayLabel: string;
+  checkSubLabel: string;
   passLabel: string;
   canPlay: boolean;
   canCheck: boolean;
@@ -99,6 +103,7 @@ const suitNames = {
 
 const tableTextureUrl = new URL("../../assets/pixel-wood-table.webp", import.meta.url).href;
 const cardBackUrl = new URL("../../assets/pixel-card-back.webp", import.meta.url).href;
+const checkImpactUrl = new URL("../../assets/pixel-check-impact.webp", import.meta.url).href;
 
 function createInput(
   playerId: string,
@@ -258,6 +263,7 @@ export function buildBullshitControllerModel(context: ControllerGameRenderContex
     isCurrentTurn: bullshitState.isCurrentTurn,
     tableTextureUrl,
     cardBackUrl,
+    checkImpactUrl,
     cards: bullshitState.ownHand.map((card) => {
       const selected = selectedSet.has(card.id);
       const cardName = formatCard(card, language);
@@ -308,9 +314,12 @@ export function buildBullshitControllerModel(context: ControllerGameRenderContex
       : en
         ? `Play ${selectedCount} face down${claimedRank ? ` as ${claimedRank}` : ""}`
         : `${selectedCount} verdeckt legen${claimedRank ? ` als ${claimedRank}` : ""}`,
+    playingLabel: zh ? "正在出牌…" : en ? "Playing…" : "Karten fliegen…",
     checkLabel: bullshitState.lastPlay
       ? zh ? "Check：质疑最近一手" : en ? "Check the last play" : "Letzten Zug pruefen"
       : zh ? "Check" : en ? "Check" : "Pruefen",
+    checkDisplayLabel: "CHECK!",
+    checkSubLabel: zh ? "开牌！" : en ? "Reveal!" : "Aufdecken!",
     passLabel: bullshitState.passUsed
       ? zh ? "本牌堆已经过牌" : en ? "Pass already used" : "Passen bereits benutzt"
       : zh ? "过牌" : en ? "Pass" : "Passen",
