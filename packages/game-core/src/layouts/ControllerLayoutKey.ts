@@ -1,4 +1,5 @@
-﻿export type ControllerLayoutKey =
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+export type ControllerLayoutKey =
   | "chaos_kommando_controls"
   | "drawing_guess"
   | "schaetzorama"
@@ -7,6 +8,7 @@
   | "left_right_hold"
   | "tap_mash"
   | "choice"
+  | "card_hand"
   | "dpad"
   | "spell_casting"
   | "racing_controls"

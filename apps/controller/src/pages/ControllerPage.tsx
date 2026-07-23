@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { Profiler, useEffect, useMemo, useRef } from "react";
 import { ControllerPerfTracker } from "../app/perfTelemetry.js";
 import type { ControllerAppState } from "../app/controllerSocketClient.js";
@@ -47,6 +48,13 @@ function resolveControllerPerfCounters(
         rows: model.rows.length,
         progressCurrent: model.progress.current,
         progressMax: model.progress.max
+      };
+    case "card_hand":
+      return {
+        ...baseCounters,
+        handCards: model.cards.length,
+        selectedCards: model.selectedCount,
+        pileCards: model.pileCount
       };
     default:
       return baseCounters;
@@ -150,14 +158,16 @@ export function ControllerPage({ state, onLeaveRoom, onInput, onSetReady }: Cont
   const gamepadChrome = gameId === "drift-racer";
   const denseBoardChrome = gameId === "word-tiles";
   const joystickChrome = layoutModel.kind === "virtual_joystick" && layoutModel.minimal;
-  const minimalChrome = denseBoardChrome || gamepadChrome || joystickChrome;
+  const cardTableChrome = layoutModel.kind === "card_hand";
+  const minimalChrome = denseBoardChrome || gamepadChrome || joystickChrome || cardTableChrome;
 
   return (
     <ControllerFrame
       title={minimalChrome ? "" : gameName}
       subtitle={minimalChrome ? undefined : `${text.phase}: ${text.formatPhase(game?.phase ?? text.unknown)} | ${orientation}`}
       wide={gamepadChrome || denseBoardChrome}
-      bare={joystickChrome}
+      bare={joystickChrome || cardTableChrome}
+      fullViewport={cardTableChrome}
       footer={
         minimalChrome ? undefined :
         <div style={{ display: "grid", gap: 10 }}>

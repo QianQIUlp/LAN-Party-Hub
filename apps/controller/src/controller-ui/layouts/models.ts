@@ -1,4 +1,5 @@
-﻿export interface LayoutStat {
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+export interface LayoutStat {
   label: string;
   value: string;
   highlighted?: boolean;
@@ -75,6 +76,65 @@ export interface ChoiceLayoutModel {
   choices: ChoiceItemModel[];
   stats?: LayoutStat[];
   feed?: string[];
+}
+
+export type CardHandSuit = "clubs" | "diamonds" | "hearts" | "spades";
+
+export interface CardHandCardModel {
+  id: string;
+  rank: string;
+  suit: CardHandSuit;
+  suitLabel: string;
+  selected: boolean;
+  disabled?: boolean;
+  accessibilityLabel: string;
+  helperText: string;
+  onToggle: () => void;
+}
+
+export interface CardHandRankOptionModel {
+  id: string;
+  rank: string;
+  label: string;
+  selected: boolean;
+  disabled?: boolean;
+  onSelect: () => void;
+}
+
+export interface CardHandLayoutModel {
+  kind: "card_hand";
+  title: string;
+  subtitle?: string;
+  helperText?: string;
+  language?: import("@open-party-lab/protocol").SupportedLanguage;
+  disabled: boolean;
+  ready?: ReadyLayoutModel;
+  isCurrentTurn: boolean;
+  tableTextureUrl: string;
+  cardBackUrl: string;
+  cards: CardHandCardModel[];
+  rankOptions: CardHandRankOptionModel[];
+  activeRank: string | null;
+  selectedRank: string | null;
+  pileCount: number;
+  selectedCount: number;
+  lastPlayLabel?: string;
+  handLabel: string;
+  selectedLabel: string;
+  pileLabel: string;
+  claimLabel: string;
+  sortLabel: string;
+  rankSortLabel: string;
+  suitSortLabel: string;
+  playLabel: string;
+  checkLabel: string;
+  passLabel: string;
+  canPlay: boolean;
+  canCheck: boolean;
+  canPass: boolean;
+  onPlay: () => void;
+  onCheck: () => void;
+  onPass: () => void;
 }
 
 export interface LeftRightHoldLayoutModel {
@@ -614,6 +674,7 @@ export interface MagicArenaLayoutModel {
 export type ControllerLayoutModel =
   | SingleButtonLayoutModel
   | ChoiceLayoutModel
+  | CardHandLayoutModel
   | TapMashLayoutModel
   | LeftRightHoldLayoutModel
   | DPadLayoutModel

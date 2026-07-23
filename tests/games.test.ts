@@ -1,5 +1,6 @@
 import { localizeGameManifest, type ServerGameContext } from "@open-party-lab/game-core";
 import { describe, expect, it } from "vitest";
+import { bullshitManifest } from "../games/bullshit/src/manifest.js";
 import { serverGame as imposterGame } from "../games/imposter/src/server/index.js";
 import { imposterManifest } from "../games/imposter/src/manifest.js";
 import type { ImposterState } from "../games/imposter/src/protocol.js";
@@ -112,17 +113,19 @@ describe("bundled game contracts", () => {
     }
   });
 
-  it("keeps every bundled game inside the first-release player range", () => {
+  it("publishes the expected player range for every bundled game", () => {
     expect([
       tapRaceManifest,
       zeichnenUndErratenManifest,
       schaetzoramaManifest,
-      imposterManifest
+      imposterManifest,
+      bullshitManifest
     ].map(({ id, minPlayers, maxPlayers }) => ({ id, minPlayers, maxPlayers }))).toEqual([
       { id: "tap-race", minPlayers: 2, maxPlayers: 4 },
       { id: "zeichnen-und-erraten", minPlayers: 2, maxPlayers: 4 },
       { id: "schaetzorama", minPlayers: 2, maxPlayers: 4 },
-      { id: "imposter", minPlayers: 3, maxPlayers: 4 }
+      { id: "imposter", minPlayers: 3, maxPlayers: 4 },
+      { id: "bullshit", minPlayers: 2, maxPlayers: 52 }
     ]);
   });
 

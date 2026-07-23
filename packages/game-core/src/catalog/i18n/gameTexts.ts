@@ -11,9 +11,11 @@ import { driftRacerText } from "./games/driftRacer.js";
 import { schaetzoramaText } from "./games/schaetzorama.js";
 import { wordTilesText } from "./games/wordTiles.js";
 import { tapRaceText } from "./games/tapRace.js";
+import { bullshitText } from "./games/bullshit.js";
 
 const gameTextCatalog = {
   "tap-race": tapRaceText,
+  bullshit: bullshitText,
   "zeichnen-und-erraten": zeichnenUndErratenText,
   "arena-survivor": arenaSurvivorText,
   imposter: imposterText,

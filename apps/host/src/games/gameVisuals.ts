@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 export interface GameVisual {
   accent: number;
   accentSoft: number;
@@ -56,6 +57,13 @@ const gameVisuals: Record<string, GameVisual> = {
     surface: 0x1d1230,
     surfaceHover: 0x2a1946,
     eyebrow: "Bluff"
+  },
+  bullshit: {
+    accent: 0xf4c95d,
+    accentSoft: 0xfef08a,
+    surface: 0x0b2f25,
+    surfaceHover: 0x124737,
+    eyebrow: "Cards"
   },
   tabu: {
     accent: 0x60a5fa,

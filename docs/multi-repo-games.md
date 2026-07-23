@@ -1,7 +1,7 @@
 <!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Multi-Repo Games
 
-LAN Party Hub supports optional local game repos. You do not need every game repo. The platform always loads its four bundled games and additionally loads optional games present under `local-games/` after `npm run games:sync-local`.
+LAN Party Hub supports optional local game repos. You do not need every game repo. The platform always loads its five bundled games and additionally loads optional games present under `local-games/` after `npm run games:sync-local`.
 
 ## Recommended Layout
 

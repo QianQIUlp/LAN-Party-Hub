@@ -24,7 +24,7 @@ LAN Party Hub（局域网派对中心）is an independently maintained derivativ
 
 The upstream work remains subject to the Apache License 2.0 and its original notices. Modifications and additions made for LAN Party Hub began in 2026 and are maintained by QianQIUlp under the repository's Apache-2.0 terms. Internal `@open-party-lab/*` package names remain only for compatibility.
 
-The four bundled games also originate from Apache-2.0 upstream repositories. Their exact repositories, fixed revisions, retained licenses, and modification scope are recorded in [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md).
+Four bundled games originate from Apache-2.0 upstream repositories. Their exact repositories, fixed revisions, retained licenses, and modification scope are recorded in [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md). The bundled `bullshit` game is an original LAN Party Hub implementation and uses no imported card art or media.
 
 Modified upstream files carry an inline LAN Party Hub modification notice where their format permits comments. Comment-free and generated formats are recorded in [config/upstream-modified-files.json](config/upstream-modified-files.json). The project-wide change summary is in [CHANGES.md](CHANGES.md).
 

@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { PropsWithChildren, ReactNode } from "react";
 
 interface ControllerFrameProps extends PropsWithChildren {
@@ -6,9 +7,10 @@ interface ControllerFrameProps extends PropsWithChildren {
   footer?: ReactNode;
   wide?: boolean;
   bare?: boolean;
+  fullViewport?: boolean;
 }
 
-export function ControllerFrame({ title, subtitle, footer, wide = false, bare = false, children }: ControllerFrameProps) {
+export function ControllerFrame({ title, subtitle, footer, wide = false, bare = false, fullViewport = false, children }: ControllerFrameProps) {
   return (
     <main
       style={{
@@ -16,7 +18,7 @@ export function ControllerFrame({ title, subtitle, footer, wide = false, bare = 
         gap: bare ? 0 : wide ? 8 : 14,
         maxWidth: bare ? "none" : wide ? 1040 : 680,
         width: "100%",
-        minHeight: bare ? "min(82vh, 760px)" : undefined,
+        minHeight: fullViewport ? "calc(100dvh - 20px)" : bare ? "min(82vh, 760px)" : undefined,
         margin: "0 auto",
         background: bare ? "transparent" : wide ? "rgba(2, 6, 23, 0.64)" : "var(--panel-bg)",
         border: bare ? "0" : wide ? "1px solid rgba(148, 163, 184, 0.14)" : "1px solid var(--panel-border)",
