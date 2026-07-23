@@ -30,6 +30,8 @@ Never attach two active agents to the same worktree. Never develop directly on p
 
 All PR titles, descriptions, review summaries, and reviewer-facing notes must be written in English. Keep the exact section headers supplied by `.github/PULL_REQUEST_TEMPLATE.md` so automation and repository conventions remain stable.
 
+Use `type(scope): subject` for every PR title. The scope should identify the owned area, such as `server`, `host`, `controller`, `release`, `legal`, `ci`, or a game ID. Do not include the PR number yourself. Integration must use squash merge; GitHub will append `(#123)` to the final commit on `main` and delete the source branch.
+
 ## Task contract
 
 Every parallel task must state:

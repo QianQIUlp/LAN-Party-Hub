@@ -58,6 +58,8 @@ Do not reintroduce these without maintainer approval:
 ## Contribution Rules
 
 - Write all pull request titles, descriptions, review summaries, and reviewer-facing notes in English. Preserve the repository template's exact section headers.
+- Format every PR title as `type(scope): subject`, for example `fix(release): publish Windows assets at release root`. Use a lowercase Conventional Commit type and a specific lowercase scope. Do not add `(#123)` manually; GitHub adds the PR number to the squash commit.
+- Merge PRs with squash merge only. The repository uses the PR title as the final commit title and leaves the squash commit body blank.
 - Keep changes small enough to review.
 - Prefer vertical slices: server, protocol, host, controller, and docs together when behavior changes.
 - Update `docs/project-status.md` when functionality or limitations change.
