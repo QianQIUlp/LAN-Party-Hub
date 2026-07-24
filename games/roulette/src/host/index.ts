@@ -207,6 +207,7 @@ export class RouletteHostScene extends Phaser.Scene {
   private terminalGroup?: THREE.Group;
   private terminalSurface?: CanvasSurface;
   private terminalGlow?: THREE.PointLight;
+  private terminalFocusAmount = 0;
   private crateGroup?: THREE.Group;
   private crateLid?: THREE.Group;
   private crateLight?: THREE.PointLight;
@@ -223,6 +224,7 @@ export class RouletteHostScene extends Phaser.Scene {
   private lastReloadNumber = -1;
   private spinVelocity = 0;
   private recoil = 0;
+  private deviceFocusAmount = 0;
   private flash = 0;
   private accentPulse = 0;
   private impact = 0;
@@ -1069,11 +1071,11 @@ export class RouletteHostScene extends Phaser.Scene {
   }
 
   private animateReload(state: RoulettePublicState, now: number): void {
-    this.setCamera("crate", 4_600, now);
+    this.setCamera("crate", 7_000, now);
     this.spinVelocity = Math.max(this.spinVelocity, 9);
     this.accentPulse = 1;
     this.crateAnimationStartedAt = now + 320;
-    this.crateAnimationEndsAt = now + 4_520;
+    this.crateAnimationEndsAt = now + 6_850;
     let flightIndex = 0;
     for (const playerId of state.playerOrder) {
       const previous = this.previousToolsByPlayer[playerId] ?? [];
@@ -1084,7 +1086,7 @@ export class RouletteHostScene extends Phaser.Scene {
           new THREE.Vector3(-2.05 + (flightIndex % 2) * 0.18, -0.05, 1.25),
           this.toolSlotWorld(playerId, addition.index),
           now + 1_020 + flightIndex * 210,
-          920,
+          4_200,
           false
         );
         flightIndex += 1;
@@ -1289,6 +1291,14 @@ export class RouletteHostScene extends Phaser.Scene {
       this.threeCamera.position.y += (Math.random() - 0.5) * strength;
     }
     this.threeCamera.lookAt(this.cameraLook);
+    const showTableUi = this.cameraMode === "wide" || this.cameraMode === "crate";
+    for (const view of this.playerViews.values()) {
+      view.panel.mesh.visible = showTableUi;
+      view.rack.visible = showTableUi;
+    }
+    if (this.promptSurface) {
+      this.promptSurface.mesh.visible = this.cameraMode !== "terminal";
+    }
   }
 
   private updateEnvironment(seconds: number, dt: number): void {
@@ -1303,6 +1313,17 @@ export class RouletteHostScene extends Phaser.Scene {
     }
     if (this.terminalGlow) {
       this.terminalGlow.intensity = 2.4 + Math.sin(seconds * 1.8) * 0.45 + (this.cameraMode === "terminal" ? 2 : 0);
+    }
+    const terminalTarget = this.cameraMode === "terminal" ? 1 : 0;
+    this.terminalFocusAmount += (terminalTarget - this.terminalFocusAmount) * (1 - Math.exp(-4.5 * dt));
+    if (this.terminalGroup) {
+      this.terminalGroup.position.set(
+        THREE.MathUtils.lerp(3.55, 2.35, this.terminalFocusAmount),
+        THREE.MathUtils.lerp(-0.18, 0.32, this.terminalFocusAmount),
+        THREE.MathUtils.lerp(-2.4, -0.85, this.terminalFocusAmount)
+      );
+      this.terminalGroup.rotation.y = THREE.MathUtils.lerp(-0.25, -0.08, this.terminalFocusAmount);
+      this.terminalGroup.scale.setScalar(1 + this.terminalFocusAmount * 1.05);
     }
     if (this.tableRimMaterial) {
       this.tableRimMaterial.emissiveIntensity = 0.34 + this.accentPulse * 1.2 + Math.sin(seconds * 1.2) * 0.08;
@@ -1320,6 +1341,8 @@ export class RouletteHostScene extends Phaser.Scene {
     this.spinVelocity *= Math.exp(-2.9 * dt);
     this.recoil *= Math.exp(-10 * dt);
     this.flash *= Math.exp(-15 * dt);
+    const focusTarget = this.cameraMode === "device" ? 1 : 0;
+    this.deviceFocusAmount += (focusTarget - this.deviceFocusAmount) * (1 - Math.exp(-5 * dt));
     if (this.chamberGroup) {
       this.chamberGroup.rotation.y += dt * (0.3 + this.spinVelocity);
     }
@@ -1328,6 +1351,7 @@ export class RouletteHostScene extends Phaser.Scene {
       this.deviceGroup.position.z = 0.2 + this.recoil * 0.34;
       this.deviceGroup.rotation.z = Math.sin(seconds * 0.62) * 0.012;
       this.deviceGroup.rotation.x = -this.recoil * 0.035;
+      this.deviceGroup.scale.setScalar(0.74 + this.deviceFocusAmount * 0.22);
     }
     if (this.muzzleFlash && this.muzzleLight) {
       this.muzzleFlash.visible = this.flash > 0.02;
@@ -1353,10 +1377,10 @@ export class RouletteHostScene extends Phaser.Scene {
       const elapsed = now - this.crateAnimationStartedAt;
       if (elapsed < 760) {
         openness = smooth(elapsed / 760);
-      } else if (elapsed < 3_350) {
+      } else if (elapsed < 5_650) {
         openness = 1;
       } else {
-        openness = 1 - smooth((elapsed - 3_350) / 760);
+        openness = 1 - smooth((elapsed - 5_650) / 900);
       }
     }
     this.crateLid.rotation.x = -1.45 * openness;
@@ -1508,6 +1532,7 @@ export class RouletteHostScene extends Phaser.Scene {
     this.terminalGroup = undefined;
     this.terminalSurface = undefined;
     this.terminalGlow = undefined;
+    this.terminalFocusAmount = 0;
     this.crateGroup = undefined;
     this.crateLid = undefined;
     this.crateLight = undefined;
@@ -1517,6 +1542,7 @@ export class RouletteHostScene extends Phaser.Scene {
     this.dealerGroup = undefined;
     this.dealerEyeMaterial = undefined;
     this.dust = undefined;
+    this.deviceFocusAmount = 0;
     this.lastEventNumber = -1;
     this.lastReloadNumber = -1;
   }
