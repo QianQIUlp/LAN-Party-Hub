@@ -11,6 +11,7 @@ import type {
 interface HostClientLike {
   subscribe(callback: (state: HostAppStateLike) => void): () => void;
   getState(): HostAppStateLike;
+  sendGameHostAction(gameId: string, action: unknown): void;
 }
 
 interface HostAppStateLike {
@@ -241,6 +242,9 @@ export class RouletteHostScene extends Phaser.Scene {
       this.consumeHostState(state);
     });
     this.consumeHostState(client.getState());
+    this.time.delayedCall(120, () => {
+      client.sendGameHostAction(rouletteManifest.id, { type: "request_host_sync" });
+    });
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -1065,11 +1069,11 @@ export class RouletteHostScene extends Phaser.Scene {
   }
 
   private animateReload(state: RoulettePublicState, now: number): void {
-    this.setCamera("crate", 3_200, now);
+    this.setCamera("crate", 4_600, now);
     this.spinVelocity = Math.max(this.spinVelocity, 9);
     this.accentPulse = 1;
-    this.crateAnimationStartedAt = now;
-    this.crateAnimationEndsAt = now + 3_050;
+    this.crateAnimationStartedAt = now + 320;
+    this.crateAnimationEndsAt = now + 4_520;
     let flightIndex = 0;
     for (const playerId of state.playerOrder) {
       const previous = this.previousToolsByPlayer[playerId] ?? [];
@@ -1079,7 +1083,7 @@ export class RouletteHostScene extends Phaser.Scene {
           addition.item,
           new THREE.Vector3(-2.05 + (flightIndex % 2) * 0.18, -0.05, 1.25),
           this.toolSlotWorld(playerId, addition.index),
-          now + 620 + flightIndex * 170,
+          now + 1_020 + flightIndex * 210,
           920,
           false
         );
@@ -1263,8 +1267,8 @@ export class RouletteHostScene extends Phaser.Scene {
         look: new THREE.Vector3(0, -0.62, -0.05)
       },
       device: {
-        position: new THREE.Vector3(2.55, 2.35, 4.0),
-        look: new THREE.Vector3(0, -0.52, -0.3)
+        position: new THREE.Vector3(1.85, 1.4, 2.75),
+        look: new THREE.Vector3(0, -0.5, -0.45)
       },
       terminal: {
         position: new THREE.Vector3(4.65, 0.72, -0.18),
@@ -1341,14 +1345,18 @@ export class RouletteHostScene extends Phaser.Scene {
       return;
     }
     let openness = 0;
-    if (now < this.crateAnimationEndsAt && this.crateAnimationStartedAt >= 0) {
+    if (
+      now >= this.crateAnimationStartedAt
+      && now < this.crateAnimationEndsAt
+      && this.crateAnimationStartedAt >= 0
+    ) {
       const elapsed = now - this.crateAnimationStartedAt;
-      if (elapsed < 620) {
-        openness = smooth(elapsed / 620);
-      } else if (elapsed < 2_350) {
+      if (elapsed < 760) {
+        openness = smooth(elapsed / 760);
+      } else if (elapsed < 3_350) {
         openness = 1;
       } else {
-        openness = 1 - smooth((elapsed - 2_350) / 620);
+        openness = 1 - smooth((elapsed - 3_350) / 760);
       }
     }
     this.crateLid.rotation.x = -1.45 * openness;

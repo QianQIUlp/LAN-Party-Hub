@@ -594,6 +594,19 @@ export const serverGame: ServerGame<
       )
     });
   },
+  handleHostAction(state, action) {
+    if (
+      !state
+      || typeof action !== "object"
+      || action === null
+      || !("type" in action)
+      || action.type !== "request_host_sync"
+    ) {
+      return null;
+    }
+
+    return { state: { ...state } };
+  },
   handleInput(state, input, context) {
     if (
       state.phase !== "playing"

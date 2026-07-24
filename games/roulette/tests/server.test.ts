@@ -284,6 +284,19 @@ describe("roulette tactical tools", () => {
 });
 
 describe("roulette match", () => {
+  it("can rebroadcast an unchanged state when a host scene requests hydration", () => {
+    const state = playingState(["blank", "live"]);
+    const result = serverGame.handleHostAction?.(
+      state,
+      { type: "request_host_sync" },
+      context()
+    );
+
+    expect(result?.state).toEqual(state);
+    expect(result?.state).not.toBe(state);
+    expect(serverGame.handleHostAction?.(state, { type: "unknown" }, context())).toBeNull();
+  });
+
   it("starts a stronger second duel after the intermission", () => {
     const state = playingState(["live"], {
       healthByPlayer: { p1: rouletteMaxHealth, p2: 1 }
