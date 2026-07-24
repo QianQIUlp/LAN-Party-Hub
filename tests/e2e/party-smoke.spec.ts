@@ -194,7 +194,7 @@ test("offline phones recover and three players can switch through all bundled ga
             continue;
           }
           const checkButton = controllers[index].getByRole("button", { name: /^Check：质疑最近一手/ });
-          if (await checkButton.isVisible().catch(() => false)) {
+          if (await checkButton.isEnabled().catch(() => false)) {
             return index;
           }
         }
@@ -204,7 +204,7 @@ test("offline phones recover and three players can switch through all bundled ga
       await expect.poll(challengerControllerIndex).toBeGreaterThanOrEqual(0);
       const challenger = controllers[await challengerControllerIndex()];
       await challenger.getByRole("button", { name: /^Check：质疑最近一手/ }).click();
-      await expect(challenger.getByText(/拿走整堆/).first()).toBeVisible();
+      await expect(challenger.getByText(/收下 \d+ 张/).first()).toBeVisible();
 
       await expect.poll(() => page.evaluate(() => {
         return (window as typeof window & {
