@@ -130,7 +130,7 @@ export class RouletteHostScene extends Phaser.Scene {
     this.deviceGroup.rotation.x = -0.08 + Math.sin(seconds * 0.7) * 0.025;
     this.deviceGroup.rotation.y = 0.2 + Math.sin(seconds * 0.45) * 0.08;
     this.deviceGroup.rotation.z = Math.sin(seconds * 0.55) * 0.018 - this.recoil * 0.025;
-    this.deviceGroup.position.x = -this.recoil * 0.42;
+    this.deviceGroup.position.x = -0.18 - this.recoil * 0.42;
     this.deviceGroup.position.y = 0.12 + Math.sin(seconds * 0.8) * 0.035;
 
     if (this.flashMesh && this.flashLight) {
@@ -331,7 +331,8 @@ export class RouletteHostScene extends Phaser.Scene {
     device.add(flashMesh);
 
     device.rotation.set(-0.08, 0.2, 0);
-    device.position.y = 0.12;
+    device.position.set(-0.18, 0.12, 0);
+    device.scale.setScalar(0.82);
     scene.add(device);
     this.deviceGroup = device;
     this.chamberGroup = chamber;
