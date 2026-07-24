@@ -53,6 +53,12 @@ interface ToolFlight {
   fadeAtEnd: boolean;
 }
 
+interface CameraCue {
+  mode: Exclude<CameraMode, "wide">;
+  startsAt: number;
+  endsAt: number;
+}
+
 const colors = {
   background: 0x040608,
   wall: 0x18080c,
@@ -193,8 +199,7 @@ export class RouletteHostScene extends Phaser.Scene {
   private threeCamera?: THREE.PerspectiveCamera;
   private cameraLook = new THREE.Vector3(0, -0.55, 0);
   private cameraMode: CameraMode = "wide";
-  private cameraFocusUntil = 0;
-  private queuedTerminalAt = 0;
+  private cameraCues: CameraCue[] = [];
   private tableGroup?: THREE.Group;
   private tableRimMaterial?: THREE.MeshStandardMaterial;
   private dangerLight?: THREE.PointLight;
@@ -1130,14 +1135,17 @@ export class RouletteHostScene extends Phaser.Scene {
     state: RoulettePublicState,
     now: number
   ): void {
-    this.setCamera("device", 1_450, now);
+    this.cameraCues = [
+      { mode: "device", startsAt: now, endsAt: now + 1_350 },
+      { mode: "terminal", startsAt: now + 1_350, endsAt: now + 3_900 }
+    ];
     this.recoil = event.shell === "live" ? 1 : 0.32;
     this.flash = event.shell === "live" ? 1 : 0.12;
     this.impact = event.shell === "live" ? 1 : 0.25;
     this.spinVelocity += event.shell === "live" ? 2.4 : 0.9;
-    this.queuedTerminalAt = now + 980;
     if (state.stage !== "duel") {
-      this.queuedTerminalAt = now + 720;
+      this.cameraCues[0] = { mode: "device", startsAt: now, endsAt: now + 900 };
+      this.cameraCues[1] = { mode: "terminal", startsAt: now + 900, endsAt: now + 4_100 };
     }
   }
 
@@ -1248,19 +1256,22 @@ export class RouletteHostScene extends Phaser.Scene {
   }
 
   private setCamera(mode: CameraMode, duration: number, now = performance.now()): void {
-    this.cameraMode = mode;
-    this.cameraFocusUntil = now + duration;
+    this.cameraCues = mode === "wide"
+      ? []
+      : [{ mode, startsAt: now, endsAt: now + duration }];
   }
 
   private updateCamera(now: number, dt: number): void {
     if (!this.threeCamera) {
       return;
     }
-    if (this.queuedTerminalAt > 0 && now >= this.queuedTerminalAt) {
-      this.queuedTerminalAt = 0;
-      this.setCamera("terminal", 1_850, now);
-    } else if (now >= this.cameraFocusUntil && this.cameraMode !== "wide") {
-      this.cameraMode = "wide";
+    this.cameraCues = this.cameraCues.filter((cue) => cue.endsAt > now);
+    this.cameraMode = "wide";
+    for (const cue of this.cameraCues) {
+      if (now >= cue.startsAt && now < cue.endsAt) {
+        this.cameraMode = cue.mode;
+        break;
+      }
     }
 
     const targets: Record<CameraMode, { position: THREE.Vector3; look: THREE.Vector3 }> = {
@@ -1539,6 +1550,7 @@ export class RouletteHostScene extends Phaser.Scene {
     this.promptSurface = undefined;
     this.playerViews.clear();
     this.previousToolsByPlayer = {};
+    this.cameraCues = [];
     this.dealerGroup = undefined;
     this.dealerEyeMaterial = undefined;
     this.dust = undefined;
