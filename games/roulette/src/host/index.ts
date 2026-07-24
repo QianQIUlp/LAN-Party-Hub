@@ -470,17 +470,6 @@ export class RouletteHostScene extends Phaser.Scene {
       fontStyle: "bold",
       color: palette.ivory
     });
-    this.add.text(
-      width - 42,
-      40,
-      this.text(language, "房间 ", "ROOM ", "RAUM ") + (appState.room?.code ?? "----"),
-      {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "20px",
-        color: palette.muted
-      }
-    ).setOrigin(1, 0);
-
     if (!gameState) {
       this.add.text(
         width / 2,
