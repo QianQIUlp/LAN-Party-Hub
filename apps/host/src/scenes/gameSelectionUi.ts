@@ -339,6 +339,34 @@ function drawGameIcon(
       graphics.strokePath();
       break;
     }
+    case "roulette": {
+      graphics.fillCircle(center, center, size * 0.34);
+      graphics.strokeCircle(center, center, size * 0.34);
+      graphics.fillStyle(0x08111f, 0.88);
+      graphics.fillCircle(center, center, size * 0.1);
+      for (let index = 0; index < 6; index += 1) {
+        const angle = -Math.PI / 2 + index * (Math.PI / 3);
+        const chamberX = center + Math.cos(angle) * size * 0.22;
+        const chamberY = center + Math.sin(angle) * size * 0.22;
+        graphics.fillCircle(chamberX, chamberY, size * 0.065);
+      }
+      graphics.lineStyle(secondaryLine, accent, 0.72);
+      graphics.lineBetween(size * 0.72, size * 0.68, size * 0.9, size * 0.84);
+      break;
+    }
+    case "liars-table": {
+      graphics.fillRoundedRect(size * 0.18, size * 0.18, size * 0.42, size * 0.58, size * 0.06);
+      graphics.strokeRoundedRect(size * 0.18, size * 0.18, size * 0.42, size * 0.58, size * 0.06);
+      graphics.fillStyle(0x08111f, 0.84);
+      graphics.fillRoundedRect(size * 0.4, size * 0.28, size * 0.42, size * 0.58, size * 0.06);
+      graphics.strokeRoundedRect(size * 0.4, size * 0.28, size * 0.42, size * 0.58, size * 0.06);
+      graphics.fillStyle(accentSoft, 0.96);
+      drawStar(graphics, size * 0.61, size * 0.56, size * 0.13, size * 0.06, 4);
+      graphics.fillPath();
+      graphics.strokePath();
+      graphics.fillCircle(size * 0.31, size * 0.34, size * 0.055);
+      break;
+    }
     case "tabu": {
       graphics.fillRoundedRect(size * 0.2, size * 0.22, size * 0.54, size * 0.42, size * 0.06);
       graphics.strokeRoundedRect(size * 0.2, size * 0.22, size * 0.54, size * 0.42, size * 0.06);

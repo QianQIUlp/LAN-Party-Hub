@@ -73,7 +73,7 @@ export class RouletteHostScene extends Phaser.Scene {
     const names = Object.fromEntries(players.map((player) => [player.id, player.name]));
 
     this.drawBackground(width, height);
-    this.add.text(42, 28, this.text(language, "命运轮盘", "FATE CHAMBER", "SCHICKSALSTROMMEL"), {
+    this.add.text(150, 28, this.text(language, "命运轮盘", "FATE CHAMBER", "SCHICKSALSTROMMEL"), {
       fontFamily: "Georgia, serif",
       fontSize: "44px",
       fontStyle: "bold",
@@ -137,7 +137,7 @@ export class RouletteHostScene extends Phaser.Scene {
     }
 
     this.drawChamber(width / 2, cardY + cardHeight * 0.42, gameState, language);
-    this.drawLastShot(width / 2, cardY + cardHeight * 0.82, gameState, names, language);
+    this.drawLastShot(width / 2, cardY + cardHeight + 35, gameState, names, language);
 
     const message = appState.game?.message ?? gameState.message ?? "";
     const messageWidth = Math.max(360, Math.min(780, width - 180));

@@ -27,7 +27,7 @@ const playerPalette = [0xdc2626, 0x2563eb, 0x16a34a, 0x9333ea];
 const rankIcon: Record<LiarsCardRank, string> = {
   crown: "♛",
   moon: "☾",
-  key: "⚿",
+  key: "K",
   wild: "✦"
 };
 
@@ -94,7 +94,7 @@ export class LiarsTableHostScene extends Phaser.Scene {
     const names = Object.fromEntries(players.map((player) => [player.id, player.name]));
 
     this.drawBackground(width, height);
-    this.add.text(38, 24, this.text(language, "谎言牌桌", "LIARS' TABLE", "LUEGENTISCH"), {
+    this.add.text(150, 24, this.text(language, "谎言牌桌", "LIARS' TABLE", "LUEGENTISCH"), {
       fontFamily: "Georgia, serif",
       fontSize: "42px",
       fontStyle: "bold",

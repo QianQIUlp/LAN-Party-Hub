@@ -36,6 +36,20 @@
     ]
   },
   {
+    "id": "roulette",
+    "package": "@open-party-lab/game-roulette",
+    "repo": "https://github.com/QianQIUlp/LAN-Party-Hub.git",
+    "sourceRepo": "https://github.com/QianQIUlp/LAN-Party-Hub",
+    "sourceKind": "lan-party-hub-original",
+    "distribution": "bundled",
+    "bundledPath": "games/roulette",
+    "includeInRelease": true,
+    "defaultLocalPath": "local-games/roulette",
+    "alternateLocalPaths": [
+      "../roulette"
+    ]
+  },
+  {
     "id": "pantomime",
     "package": "@open-party-lab/game-pantomime",
     "repo": "https://github.com/Hartwich/pantomime.git",
@@ -94,6 +108,20 @@
     "defaultLocalPath": "local-games/bullshit",
     "alternateLocalPaths": [
       "../bullshit"
+    ]
+  },
+  {
+    "id": "liars-table",
+    "package": "@open-party-lab/game-liars-table",
+    "repo": "https://github.com/QianQIUlp/LAN-Party-Hub.git",
+    "sourceRepo": "https://github.com/QianQIUlp/LAN-Party-Hub",
+    "sourceKind": "lan-party-hub-original",
+    "distribution": "bundled",
+    "bundledPath": "games/liars-table",
+    "includeInRelease": true,
+    "defaultLocalPath": "local-games/liars-table",
+    "alternateLocalPaths": [
+      "../liars-table"
     ]
   },
   {

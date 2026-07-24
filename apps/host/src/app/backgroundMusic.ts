@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import type { HostAppState, HostSocketClient } from "./hostSocketClient.js";
 
 const LOBBY_TRACK_ID = "lobby";
@@ -288,6 +289,16 @@ const musicProfiles: Record<string, MusicProfile> = {
   imposter: createProfile(musicTemplates.mystery, {
     bpm: 98,
     rootMidi: 46,
+    masterGain: 0.11
+  }),
+  roulette: createProfile(musicTemplates.mystery, {
+    bpm: 74,
+    rootMidi: 41,
+    masterGain: 0.1
+  }),
+  "liars-table": createProfile(musicTemplates.mystery, {
+    bpm: 92,
+    rootMidi: 45,
     masterGain: 0.11
   }),
   tabu: createProfile(musicTemplates.arcade, {

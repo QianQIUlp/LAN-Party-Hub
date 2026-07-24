@@ -68,7 +68,7 @@ interface ControllerGameRenderContext {
 const rankIcon: Record<LiarsCardRank, string> = {
   crown: "♛",
   moon: "☾",
-  key: "⚿",
+  key: "K",
   wild: "✦"
 };
 

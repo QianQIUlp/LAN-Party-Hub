@@ -1,5 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const serverPort = process.env.E2E_SERVER_PORT ?? "3000";
+const hostPort = process.env.E2E_HOST_PORT ?? "5173";
+const controllerPort = process.env.E2E_CONTROLLER_PORT ?? "5174";
+const serverOrigin = "http://127.0.0.1:" + serverPort;
+const hostOrigin = "http://127.0.0.1:" + hostPort;
+const controllerOrigin = "http://127.0.0.1:" + controllerPort;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -8,7 +15,7 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: hostOrigin,
     trace: "retain-on-failure"
   },
   projects: [
@@ -19,20 +26,20 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "PRIMARY_ROOM_CODE=E2E0 JSON_SNAPSHOT_PATH=../../Temp/e2e-room.json PUBLIC_CONTROLLER_ORIGIN=http://127.0.0.1:5174 npm run dev --workspace @open-party-lab/server",
-      url: "http://127.0.0.1:3000/health",
+      command: "PORT=" + serverPort + " PRIMARY_ROOM_CODE=E2E0 JSON_SNAPSHOT_PATH=../../Temp/e2e-room.json PUBLIC_CONTROLLER_ORIGIN=" + controllerOrigin + " npm run dev --workspace @open-party-lab/server",
+      url: serverOrigin + "/health",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000
     },
     {
-      command: "VITE_SERVER_URL=http://127.0.0.1:3000 npm run dev --workspace @open-party-lab/host -- --host 127.0.0.1",
-      url: "http://127.0.0.1:5173",
+      command: "VITE_SERVER_URL=" + serverOrigin + " npm run dev --workspace @open-party-lab/host -- --host 127.0.0.1 --port " + hostPort,
+      url: hostOrigin,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000
     },
     {
-      command: "VITE_SERVER_URL=http://127.0.0.1:3000 npm run dev --workspace @open-party-lab/controller -- --host 127.0.0.1",
-      url: "http://127.0.0.1:5174",
+      command: "VITE_SERVER_URL=" + serverOrigin + " npm run dev --workspace @open-party-lab/controller -- --host 127.0.0.1 --port " + controllerPort,
+      url: controllerOrigin,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000
     }

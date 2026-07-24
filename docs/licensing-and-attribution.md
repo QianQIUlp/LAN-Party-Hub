@@ -7,7 +7,7 @@ This is an engineering policy for this repository, not legal advice.
 - Keep the root `LICENSE` as the unmodified Apache License 2.0 text.
 - Keep the upstream Open Party Lab notice inside `NOTICE.md`; append derivative notices instead of replacing upstream attribution.
 - Keep original copyright, patent, trademark, attribution, and license headers that still relate to distributed code or assets.
-- Keep every bundled game's `LICENSE` and provenance in `THIRD_PARTY_SOURCES.md` and `config/known-games.json`. Imported games require an exact source repository and revision; LAN Party Hub-original games use the repository's own Git history.
+- Keep every bundled game's `LICENSE` and provenance in `THIRD_PARTY_SOURCES.md` and `config/known-games.json`. Imported games require an exact source repository and revision; repository-native games use `sourceKind: lan-party-hub-original`, point `sourceRepo` at this repository, and rely on its Git history instead of an invented external revision.
 - Do not present LAN Party Hub as an official or endorsed Open Party Lab release.
 
 ## Modifying an upstream-derived file

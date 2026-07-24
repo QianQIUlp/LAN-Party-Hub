@@ -100,12 +100,23 @@ async function check() {
   if (!notice.includes("Upstream Open Party Lab notice (preserved)") || !notice.includes("independently maintained derivative")) errors.push("NOTICE.md is missing preserved upstream or derivative attribution.");
 
   const bundled = knownGames.filter((game) => game.includeInRelease === true);
-  if (bundled.length !== 5) errors.push(`Expected 5 bundled games, found ${bundled.length}.`);
+  if (bundled.length === 0) errors.push("No bundled games are configured for release.");
   for (const game of bundled) {
     if (!existsSync(resolve(root, game.bundledPath ?? "", "LICENSE"))) errors.push(`${game.id} is missing its retained LICENSE.`);
+
     if (game.sourceKind === "lan-party-hub-original") {
       if (!game.sourceRepo || !sources.includes(game.sourceRepo)) {
         errors.push(`${game.id} original-source provenance is missing from THIRD_PARTY_SOURCES.md.`);
+      }
+      if (game.sourceRevision) {
+        errors.push(`${game.id} is repository-native and must not claim an imported source revision.`);
+      }
+      continue;
+    }
+
+    if (game.sourceKind === "original") {
+      if (game.sourceRepo || game.sourceRevision) {
+        errors.push(`${game.id} is marked original but also claims imported source provenance.`);
       }
       continue;
     }

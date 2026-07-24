@@ -15,6 +15,8 @@ LAN Party Hub 将下列游戏源代码作为首版内置组件。导入时使用
 https://github.com/QianQIUlp/LAN-Party-Hub 中原创实现，来源是贡献者描述的传统纸牌玩法。
 代码、规则状态机和牌面 UI 均以本仓库 Git 历史为审计来源；未导入第三方牌面、字体、音频或数据集。控制器使用的两张原创像素素材由 OpenAI 内置图像生成工具于 2026-07-23 生成，其提示词边界、后处理方式与许可记录在 `games/bullshit/assets/README.md`。
 
+`roulette` 与 `liars-table` 同样由 LAN Party Hub 在本仓库内原创实现，没有外部源码提交号。两者使用原生 Three.js/Phaser 几何、CSS、系统字体与 Unicode 文本符号，不包含外部美术、音频、字体或数据集；本仓库 Git 历史是其代码、规则和视觉实现的审计来源。
+
 ## LAN Party Hub 中的修改
 
 - 将游戏放入根工作区 `games/<game-id>`，并由生成器同时合并可选的 `local-games/`。
