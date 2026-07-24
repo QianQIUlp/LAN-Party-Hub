@@ -27,7 +27,7 @@ interface HostAppStateLike {
   } | null;
 }
 
-type CameraMode = "wide" | "device" | "terminal" | "crate";
+type CameraMode = "wide" | "device" | "shot" | "terminal" | "crate";
 
 interface CanvasSurface {
   canvas: HTMLCanvasElement;
@@ -57,6 +57,35 @@ interface CameraCue {
   mode: Exclude<CameraMode, "wide">;
   startsAt: number;
   endsAt: number;
+}
+
+interface ShotAnimation {
+  startAt: number;
+  triggerAt: number;
+  returnAt: number;
+  endsAt: number;
+  playerId: string;
+  targetPlayerId: string;
+  shell: "live" | "blank";
+  shooterSide: -1 | 1;
+  targetSide: -1 | 1;
+  triggered: boolean;
+}
+
+interface ProjectileFlight {
+  object: THREE.Group;
+  from: THREE.Vector3;
+  to: THREE.Vector3;
+  startAt: number;
+  duration: number;
+}
+
+interface ShotPulse {
+  object: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  startAt: number;
+  duration: number;
+  startScale: number;
+  endScale: number;
 }
 
 const colors = {
@@ -206,9 +235,14 @@ export class RouletteHostScene extends Phaser.Scene {
   private deviceGroup?: THREE.Group;
   private chamberGroup?: THREE.Group;
   private chamberSlots: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>[] = [];
+  private triggerMesh?: THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>;
+  private cockingLever?: THREE.Group;
   private muzzleFlash?: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
   private muzzleLight?: THREE.PointLight;
   private deviceAccent?: THREE.MeshStandardMaterial;
+  private shotAnimation?: ShotAnimation;
+  private projectileFlights: ProjectileFlight[] = [];
+  private shotPulses: ShotPulse[] = [];
   private terminalGroup?: THREE.Group;
   private terminalSurface?: CanvasSurface;
   private terminalGlow?: THREE.PointLight;
@@ -276,7 +310,8 @@ export class RouletteHostScene extends Phaser.Scene {
     }
     this.updateCamera(now, dt);
     this.updateEnvironment(seconds, dt);
-    this.updateDevice(seconds, dt);
+    this.updateDevice(seconds, dt, now);
+    this.updateShotEffects(now);
     this.updateCrate(now);
     this.updateToolFlights(now);
     this.threeRenderer.render(this.threeScene, this.threeCamera);
@@ -611,6 +646,22 @@ export class RouletteHostScene extends Phaser.Scene {
     grip.rotation.x = -0.3;
     grip.castShadow = true;
     device.add(grip);
+    const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.09), brass);
+    trigger.position.set(0, -0.34, 0.67);
+    trigger.rotation.x = -0.28;
+    device.add(trigger);
+    this.triggerMesh = trigger;
+    const cockingLever = new THREE.Group();
+    const leverArm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.78), brass);
+    leverArm.position.z = -0.32;
+    cockingLever.add(leverArm);
+    const leverKnob = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), brass);
+    leverKnob.position.z = -0.76;
+    cockingLever.add(leverKnob);
+    cockingLever.position.set(0.52, 0.34, 0.62);
+    cockingLever.rotation.x = 0.14;
+    device.add(cockingLever);
+    this.cockingLever = cockingLever;
     const stock = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.42, 1.35), blackMetal);
     stock.position.set(0, 0, 1.65);
     stock.rotation.x = 0.05;
@@ -1135,14 +1186,30 @@ export class RouletteHostScene extends Phaser.Scene {
     state: RoulettePublicState,
     now: number
   ): void {
-    const focusDuration = state.stage === "duel" ? 950 : 720;
+    const duration = state.stage === "duel" ? 3_200 : 3_050;
+    const shooterSide = this.playerViews.get(event.playerId)?.side ?? -1;
+    const targetSide = this.playerViews.get(event.targetPlayerId)?.side
+      ?? (event.targetPlayerId === event.playerId ? shooterSide : shooterSide === -1 ? 1 : -1);
     this.cameraCues = [
-      { mode: "device", startsAt: now, endsAt: now + focusDuration }
+      { mode: "shot", startsAt: now, endsAt: now + duration }
     ];
-    this.recoil = event.shell === "live" ? 1 : 0.32;
-    this.flash = event.shell === "live" ? 1 : 0.12;
-    this.impact = event.shell === "live" ? 1 : 0.25;
-    this.spinVelocity += event.shell === "live" ? 2.4 : 0.9;
+    this.shotAnimation = {
+      startAt: now,
+      triggerAt: now + 1_500,
+      returnAt: now + 2_250,
+      endsAt: now + duration,
+      playerId: event.playerId,
+      targetPlayerId: event.targetPlayerId,
+      shell: event.shell,
+      shooterSide,
+      targetSide,
+      triggered: false
+    };
+    this.recoil = 0;
+    this.flash = 0;
+    this.impact = 0;
+    this.spinVelocity += 1.2;
+    this.accentPulse = 1;
   }
 
   private launchTool(
@@ -1279,6 +1346,10 @@ export class RouletteHostScene extends Phaser.Scene {
         position: new THREE.Vector3(1.85, 1.4, 2.75),
         look: new THREE.Vector3(0, -0.5, -0.45)
       },
+      shot: {
+        position: new THREE.Vector3(0, 4.15, 7.25),
+        look: new THREE.Vector3(0, -0.05, 0.8)
+      },
       terminal: {
         position: new THREE.Vector3(4.4, 1.3, 2.4),
         look: new THREE.Vector3(2.35, 0.25, -0.85)
@@ -1298,7 +1369,9 @@ export class RouletteHostScene extends Phaser.Scene {
       this.threeCamera.position.y += (Math.random() - 0.5) * strength;
     }
     this.threeCamera.lookAt(this.cameraLook);
-    const showTableUi = this.cameraMode === "wide" || this.cameraMode === "crate";
+    const showTableUi = this.cameraMode === "wide"
+      || this.cameraMode === "shot"
+      || this.cameraMode === "crate";
     for (const view of this.playerViews.values()) {
       view.panel.mesh.visible = showTableUi;
       view.rack.visible = showTableUi;
@@ -1344,21 +1417,85 @@ export class RouletteHostScene extends Phaser.Scene {
     }
   }
 
-  private updateDevice(seconds: number, dt: number): void {
+  private updateDevice(seconds: number, dt: number, now: number): void {
     this.spinVelocity *= Math.exp(-2.9 * dt);
-    this.recoil *= Math.exp(-10 * dt);
+    this.recoil *= Math.exp(-6.5 * dt);
     this.flash *= Math.exp(-15 * dt);
     const focusTarget = this.cameraMode === "device" ? 1 : 0;
     this.deviceFocusAmount += (focusTarget - this.deviceFocusAmount) * (1 - Math.exp(-5 * dt));
     if (this.chamberGroup) {
       this.chamberGroup.rotation.y += dt * (0.3 + this.spinVelocity);
     }
+    if (this.shotAnimation && now >= this.shotAnimation.endsAt) {
+      this.shotAnimation = undefined;
+    }
+    if (this.triggerMesh) {
+      this.triggerMesh.rotation.x = -0.28;
+    }
+    if (this.cockingLever) {
+      this.cockingLever.rotation.x = 0.14;
+    }
     if (this.deviceGroup) {
-      this.deviceGroup.position.y = -0.48 + Math.sin(seconds * 1.1) * 0.018;
-      this.deviceGroup.position.z = 0.2 + this.recoil * 0.34;
-      this.deviceGroup.rotation.z = Math.sin(seconds * 0.62) * 0.012;
-      this.deviceGroup.rotation.x = -this.recoil * 0.035;
-      this.deviceGroup.scale.setScalar(0.74 + this.deviceFocusAmount * 0.22);
+      const home = new THREE.Vector3(0, -0.48 + Math.sin(seconds * 1.1) * 0.018, 0.2);
+      const homeRotation = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0, 0, Math.sin(seconds * 0.62) * 0.012)
+      );
+      const homeScale = 0.74 + this.deviceFocusAmount * 0.22;
+      const animation = this.shotAnimation;
+
+      if (animation) {
+        const liftAmount = smooth((now - animation.startAt) / 600);
+        const aimAmount = smooth((now - animation.startAt - 220) / 600);
+        const returnAmount = smooth(
+          (now - animation.returnAt) / Math.max(1, animation.endsAt - animation.returnAt)
+        );
+        const heldAmount = liftAmount * (1 - returnAmount);
+        const aimedAmount = aimAmount * (1 - returnAmount);
+        const held = new THREE.Vector3(animation.shooterSide * 0.55, 0.72, 0.82);
+        const target = this.shotTargetWorld(animation);
+        const direction = target.clone().sub(held).normalize();
+        const aimedRotation = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 0, -1),
+          direction
+        );
+        const rotation = new THREE.Quaternion().slerpQuaternions(
+          homeRotation,
+          aimedRotation,
+          aimedAmount
+        );
+        rotation.multiply(
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(-this.recoil * 0.11, 0, 0))
+        );
+        const position = new THREE.Vector3().lerpVectors(home, held, heldAmount);
+        position.y += heldAmount * (0.12 + Math.sin((now - animation.startAt) * 0.0045) * 0.035);
+        position.addScaledVector(direction, -this.recoil * 0.52 * heldAmount);
+
+        this.deviceGroup.position.copy(position);
+        this.deviceGroup.quaternion.copy(rotation);
+        this.deviceGroup.scale.setScalar(THREE.MathUtils.lerp(homeScale, 0.62, heldAmount));
+
+        if (this.triggerMesh) {
+          const pull = smooth((now - animation.triggerAt + 260) / 260)
+            * (1 - smooth((now - animation.triggerAt - 90) / 260));
+          this.triggerMesh.rotation.x = -0.28 - pull * 0.9;
+        }
+        if (this.cockingLever) {
+          const cocked = smooth((now - animation.startAt - 700) / 500);
+          const snapped = smooth((now - animation.triggerAt) / 130);
+          const settled = smooth((now - animation.triggerAt - 220) / 260);
+          let leverAngle = THREE.MathUtils.lerp(0.14, -0.62, cocked);
+          leverAngle = THREE.MathUtils.lerp(leverAngle, 0.78, snapped);
+          this.cockingLever.rotation.x = THREE.MathUtils.lerp(leverAngle, 0.14, settled);
+        }
+
+        if (!animation.triggered && now >= animation.triggerAt) {
+          this.triggerShot(animation, now);
+        }
+      } else {
+        this.deviceGroup.position.copy(home);
+        this.deviceGroup.quaternion.copy(homeRotation);
+        this.deviceGroup.scale.setScalar(homeScale);
+      }
     }
     if (this.muzzleFlash && this.muzzleLight) {
       this.muzzleFlash.visible = this.flash > 0.02;
@@ -1369,6 +1506,137 @@ export class RouletteHostScene extends Phaser.Scene {
     if (this.deviceAccent) {
       this.deviceAccent.emissiveIntensity = 0.32 + this.accentPulse * 2.4;
     }
+  }
+
+  private shotTargetWorld(animation: ShotAnimation): THREE.Vector3 {
+    return new THREE.Vector3(animation.targetSide * 4.05, 0.98, 1.62);
+  }
+
+  private triggerShot(animation: ShotAnimation, now: number): void {
+    animation.triggered = true;
+    if (!this.deviceGroup) {
+      return;
+    }
+
+    this.deviceGroup.updateWorldMatrix(true, false);
+    const muzzle = this.deviceGroup.localToWorld(new THREE.Vector3(0, 0.03, -3.72));
+    const target = this.shotTargetWorld(animation);
+    this.accentPulse = 1;
+
+    if (animation.shell === "live") {
+      this.recoil = 1;
+      this.flash = 1;
+      this.spinVelocity += 4.6;
+      this.launchProjectile(muzzle, target, now);
+      return;
+    }
+
+    this.recoil = 0;
+    this.flash = 0;
+    this.spinVelocity += 0.9;
+  }
+
+  private launchProjectile(from: THREE.Vector3, to: THREE.Vector3, now: number): void {
+    if (!this.threeScene) {
+      return;
+    }
+    const projectile = new THREE.Group();
+    const brass = new THREE.MeshStandardMaterial({
+      color: 0xf4bd52,
+      emissive: 0x8f2600,
+      emissiveIntensity: 2.2,
+      metalness: 0.82,
+      roughness: 0.18
+    });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.38, 12), brass);
+    body.castShadow = true;
+    projectile.add(body);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.086, 0.18, 12), brass);
+    tip.position.y = 0.28;
+    projectile.add(tip);
+    const trail = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.018, 0.075, 0.62, 10),
+      new THREE.MeshBasicMaterial({
+        color: 0xff5c2f,
+        transparent: true,
+        opacity: 0.68,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    trail.position.y = -0.48;
+    projectile.add(trail);
+    const glow = new THREE.PointLight(0xff522c, 7, 2.8, 1.8);
+    projectile.add(glow);
+
+    const direction = to.clone().sub(from).normalize();
+    projectile.position.copy(from);
+    projectile.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+    this.threeScene.add(projectile);
+    this.projectileFlights.push({ object: projectile, from, to, startAt: now, duration: 520 });
+  }
+
+  private launchImpactPulse(at: THREE.Vector3, now: number): void {
+    if (!this.threeScene) {
+      return;
+    }
+    const pulse = new THREE.Mesh(
+      new THREE.SphereGeometry(0.24, 14, 10),
+      new THREE.MeshBasicMaterial({
+        color: 0xff3b28,
+        transparent: true,
+        opacity: 0.88,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    pulse.position.copy(at);
+    this.threeScene.add(pulse);
+    this.shotPulses.push({
+      object: pulse,
+      startAt: now,
+      duration: 520,
+      startScale: 0.35,
+      endScale: 2.4
+    });
+  }
+
+  private updateShotEffects(now: number): void {
+    const remainingProjectiles: ProjectileFlight[] = [];
+    for (const flight of this.projectileFlights) {
+      const raw = (now - flight.startAt) / flight.duration;
+      const progress = clamp(raw);
+      flight.object.position.lerpVectors(flight.from, flight.to, progress);
+      const scale = 0.82 + Math.sin(progress * Math.PI) * 0.34;
+      flight.object.scale.setScalar(scale);
+      if (raw >= 1) {
+        this.threeScene?.remove(flight.object);
+        disposeObject(flight.object);
+        this.impact = 1;
+        this.accentPulse = 1;
+        this.launchImpactPulse(flight.to, now);
+      } else {
+        remainingProjectiles.push(flight);
+      }
+    }
+    this.projectileFlights = remainingProjectiles;
+
+    const remainingPulses: ShotPulse[] = [];
+    for (const pulse of this.shotPulses) {
+      const raw = (now - pulse.startAt) / pulse.duration;
+      const progress = smooth(raw);
+      pulse.object.scale.setScalar(
+        THREE.MathUtils.lerp(pulse.startScale, pulse.endScale, progress)
+      );
+      pulse.object.material.opacity = 1 - progress;
+      if (raw >= 1) {
+        this.threeScene?.remove(pulse.object);
+        disposeObject(pulse.object);
+      } else {
+        remainingPulses.push(pulse);
+      }
+    }
+    this.shotPulses = remainingPulses;
   }
 
   private updateCrate(now: number): void {
@@ -1508,6 +1776,16 @@ export class RouletteHostScene extends Phaser.Scene {
       disposeObject(flight.object);
     }
     this.toolFlights = [];
+    for (const flight of this.projectileFlights) {
+      this.threeScene?.remove(flight.object);
+      disposeObject(flight.object);
+    }
+    this.projectileFlights = [];
+    for (const pulse of this.shotPulses) {
+      this.threeScene?.remove(pulse.object);
+      disposeObject(pulse.object);
+    }
+    this.shotPulses = [];
     if (this.threeScene) {
       disposeObject(this.threeScene);
     }
@@ -1533,6 +1811,8 @@ export class RouletteHostScene extends Phaser.Scene {
     this.deviceGroup = undefined;
     this.chamberGroup = undefined;
     this.chamberSlots = [];
+    this.triggerMesh = undefined;
+    this.cockingLever = undefined;
     this.muzzleFlash = undefined;
     this.muzzleLight = undefined;
     this.deviceAccent = undefined;
@@ -1551,6 +1831,7 @@ export class RouletteHostScene extends Phaser.Scene {
     this.dealerEyeMaterial = undefined;
     this.dust = undefined;
     this.deviceFocusAmount = 0;
+    this.shotAnimation = undefined;
     this.lastEventNumber = -1;
     this.lastReloadNumber = -1;
   }
