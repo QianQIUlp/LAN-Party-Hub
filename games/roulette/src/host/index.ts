@@ -10,6 +10,7 @@ import type {
 
 interface HostClientLike {
   subscribe(callback: (state: HostAppStateLike) => void): () => void;
+  getState(): HostAppStateLike;
 }
 
 interface HostAppStateLike {
@@ -183,7 +184,9 @@ function itemAdditions(
 
 export class RouletteHostScene extends Phaser.Scene {
   private unsubscribe?: () => void;
+  private hostClient?: HostClientLike;
   private latestState?: HostAppStateLike;
+  private lastSyncedGameState?: unknown;
   private threeRenderer?: THREE.WebGLRenderer;
   private threeScene?: THREE.Scene;
   private threeCamera?: THREE.PerspectiveCamera;
@@ -233,15 +236,11 @@ export class RouletteHostScene extends Phaser.Scene {
   create(): void {
     this.setupThree();
     const client = this.registry.get("hostClient") as HostClientLike;
+    this.hostClient = client;
     this.unsubscribe = client.subscribe((state) => {
-      this.latestState = state;
-      const gameState = state.game?.state as RoulettePublicState | undefined;
-      if (gameState && this.threeScene) {
-        this.syncScene(gameState);
-      } else if (!this.threeRenderer) {
-        this.drawFallback(gameState);
-      }
+      this.consumeHostState(state);
     });
+    this.consumeHostState(client.getState());
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -260,6 +259,10 @@ export class RouletteHostScene extends Phaser.Scene {
     const dt = Math.min(0.05, Math.max(0, delta / 1_000));
     const now = performance.now();
     const seconds = time / 1_000;
+    const liveState = this.hostClient?.getState();
+    if (liveState && liveState.game?.state !== this.lastSyncedGameState) {
+      this.consumeHostState(liveState);
+    }
     this.updateCamera(now, dt);
     this.updateEnvironment(seconds, dt);
     this.updateDevice(seconds, dt);
@@ -293,7 +296,7 @@ export class RouletteHostScene extends Phaser.Scene {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.05;
+      renderer.toneMappingExposure = 1.34;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.domElement.style.position = "absolute";
@@ -312,16 +315,22 @@ export class RouletteHostScene extends Phaser.Scene {
       camera.position.set(0, 5.4, 8.6);
       camera.lookAt(this.cameraLook);
 
-      scene.add(new THREE.HemisphereLight(0x6aa9bc, 0x200307, 1.45));
-      const key = new THREE.SpotLight(0xffd5a0, 34, 20, Math.PI / 5, 0.65, 1.4);
+      scene.add(new THREE.HemisphereLight(0x8bc6d3, 0x3f0a0f, 2.7));
+      const key = new THREE.SpotLight(0xffd5a0, 58, 22, Math.PI / 4.5, 0.62, 1.35);
       key.position.set(-3.5, 7.5, 4.5);
       key.target.position.set(0, -0.8, 0);
       key.castShadow = true;
       scene.add(key, key.target);
-      const opposing = new THREE.SpotLight(0x77d9ff, 22, 18, Math.PI / 5, 0.72, 1.5);
+      const opposing = new THREE.SpotLight(0x77d9ff, 38, 19, Math.PI / 4.7, 0.68, 1.45);
       opposing.position.set(4.5, 5.5, -2.5);
       opposing.target.position.set(0, -0.8, 0);
       scene.add(opposing, opposing.target);
+      const dealerFill = new THREE.PointLight(0xff8a6b, 14, 8, 1.7);
+      dealerFill.position.set(0, 1.8, -1.4);
+      scene.add(dealerFill);
+      const tableFill = new THREE.PointLight(0x62d4b5, 9, 9, 1.6);
+      tableFill.position.set(0, 1.8, 3.6);
+      scene.add(tableFill);
       const danger = new THREE.PointLight(colors.live, 0, 9, 1.8);
       danger.position.set(0, 1.2, 1.4);
       scene.add(danger);
@@ -780,6 +789,47 @@ export class RouletteHostScene extends Phaser.Scene {
     );
   }
 
+  private consumeHostState(state: HostAppStateLike): void {
+    this.latestState = state;
+    const gameState = state.game?.state as RoulettePublicState | undefined;
+    if (gameState) {
+      this.lastSyncedGameState = state.game?.state;
+    }
+    const visibleState = gameState ?? this.placeholderState(state);
+    if (visibleState && this.threeScene) {
+      this.syncScene(visibleState);
+    } else if (!this.threeRenderer) {
+      this.drawFallback(visibleState);
+    }
+  }
+
+  private placeholderState(state: HostAppStateLike): RoulettePublicState | undefined {
+    const playerOrder = (state.room?.players ?? []).slice(0, 2).map((player) => player.id);
+    if (playerOrder.length === 0) {
+      return undefined;
+    }
+    return {
+      stage: "duel",
+      playerOrder,
+      currentPlayerId: playerOrder[0],
+      healthByPlayer: Object.fromEntries(playerOrder.map((playerId) => [playerId, 3])),
+      maxHealth: 3,
+      liveShellsRemaining: 0,
+      blankShellsRemaining: 0,
+      reloadNumber: 0,
+      actionNumber: 0,
+      inventoryCountByPlayer: Object.fromEntries(playerOrder.map((playerId) => [playerId, 0])),
+      visibleToolsByPlayer: Object.fromEntries(playerOrder.map((playerId) => [playerId, []])),
+      restrainedPlayerIds: [],
+      boostedPlayerIds: [],
+      duelNumber: 1,
+      duelWinsRequired: 2,
+      duelWinsByPlayer: Object.fromEntries(playerOrder.map((playerId) => [playerId, 0])),
+      intermissionEndsAt: null,
+      message: ""
+    };
+  }
+
   private ensurePlayerViews(state: RoulettePublicState): void {
     if (!this.threeScene) {
       return;
@@ -1217,12 +1267,12 @@ export class RouletteHostScene extends Phaser.Scene {
         look: new THREE.Vector3(0, -0.52, -0.3)
       },
       terminal: {
-        position: new THREE.Vector3(5.2, 1.7, 1.45),
+        position: new THREE.Vector3(4.65, 0.72, -0.18),
         look: new THREE.Vector3(3.45, -0.15, -2.35)
       },
       crate: {
-        position: new THREE.Vector3(-0.35, 4.45, 4.3),
-        look: new THREE.Vector3(-1.85, -0.45, 1.1)
+        position: new THREE.Vector3(-0.15, 3.15, 3.2),
+        look: new THREE.Vector3(-1.82, -0.43, 1.16)
       }
     };
     const target = targets[this.cameraMode];
