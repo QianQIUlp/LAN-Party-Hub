@@ -28,7 +28,7 @@ test("offline phones recover and three players can switch through all bundled ga
     }).__openPartyLabHost;
     return bridge?.getState().room?.availableGames.map((game) => game.id).sort() ?? [];
   });
-  expect(gameIds).toEqual(["imposter", "schaetzorama", "tap-race", "zeichnen-und-erraten"]);
+  expect(gameIds).toEqual(["bullshit", "imposter", "schaetzorama", "tap-race", "zeichnen-und-erraten"]);
 
   const phoneOne = await browser.newContext({ viewport: { width: 360, height: 800 }, isMobile: true, hasTouch: true });
   const phoneTwo = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -130,7 +130,7 @@ test("offline phones recover and three players can switch through all bundled ga
   await expect(controllerThree.getByRole("heading", { name: "房间 E2E0" })).toBeVisible();
 
   const controllers = [controllerOne, controllerTwo, controllerThree];
-  for (const gameId of ["tap-race", "zeichnen-und-erraten", "schaetzorama", "imposter"]) {
+  for (const gameId of ["tap-race", "zeichnen-und-erraten", "schaetzorama", "imposter", "bullshit"]) {
     await page.evaluate((nextGameId) => {
       (window as typeof window & {
         __openPartyLabHost?: { selectGame(gameId: string): void };
@@ -163,6 +163,55 @@ test("offline phones recover and three players can switch through all bundled ga
         __openPartyLabHost?: { getState(): HostAutomationState };
       }).__openPartyLabHost?.getState().room?.currentRound?.gameId ?? null;
     })).toBe(gameId);
+
+    if (gameId === "bullshit") {
+      await expect.poll(() => page.evaluate(() => {
+        return (window as typeof window & {
+          __openPartyLabHost?: { getState(): HostAutomationState };
+        }).__openPartyLabHost?.getState().room?.currentRound?.phase ?? null;
+      })).toBe("playing");
+
+      const currentControllerIndex = async () => {
+        for (let index = 0; index < controllers.length; index += 1) {
+          if (await controllers[index].getByText("轮到你", { exact: true }).isVisible().catch(() => false)) {
+            return index;
+          }
+        }
+        return -1;
+      };
+
+      await expect.poll(currentControllerIndex).toBeGreaterThanOrEqual(0);
+      const leaderIndex = await currentControllerIndex();
+      const leader = controllers[leaderIndex];
+      await expect(leader.getByRole("heading", { name: "吹牛牌", exact: true })).toBeVisible();
+      await leader.getByRole("button", { name: "宣称 A", exact: true }).click();
+      await leader.locator("button").filter({ hasText: "点击加入本次背面出牌。" }).first().click();
+      await leader.getByRole("button", { name: /背面打出 1 张，宣称 A/ }).click();
+
+      const challengerControllerIndex = async () => {
+        for (let index = 0; index < controllers.length; index += 1) {
+          if (index === leaderIndex) {
+            continue;
+          }
+          const checkButton = controllers[index].getByRole("button", { name: /^Check：质疑最近一手/ });
+          if (await checkButton.isEnabled().catch(() => false)) {
+            return index;
+          }
+        }
+        return -1;
+      };
+
+      await expect.poll(challengerControllerIndex).toBeGreaterThanOrEqual(0);
+      const challenger = controllers[await challengerControllerIndex()];
+      await challenger.getByRole("button", { name: /^Check：质疑最近一手/ }).click();
+      await expect(challenger.getByText(/收下 \d+ 张/).first()).toBeVisible();
+
+      await expect.poll(() => page.evaluate(() => {
+        return (window as typeof window & {
+          __openPartyLabHost?: { getState(): HostAutomationState };
+        }).__openPartyLabHost?.getState().error ?? null;
+      })).toBeNull();
+    }
 
     await page.evaluate(() => {
       (window as typeof window & {

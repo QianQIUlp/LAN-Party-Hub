@@ -19,7 +19,7 @@
     "ai:controllers": "node scripts/virtual-controllers.mjs",
     "postinstall": "node scripts/local-games.mjs ensure-generated",
     "build:packages": "tsc -b packages/utils packages/ui-kit packages/game-core packages/protocol",
-    "typecheck:games": "npm run typecheck --workspace @open-party-lab/game-tap-race --workspace @open-party-lab/game-zeichnen-und-erraten --workspace @open-party-lab/game-schaetzorama --workspace @open-party-lab/game-imposter",
+    "typecheck:games": "npm run typecheck --workspace @open-party-lab/game-tap-race --workspace @open-party-lab/game-zeichnen-und-erraten --workspace @open-party-lab/game-schaetzorama --workspace @open-party-lab/game-imposter --workspace @open-party-lab/game-bullshit",
     "watch:packages": "tsc -b packages/utils packages/ui-kit packages/game-core packages/protocol -w",
     "dev:all": "powershell -ExecutionPolicy Bypass -File ./scripts/dev-all.ps1",
     "dev:stop": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-dev.ps1",

@@ -1,7 +1,9 @@
-﻿import { LeftRightHoldLayout } from "./LeftRightHoldLayout.js";
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import { LeftRightHoldLayout } from "./LeftRightHoldLayout.js";
 import { DPadLayout } from "./DPadLayout.js";
 import { SingleButtonLayout } from "./SingleButtonLayout.js";
 import { ChoiceLayout } from "./ChoiceLayout.js";
+import { CardHandLayout } from "./CardHandLayout.js";
 import { ShopLayout } from "./ShopLayout.js";
 import { ArenaSurvivorModernShopLayout } from "./ArenaSurvivorModernShopLayout.js";
 import { TapMashLayout } from "./TapMashLayout.js";
@@ -47,6 +49,8 @@ export function ControllerLayoutRenderer({ model }: ControllerLayoutRendererProp
       return <SingleButtonLayout model={model} />;
     case "choice":
       return <ChoiceLayout model={model} />;
+    case "card_hand":
+      return <CardHandLayout model={model} />;
     case "tap_mash":
       return <TapMashLayout model={model} />;
     case "drawing_guess":

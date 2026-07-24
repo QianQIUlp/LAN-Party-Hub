@@ -39,6 +39,17 @@ function ackError<T>(message: string): AckResult<T> {
   return { ok: false, error: message };
 }
 
+function bindAuthenticatedPlayerInput(input: unknown, playerId: string): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return input;
+  }
+
+  return {
+    ...input,
+    playerId
+  };
+}
+
 function getPlayerSetupSelectionKey(setup: GamePlayerSetupDefinition): string {
   return setup.selectionKey ?? "character";
 }
@@ -891,8 +902,9 @@ export function registerSocketHandlers({
         return;
       }
       const text = socketText(room.language);
+      const authenticatedPlayerId = socket.data.playerId;
 
-      if (socket.data.role !== "controller" || socket.data.playerId !== payload.playerId) {
+      if (socket.data.role !== "controller" || !authenticatedPlayerId || authenticatedPlayerId !== payload.playerId) {
         stateBroadcaster.emitError(
           socket,
           "player/forbidden",
@@ -902,8 +914,8 @@ export function registerSocketHandlers({
       }
 
       const update = gameRuntime.handleInput(room, {
-        playerId: payload.playerId,
-        input: payload.input
+        playerId: authenticatedPlayerId,
+        input: bindAuthenticatedPlayerInput(payload.input, authenticatedPlayerId)
       });
 
       if (!update) {

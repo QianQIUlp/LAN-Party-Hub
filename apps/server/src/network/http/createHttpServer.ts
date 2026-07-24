@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server as HttpServer, type ServerResponse } from "node:http";
 import { extname, join, relative, resolve } from "node:path";
+import { promisify } from "node:util";
+import { gzip } from "node:zlib";
 import type { PerfLogPayload } from "@open-party-lab/game-core";
 import type { AppEnv } from "../../core/config/env.js";
 import { serverPerfRegistry } from "../../core/perf/serverPerfRegistry.js";
@@ -27,6 +29,9 @@ const contentTypes: Record<string, string> = {
   ".woff": "font/woff",
   ".woff2": "font/woff2"
 };
+
+const gzipAsync = promisify(gzip);
+const compressibleWebExtensions = new Set([".css", ".html", ".js", ".json", ".svg"]);
 
 async function serveWebAsset(
   webRoot: string,
@@ -59,11 +64,18 @@ async function serveWebAsset(
 
   try {
     const body = await readFile(filePath);
+    const extension = extname(filePath).toLowerCase();
+    const acceptsGzip = request.headers["accept-encoding"]?.includes("gzip") ?? false;
+    const shouldCompress = acceptsGzip && compressibleWebExtensions.has(extension);
+    const responseBody = shouldCompress ? await gzipAsync(body, { level: 6 }) : body;
     response.writeHead(200, {
-      "cache-control": extname(filePath) === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
-      "content-type": contentTypes[extname(filePath).toLowerCase()] ?? "application/octet-stream"
+      "cache-control": extension === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
+      "content-length": responseBody.byteLength,
+      "content-type": contentTypes[extension] ?? "application/octet-stream",
+      ...(compressibleWebExtensions.has(extension) ? { vary: "accept-encoding" } : {}),
+      ...(shouldCompress ? { "content-encoding": "gzip" } : {})
     });
-    response.end(request.method === "HEAD" ? undefined : body);
+    response.end(request.method === "HEAD" ? undefined : responseBody);
     return true;
   } catch {
     return false;

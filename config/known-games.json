@@ -83,6 +83,20 @@
     ]
   },
   {
+    "id": "bullshit",
+    "package": "@open-party-lab/game-bullshit",
+    "repo": "https://github.com/QianQIUlp/LAN-Party-Hub",
+    "sourceRepo": "https://github.com/QianQIUlp/LAN-Party-Hub",
+    "sourceKind": "lan-party-hub-original",
+    "distribution": "bundled",
+    "bundledPath": "games/bullshit",
+    "includeInRelease": true,
+    "defaultLocalPath": "local-games/bullshit",
+    "alternateLocalPaths": [
+      "../bullshit"
+    ]
+  },
+  {
     "id": "schaetzorama",
     "package": "@open-party-lab/game-schaetzorama",
     "repo": "https://github.com/Hartwich/schaetzorama.git",
