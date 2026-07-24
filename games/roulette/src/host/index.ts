@@ -1135,18 +1135,14 @@ export class RouletteHostScene extends Phaser.Scene {
     state: RoulettePublicState,
     now: number
   ): void {
+    const focusDuration = state.stage === "duel" ? 950 : 720;
     this.cameraCues = [
-      { mode: "device", startsAt: now, endsAt: now + 1_350 },
-      { mode: "terminal", startsAt: now + 1_350, endsAt: now + 3_900 }
+      { mode: "device", startsAt: now, endsAt: now + focusDuration }
     ];
     this.recoil = event.shell === "live" ? 1 : 0.32;
     this.flash = event.shell === "live" ? 1 : 0.12;
     this.impact = event.shell === "live" ? 1 : 0.25;
     this.spinVelocity += event.shell === "live" ? 2.4 : 0.9;
-    if (state.stage !== "duel") {
-      this.cameraCues[0] = { mode: "device", startsAt: now, endsAt: now + 900 };
-      this.cameraCues[1] = { mode: "terminal", startsAt: now + 900, endsAt: now + 4_100 };
-    }
   }
 
   private launchTool(
@@ -1284,8 +1280,8 @@ export class RouletteHostScene extends Phaser.Scene {
         look: new THREE.Vector3(0, -0.5, -0.45)
       },
       terminal: {
-        position: new THREE.Vector3(4.65, 0.72, -0.18),
-        look: new THREE.Vector3(3.45, -0.15, -2.35)
+        position: new THREE.Vector3(4.4, 1.3, 2.4),
+        look: new THREE.Vector3(2.35, 0.25, -0.85)
       },
       crate: {
         position: new THREE.Vector3(-0.15, 3.15, 3.2),
