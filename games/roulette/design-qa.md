@@ -29,7 +29,7 @@ The wide comparison confirms the requested hierarchy: a deep industrial room, op
 
 ### Focused regions and motion states
 
-- Result focus: `device-final-proof.png` shows a camera push toward the fate device, hides the large player panels, changes the table rim mood, and adds recoil/impact lighting. The following terminal cue enlarges and repositions the status display before returning to the wide shot.
+- Result focus: `device-final-proof.png` shows a camera push toward the fate device, hides the large player panels, changes the table rim mood, and adds recoil/impact lighting. Shot actions now return directly to the wide table after this short beat so health and turn changes are immediately visible; terminal focus is reserved for terminal-related tool feedback.
 - Item distribution: `crate-final-proof.png` shows the lid open and multiple individually modeled tools in flight from the illuminated case toward real player rack slots.
 - Status readability: the focused terminal uses live canvas-rendered health, duel wins, and chamber pips rather than a text-only event log.
 - Controller: the phone view preserves the existing platform interaction pattern, gives the active player the valid actions, and keeps private inspection results off the host.
@@ -59,7 +59,7 @@ The wide comparison confirms the requested hierarchy: a deep industrial room, op
 - [P1] Public tool identities still appeared only after the first player action because the reconnecting host did not receive a fresh cloned game-state emission.
 - [P2] One camera deadline could be overwritten by a rapid shot/status transition, shortening the intended device-to-terminal sequence.
 - [P2] The crate lid and item flights ended too quickly to communicate distribution clearly.
-- Fixes: added a read-only host synchronization action, exposed visible rack identities while retaining private shell knowledge, replaced the single deadline with ordered camera cues, and extended the lid and flight timing.
+- Fixes: added a read-only host synchronization action, exposed visible rack identities while retaining private shell knowledge, introduced time-bounded camera cues, and extended the lid and flight timing.
 - Post-fix evidence: `wide-table-accepted.png`, `crate-t025.png`, and `focus-t018.png` confirmed hydrated inventory, an open case, and a readable focus transition.
 
 ### Iteration 3 — passed
@@ -73,6 +73,7 @@ The wide comparison confirms the requested hierarchy: a deep industrial room, op
 - Production preview loaded from the unified port with one Three.js overlay canvas.
 - Two isolated controller contexts joined the same room; only the active player could submit an action, inventory use and shot resolution updated the host, and the camera/crate sequences completed.
 - Desktop and phone pages reported no uncaught page errors or console errors, and the checked viewports had no horizontal overflow.
+- Shot-camera regression evidence: `/home/qiu/.codex/visualizations/2026/07/24/roulette-camera-fix/shot-0120.png` captures the short device focus; `shot-1370.png` and `shot-3570.png` show the restored wide table with updated active-player state. `self-shot-1370.png` and `self-shot-3070.png` confirm the same return path for self-targeted shots.
 
 ## Implementation checklist
 
