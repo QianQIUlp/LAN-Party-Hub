@@ -7,7 +7,12 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: auto auto auto minmax(180px, 1fr) auto;
+  grid-template-areas:
+    "header"
+    "claim"
+    "playfield"
+    "actions";
+  grid-template-rows: auto auto minmax(180px, 1fr) auto;
   gap: 8px;
   min-height: calc(100dvh - max(20px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
   overflow: hidden;
@@ -41,6 +46,7 @@
 }
 
 .card-hand-header {
+  grid-area: header;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
@@ -59,14 +65,6 @@
   background: var(--ink);
   border: 3px solid #100b19;
   box-shadow: 4px 4px 0 rgba(16, 11, 25, 0.72);
-}
-
-.card-hand-kicker {
-  width: 100%;
-  color: #f7c66b;
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
 }
 
 .card-hand-title-group h1 {
@@ -124,9 +122,13 @@
 }
 
 .card-hand-message {
-  align-self: center;
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  z-index: 280;
+  width: max-content;
   max-width: min(780px, calc(100% - 24px));
-  margin: 0 auto;
+  margin: 0;
   padding: 7px 11px;
   overflow: hidden;
   color: #2a1931;
@@ -136,11 +138,13 @@
   font-size: clamp(0.69rem, 1.8vw, 0.85rem);
   font-weight: 800;
   line-height: 1.25;
+  pointer-events: none;
   text-align: center;
-  animation: message-snap 220ms steps(3, end) both;
+  animation: message-toast 3.2s steps(10, end) both;
 }
 
 .card-hand-claim-panel {
+  grid-area: claim;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -165,7 +169,6 @@
   font-weight: 900;
 }
 
-.card-hand-claim-heading strong,
 .card-hand-rank-locked {
   min-width: 34px;
   padding: 4px 7px;
@@ -211,6 +214,7 @@
 }
 
 .card-hand-playfield {
+  grid-area: playfield;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -420,15 +424,6 @@
   transform: rotate(-2deg);
 }
 
-.card-hand-pile-empty {
-  padding: 3px 5px;
-  background: rgba(255, 226, 158, 0.72);
-  border: 2px solid rgba(33, 21, 45, 0.72);
-  font-size: 0.62rem;
-  font-weight: 1000;
-  letter-spacing: 0.12em;
-}
-
 .card-hand-pile-stack {
   position: absolute;
   inset: 0;
@@ -450,10 +445,10 @@
 }
 
 .card-hand-pile-count {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 4px 7px;
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  padding: 4px 8px;
   color: var(--cream);
   background: var(--ink);
   border: 2px solid #100b19;
@@ -465,7 +460,6 @@
   animation: pile-count-bump 300ms steps(4, end) both;
 }
 
-.card-hand-pile-count span,
 .card-hand-pile-zone small {
   font-size: 0.62rem;
   font-weight: 900;
@@ -480,6 +474,7 @@
 }
 
 .card-hand-actions {
+  grid-area: actions;
   position: relative;
   z-index: 240;
   display: grid;
@@ -700,9 +695,10 @@
   100% { transform: scale(1); }
 }
 
-@keyframes message-snap {
-  0% { opacity: 0; transform: translateY(-6px); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes message-toast {
+  0% { opacity: 0; transform: translate(-50%, -6px); }
+  8%, 82% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -4px); }
 }
 
 @keyframes card-deal-in {
@@ -802,7 +798,7 @@
 
 @media (max-width: 620px) {
   .card-hand-board {
-    grid-template-rows: auto auto auto minmax(270px, 1fr) auto;
+    grid-template-rows: auto auto minmax(270px, 1fr) auto;
   }
 
   .card-hand-header {
@@ -813,10 +809,6 @@
   .card-hand-title-group {
     gap: 5px 7px;
     padding: 6px 8px;
-  }
-
-  .card-hand-kicker {
-    display: none;
   }
 
   .card-hand-stats {
@@ -843,6 +835,7 @@
   }
 
   .card-hand-message {
+    top: 164px;
     max-width: calc(100% - 16px);
   }
 
@@ -904,7 +897,7 @@
 
 @media (max-height: 600px) and (orientation: landscape) {
   .card-hand-board {
-    grid-template-rows: auto auto auto minmax(120px, 1fr) auto;
+    grid-template-rows: auto auto minmax(120px, 1fr) auto;
     gap: 4px;
   }
 
@@ -914,10 +907,6 @@
 
   .card-hand-title-group {
     padding-block: 4px;
-  }
-
-  .card-hand-kicker {
-    display: none;
   }
 
   .card-hand-stats > div {

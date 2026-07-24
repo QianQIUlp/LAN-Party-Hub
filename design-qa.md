@@ -7,8 +7,10 @@
 - Side-by-side comparison: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-comparison.png`
 - Desktop implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-wide.png`
 - Phone implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-mobile.png`
+- Shared-screen implementation: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-copy-host.png`
 - Card-flight evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-flight.png`
 - Check-impact evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-check.png`
+- Concise Check-result toast: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-copy-resolution.png`
 - Automated evidence: `/home/qiu/.codex/visualizations/2026/07/23/019f8ed9-f77e-7a71-b5a8-c92b48b1f3ba/bullshit-motion-qa.json`
 
 The annotation and reference-sized implementation are both 874 × 522 pixels. The state uses a two-player hand, claim A, and three cards in the active pile. The annotation is the composition target: its arrows request that the right-side pile move into the open table center. It is not a visual-style target, so its red annotations and exact pile placement are not copied as decoration.
@@ -18,6 +20,8 @@ The annotation and reference-sized implementation are both 874 × 522 pixels. Th
 The combined image was inspected at original resolution. The implementation moves the active pile from the right rail to the horizontal center of the wooden table while keeping the curved hand and turn actions anchored below it. At the matched three-card state, three distinct card backs are visible. The pile remains readable without obscuring the claim rail or action dock.
 
 The original wood, plum, coral, gold, indigo, and cream language remains intact. No Balatro artwork, Ace Attorney character, franchise typography, logo, or copied composition is present. The full-screen Check sequence uses an original generated red/cream/black pixel-comic backdrop and project-native typography.
+
+The player-facing copy pass removes routine server narration, duplicated pile and selection summaries, the decorative English kicker, the empty-pile `DROP` marker, and verbose action sentences. The controller now shows only actionable controls plus concise Check, pending-win, and winner events. Event copy appears as a non-blocking toast and fades after 3.2 seconds. The shared screen keeps turn, latest play, claim, pile size, and player counts while removing its rule slogan and direct server-message fallback.
 
 ## Motion and Interaction Evidence
 
@@ -44,5 +48,6 @@ The original wood, plum, coral, gold, indigo, and cream language remains intact.
 2. First motion pass — blocked because the board-level color filter also tinted the Check overlay sepia, muting its intended red impact.
 3. Color correction — removed the parent filter while retaining the shake and overlay-local contrast flash. The final capture is red, cream, black, and gold as intended.
 4. Final comparison — passed with no actionable P0, P1, or P2 findings.
+5. Player-copy pass — passed on the shared screen, 1192 × 768 controller, 874 × 522 controller, and 390 × 844 controller with no empty grid tracks or overlapping labels.
 
 final result: passed

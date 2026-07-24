@@ -35,17 +35,14 @@ function textFor(language: Language) {
   if (language === "zh-CN") {
     return {
       title: "吹牛牌",
-      eyebrow: "BULLSHIT · 真假只看最后一手",
-      waiting: "等待第一手牌",
+      waiting: "等待出牌",
       current: (name: string) => `轮到 ${name}`,
-      pile: "当前牌堆",
-      cards: "张",
-      claim: "固定宣称",
-      lastPlay: (name: string, count: number, rank: string) => `${name} 最近宣称 ${count} 张 ${rank}`,
-      pending: (name: string) => `${name} 已出完牌 · 最后一手待确认`,
-      truthful: "质疑失败 · 最近一手是真牌",
-      bluff: "抓到谎言 · 最近一手有假牌",
-      takesPile: (name: string, count: number) => `${name} 拿走整堆 ${count} 张牌，并开启新牌堆`,
+      claim: "宣称",
+      lastPlay: (name: string, count: number, rank: string) => `${name} × ${count} · ${rank}`,
+      pending: (name: string) => `${name} · 最后一手待确认`,
+      truthful: "真话",
+      bluff: "抓到了！",
+      takesPile: (name: string, count: number) => `${name} 收下 ${count} 张`,
       winner: (name: string) => `${name} 获胜！`,
       pass: "已过",
       hiddenPlayers: (count: number) => `另有 ${count} 名玩家`
@@ -55,17 +52,14 @@ function textFor(language: Language) {
   if (language === "en") {
     return {
       title: "Bullshit",
-      eyebrow: "ONLY THE LAST PLAY CAN BE CHECKED",
-      waiting: "Waiting for the opening play",
+      waiting: "Waiting for a play",
       current: (name: string) => `${name}'s turn`,
-      pile: "Current pile",
-      cards: "cards",
-      claim: "Claimed rank",
-      lastPlay: (name: string, count: number, rank: string) => `${name} most recently claimed ${count} × ${rank}`,
-      pending: (name: string) => `${name} is out · final play pending`,
-      truthful: "Failed check · the last play was truthful",
-      bluff: "Bluff caught · the last play was false",
-      takesPile: (name: string, count: number) => `${name} takes all ${count} cards and leads next`,
+      claim: "Claim",
+      lastPlay: (name: string, count: number, rank: string) => `${name} × ${count} · ${rank}`,
+      pending: (name: string) => `${name} · final play pending`,
+      truthful: "TRUTH",
+      bluff: "CAUGHT!",
+      takesPile: (name: string, count: number) => `${name} takes ${count}`,
       winner: (name: string) => `${name} wins!`,
       pass: "passed",
       hiddenPlayers: (count: number) => `${count} more players`
@@ -74,17 +68,14 @@ function textFor(language: Language) {
 
   return {
     title: "Bullshit",
-    eyebrow: "NUR DER LETZTE ZUG DARF GEPRUEFT WERDEN",
-    waiting: "Warte auf den ersten Zug",
+    waiting: "Warte auf einen Zug",
     current: (name: string) => `${name} ist dran`,
-    pile: "Aktueller Stapel",
-    cards: "Karten",
     claim: "Ansage",
-    lastPlay: (name: string, count: number, rank: string) => `${name} behauptet zuletzt ${count} × ${rank}`,
-    pending: (name: string) => `${name} ist fertig · letzter Zug offen`,
-    truthful: "Pruefung verloren · der letzte Zug war ehrlich",
-    bluff: "Bluff erwischt · der letzte Zug war falsch",
-    takesPile: (name: string, count: number) => `${name} nimmt alle ${count} Karten und beginnt neu`,
+    lastPlay: (name: string, count: number, rank: string) => `${name} × ${count} · ${rank}`,
+    pending: (name: string) => `${name} · letzter Zug offen`,
+    truthful: "EHRLICH",
+    bluff: "ERWISCHT!",
+    takesPile: (name: string, count: number) => `${name} nimmt ${count}`,
     winner: (name: string) => `${name} gewinnt!`,
     pass: "gepasst",
     hiddenPlayers: (count: number) => `${count} weitere Spieler`
@@ -215,7 +206,6 @@ function drawPile(scene: Phaser.Scene, state: BullshitPublicState, language: Lan
     }
   }
 
-  addCenteredText(scene, scene.scale.width / 2, centerY - cardHeight / 2 - 34, text.pile, 18, palette.muted);
   addCenteredText(
     scene,
     scene.scale.width / 2,
@@ -306,23 +296,22 @@ export function renderBullshitState(
   background.lineStyle(3, palette.tableEdge, 0.85);
   background.strokeRoundedRect(20, 18, width - 40, height - 36, 32);
 
-  addCenteredText(scene, width / 2, 52, text.eyebrow, 15, palette.accentText, "700");
-  addCenteredText(scene, width / 2, 91, state.winnerName ? text.winner(state.winnerName) : text.title, 42, palette.text, "700");
+  addCenteredText(scene, width / 2, 60, state.winnerName ? text.winner(state.winnerName) : text.title, 42, palette.text, "700");
 
   const turnLine = state.winnerName
-    ? state.message ?? text.winner(state.winnerName)
+    ? text.winner(state.winnerName)
     : state.currentTurnPlayerName
       ? text.current(state.currentTurnPlayerName)
       : text.waiting;
-  addCenteredText(scene, width / 2, 136, turnLine, 24, state.winnerName ? palette.accentText : palette.text);
+  addCenteredText(scene, width / 2, 108, turnLine, 24, state.winnerName ? palette.accentText : palette.text);
 
   if (state.pendingWinnerName && !state.winnerName) {
-    addCenteredText(scene, width / 2, 174, text.pending(state.pendingWinnerName), 18, palette.accentText, "700");
+    addCenteredText(scene, width / 2, 150, text.pending(state.pendingWinnerName), 18, palette.accentText, "700");
   } else if (state.lastPlay && !state.lastResolution) {
     addCenteredText(
       scene,
       width / 2,
-      174,
+      150,
       text.lastPlay(state.lastPlay.playerName, state.lastPlay.count, state.lastPlay.claimedRank),
       18,
       palette.muted

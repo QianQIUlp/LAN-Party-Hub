@@ -223,7 +223,6 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
 
       <header className="card-hand-header">
         <div className="card-hand-title-group">
-          <span className="card-hand-kicker">FACE DOWN · SPEAK UP</span>
           <h1>{model.title}</h1>
           {model.subtitle ? (
             <span className={`card-hand-turn ${model.isCurrentTurn ? "is-active" : ""}`}>{model.subtitle}</span>
@@ -235,25 +234,24 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
             <dt>{model.handLabel}</dt>
             <dd key={`hand-${model.cards.length}`}>{model.cards.length}</dd>
           </div>
-          <div>
-            <dt>{model.selectedLabel}</dt>
-            <dd key={`selected-${model.selectedCount}`}>{model.selectedCount}</dd>
-          </div>
-          <div>
-            <dt>{model.pileLabel}</dt>
-            <dd key={`pile-${model.pileCount}`}>{model.pileCount}</dd>
-          </div>
+          {model.selectedCount > 0 ? (
+            <div>
+              <dt>{model.selectedLabel}</dt>
+              <dd key={`selected-${model.selectedCount}`}>{model.selectedCount}</dd>
+            </div>
+          ) : null}
         </dl>
       </header>
 
-      <div key={model.helperText} className="card-hand-message" role="status" aria-live="polite">
-        {model.helperText}
-      </div>
+      {model.helperText ? (
+        <div key={model.helperText} className="card-hand-message" role="status" aria-live="polite">
+          {model.helperText}
+        </div>
+      ) : null}
 
       <section className="card-hand-claim-panel" aria-label={model.claimLabel}>
         <div className="card-hand-claim-heading">
           <span>{model.claimLabel}</span>
-          <strong>{model.activeRank ?? "?"}</strong>
         </div>
         {model.activeRank ? (
           <div className="card-hand-rank-locked">{model.activeRank}</div>
@@ -289,18 +287,15 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
                 />
               ))}
             </div>
-            {visiblePileCount === 0 ? <span className="card-hand-pile-empty">DROP</span> : null}
           </div>
-          <div className="card-hand-pile-count">
+          <div className="card-hand-pile-count" aria-label={`${model.pileLabel} ${model.pileCount}`}>
             <strong key={`pile-label-${model.pileCount}`}>{model.pileCount}</strong>
-            <span>{model.pileLabel}</span>
           </div>
           {model.lastPlayLabel ? <small key={model.lastPlayLabel}>{model.lastPlayLabel}</small> : null}
         </aside>
 
         <section className="card-hand-hand-zone" aria-label={model.handLabel}>
-          <div className="card-hand-sort-row">
-            <span>{model.sortLabel}</span>
+          <div className="card-hand-sort-row" aria-label={model.sortLabel}>
             <div>
               <button
                 type="button"
@@ -407,6 +402,7 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
         <button
           type="button"
           className="card-hand-action is-play"
+          aria-label={model.playAccessibilityLabel}
           disabled={model.disabled || !model.canPlay || isPlayingCards || isChecking}
           onClick={handlePlay}
         >

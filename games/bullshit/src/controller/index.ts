@@ -52,6 +52,7 @@ interface CardHandLayoutModel {
   rankSortLabel: string;
   suitSortLabel: string;
   playLabel: string;
+  playAccessibilityLabel: string;
   playingLabel: string;
   checkLabel: string;
   checkDisplayLabel: string;
@@ -75,7 +76,6 @@ interface ControllerGameRenderContext {
     player?: { id: string } | null;
     game?: {
       phase?: string;
-      message?: string;
       state?: unknown;
     } | null;
   };
@@ -120,45 +120,35 @@ function formatCard(card: BullshitCard, language: SupportedLanguage): string {
   return `${suitSymbols[card.suit]} ${card.rank} · ${suitNames[language][card.suit]}`;
 }
 
-function formatRevealedCards(cards: readonly BullshitCard[], language: SupportedLanguage): string {
-  if (cards.length === 0) {
-    return "-";
-  }
-
-  return cards.map((card) => formatCard(card, language)).join("、");
-}
-
 function resolutionText(state: BullshitControllerState, language: SupportedLanguage): string | undefined {
   const resolution = state.lastResolution;
   if (!resolution) {
     return undefined;
   }
 
-  const cards = formatRevealedCards(resolution.revealedCards, language);
   if (language === "zh-CN") {
     return resolution.truthful
-      ? `${resolution.challengedName} 的牌是真的：${cards}。${resolution.recipientName} 拿走整堆。`
-      : `${resolution.challengedName} 被抓到说谎：${cards}。${resolution.recipientName} 拿走整堆。`;
+      ? `没骗你！${resolution.recipientName} 收下 ${resolution.pileSize} 张`
+      : `抓到了！${resolution.recipientName} 收下 ${resolution.pileSize} 张`;
   }
 
   if (language === "en") {
     return resolution.truthful
-      ? `${resolution.challengedName} was truthful (${cards}). ${resolution.recipientName} takes the pile.`
-      : `${resolution.challengedName} was bluffing (${cards}). ${resolution.recipientName} takes the pile.`;
+      ? `Truth! ${resolution.recipientName} takes ${resolution.pileSize}`
+      : `Caught! ${resolution.recipientName} takes ${resolution.pileSize}`;
   }
 
   return resolution.truthful
-    ? `${resolution.challengedName} sagte die Wahrheit (${cards}). ${resolution.recipientName} nimmt den Stapel.`
-    : `${resolution.challengedName} hat geblufft (${cards}). ${resolution.recipientName} nimmt den Stapel.`;
+    ? `Ehrlich! ${resolution.recipientName} nimmt ${resolution.pileSize}`
+    : `Erwischt! ${resolution.recipientName} nimmt ${resolution.pileSize}`;
 }
 
 function buildHelperText(
   state: BullshitControllerState,
   phase: string | undefined,
   playerId: string,
-  language: SupportedLanguage,
-  fallbackMessage: string | undefined
-): string {
+  language: SupportedLanguage
+): string | undefined {
   const zh = language === "zh-CN";
   const en = language === "en";
   const resolution = resolutionText(state, language);
@@ -170,7 +160,7 @@ function buildHelperText(
   }
 
   if (phase !== "playing") {
-    return resolution ?? fallbackMessage ?? (zh ? "等待本局开始。" : en ? "Waiting for the round." : "Warte auf die Runde.");
+    return resolution;
   }
 
   if (resolution) {
@@ -180,31 +170,15 @@ function buildHelperText(
   if (!state.isCurrentTurn) {
     if (state.pendingWinnerPlayerId) {
       return zh
-        ? `${state.pendingWinnerName ?? "上一位玩家"} 已经出完牌；轮到他之前仍可质疑最后一手。`
+        ? `最后一次 Check：${state.pendingWinnerName ?? "上一位玩家"}`
         : en
-          ? `${state.pendingWinnerName ?? "The previous player"} is out; their last play can still be checked.`
-          : `${state.pendingWinnerName ?? "Der vorige Spieler"} ist fertig; der letzte Zug darf noch geprueft werden.`;
+          ? `Last chance to Check ${state.pendingWinnerName ?? "the previous player"}`
+          : `Letzter Check gegen ${state.pendingWinnerName ?? "den vorigen Spieler"}`;
     }
-    return zh
-      ? `等待 ${state.currentTurnPlayerName ?? "下一位玩家"} 行动。`
-      : en
-        ? `Waiting for ${state.currentTurnPlayerName ?? "the next player"}.`
-        : `Warte auf ${state.currentTurnPlayerName ?? "den naechsten Spieler"}.`;
+    return undefined;
   }
 
-  if (!state.activeRank) {
-    return zh
-      ? "选一个宣称点数，再挑任意手牌背面打出；真实牌不必与宣称相同。"
-      : en
-        ? "Choose a claim, then any cards to play face down. Their real ranks may differ."
-        : "Waehle eine Ansage und beliebige Handkarten. Die echten Werte duerfen abweichen.";
-  }
-
-  return zh
-    ? `本堆只认 ${state.activeRank}。你可以继续跟牌、Check 最近一手，或者过牌。`
-    : en
-      ? `This pile stays on ${state.activeRank}. Add cards, check the last play, or pass.`
-      : `Dieser Stapel bleibt bei ${state.activeRank}. Lege nach, pruefe oder passe.`;
+  return undefined;
 }
 
 function buildControllerState(context: ControllerGameRenderContext): BullshitControllerState {
@@ -228,8 +202,7 @@ function buildControllerState(context: ControllerGameRenderContext): BullshitCon
     canPlay: gameState.canPlay ?? false,
     canCheck: gameState.canCheck ?? false,
     canPass: gameState.canPass ?? false,
-    passUsed: gameState.passUsed ?? false,
-    message: gameState.message
+    passUsed: gameState.passUsed ?? false
   };
 }
 
@@ -257,7 +230,7 @@ export function buildBullshitControllerModel(context: ControllerGameRenderContex
     kind: "card_hand",
     title,
     subtitle,
-    helperText: buildHelperText(bullshitState, state.game?.phase, playerId, language, state.game?.message),
+    helperText: buildHelperText(bullshitState, state.game?.phase, playerId, language),
     language,
     disabled: !isPlaying,
     isCurrentTurn: bullshitState.isCurrentTurn,
@@ -297,19 +270,20 @@ export function buildBullshitControllerModel(context: ControllerGameRenderContex
     selectedCount,
     lastPlayLabel: bullshitState.lastPlay
       ? zh
-        ? `${bullshitState.lastPlay.playerName} 刚出了 ${bullshitState.lastPlay.count} 张`
+        ? `${bullshitState.lastPlay.playerName} × ${bullshitState.lastPlay.count}`
         : en
-          ? `${bullshitState.lastPlay.playerName} played ${bullshitState.lastPlay.count}`
-          : `${bullshitState.lastPlay.playerName}: ${bullshitState.lastPlay.count} Karten`
+          ? `${bullshitState.lastPlay.playerName} × ${bullshitState.lastPlay.count}`
+          : `${bullshitState.lastPlay.playerName} × ${bullshitState.lastPlay.count}`
       : undefined,
     handLabel: zh ? "手牌" : en ? "Hand" : "Hand",
     selectedLabel: zh ? "已选" : en ? "Selected" : "Gewaehlt",
     pileLabel: zh ? "桌面牌堆" : en ? "Table pile" : "Tischstapel",
-    claimLabel: zh ? "本堆宣称" : en ? "Pile claim" : "Ansage",
+    claimLabel: zh ? "宣称" : en ? "Claim" : "Ansage",
     sortLabel: zh ? "理牌" : en ? "Sort" : "Sortieren",
     rankSortLabel: zh ? "点数" : en ? "Rank" : "Wert",
     suitSortLabel: zh ? "花色" : en ? "Suit" : "Farbe",
-    playLabel: zh
+    playLabel: zh ? "出牌" : en ? "Play" : "Legen",
+    playAccessibilityLabel: zh
       ? `背面打出 ${selectedCount} 张${claimedRank ? `，宣称 ${claimedRank}` : ""}`
       : en
         ? `Play ${selectedCount} face down${claimedRank ? ` as ${claimedRank}` : ""}`
@@ -321,7 +295,7 @@ export function buildBullshitControllerModel(context: ControllerGameRenderContex
     checkDisplayLabel: "CHECK!",
     checkSubLabel: zh ? "开牌！" : en ? "Reveal!" : "Aufdecken!",
     passLabel: bullshitState.passUsed
-      ? zh ? "本牌堆已经过牌" : en ? "Pass already used" : "Passen bereits benutzt"
+      ? zh ? "已过" : en ? "Passed" : "Gepasst"
       : zh ? "过牌" : en ? "Pass" : "Passen",
     canPlay: canChoose && bullshitState.canPlay,
     canCheck: canChoose && bullshitState.canCheck,

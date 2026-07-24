@@ -128,6 +128,7 @@ export interface CardHandLayoutModel {
   rankSortLabel: string;
   suitSortLabel: string;
   playLabel: string;
+  playAccessibilityLabel: string;
   playingLabel: string;
   checkLabel: string;
   checkDisplayLabel: string;
