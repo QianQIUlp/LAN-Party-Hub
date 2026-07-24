@@ -240,6 +240,12 @@ function publicState(state: RouletteState): RoulettePublicState {
         state.inventoryByPlayer[playerId]?.length ?? 0
       ])
     ),
+    visibleToolsByPlayer: Object.fromEntries(
+      state.playerOrder.map((playerId) => [
+        playerId,
+        [...(state.inventoryByPlayer[playerId] ?? [])]
+      ])
+    ),
     restrainedPlayerIds: state.playerOrder.filter(
       (playerId) => state.skipNextTurnByPlayer[playerId]
     ),

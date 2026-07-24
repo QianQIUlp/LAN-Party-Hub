@@ -19,6 +19,8 @@ other media asset.
 - A live charge removes one resolve, or two when overcharged.
 - Each player draws two tools at the start of a duel and after every reload, up
   to an inventory capacity of eight.
+- Both tool racks are visible on the shared table so players can read the board;
+  inspection-lens results remain private on the owner's controller.
 
 ## Tactical tools
 

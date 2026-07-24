@@ -102,6 +102,7 @@ export interface RoulettePublicState {
   reloadNumber: number;
   actionNumber: number;
   inventoryCountByPlayer: Record<string, number>;
+  visibleToolsByPlayer: Record<string, RouletteItem[]>;
   restrainedPlayerIds: string[];
   boostedPlayerIds: string[];
   duelNumber: number;

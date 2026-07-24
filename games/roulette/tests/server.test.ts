@@ -211,9 +211,31 @@ describe("roulette tactical tools", () => {
     expect(publicState).not.toHaveProperty("shells");
     expect(publicState).not.toHaveProperty("inventoryByPlayer");
     expect(publicState).not.toHaveProperty("knownCurrentShellByPlayer");
+    expect(publicState).toMatchObject({
+      visibleToolsByPlayer: { p1: [], p2: [] }
+    });
     expect(ownerState).toMatchObject({ knownCurrentShell: "live" });
     expect(rivalState).toMatchObject({ knownCurrentShell: null });
     expect(ownerState?.lastEvent).not.toHaveProperty("revealedShell");
+  });
+
+  it("shows both tool racks while keeping charge knowledge private", () => {
+    const state = playingState(["blank", "live"], {
+      inventoryByPlayer: {
+        p1: ["lens", "overcharge"],
+        p2: ["restraint"]
+      },
+      knownCurrentShellByPlayer: { p1: "blank", p2: null }
+    });
+    const publicState = serverGame.toPublicState?.(state, context());
+
+    expect(publicState).toMatchObject({
+      visibleToolsByPlayer: {
+        p1: ["lens", "overcharge"],
+        p2: ["restraint"]
+      }
+    });
+    expect(publicState).not.toHaveProperty("knownCurrentShellByPlayer");
   });
 
   it("flips a known current charge without leaking it publicly", () => {
