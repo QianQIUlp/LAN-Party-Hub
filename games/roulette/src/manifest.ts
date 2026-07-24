@@ -3,14 +3,14 @@ import type { GameManifest } from "@open-party-lab/game-core";
 export const rouletteManifest = {
   id: "roulette",
   displayName: "命运轮盘",
-  description: "在隐藏弹序中选择朝自己或对手扣动扳机，活到最后。",
+  description: "公开弹量、隐藏顺序，利用战术道具赢下三盘两胜的命运对决。",
   minPlayers: 2,
   maxPlayers: 2,
   hostView: "RouletteHostScene",
   controllerView: "roulette",
   controllerLayout: "choice",
   supportsTeams: false,
-  estimatedRoundDurationMs: 120_000,
+  estimatedRoundDurationMs: 300_000,
   contentRating: "optional-adult",
   roundCompletionMode: "wait_for_ready",
   phaseDurations: {
