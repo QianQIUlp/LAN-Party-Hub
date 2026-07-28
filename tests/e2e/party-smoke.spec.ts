@@ -147,8 +147,8 @@ test("offline phones recover and compatible groups can switch through all bundle
     }).__openPartyLabHost?.getState().room?.currentRound?.gameId ?? null;
   })).toBe("roulette");
 
-  const selfChoiceOne = controllerOne.getByRole("button", { name: "朝自己扣动扳机" });
-  const selfChoiceTwo = controllerTwo.getByRole("button", { name: "朝自己扣动扳机" });
+  const selfChoiceOne = controllerOne.getByRole("button", { name: /^对自己执行测试/ });
+  const selfChoiceTwo = controllerTwo.getByRole("button", { name: /^对自己执行测试/ });
   await expect(selfChoiceOne).toBeVisible();
   await expect(selfChoiceTwo).toBeVisible();
   await expect.poll(async () =>

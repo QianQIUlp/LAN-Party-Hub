@@ -13,10 +13,11 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   fullyParallel: false,
   workers: 1,
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: hostOrigin,
-    trace: "retain-on-failure"
+    trace: process.env.CI ? "on-first-retry" : "off"
   },
   projects: [
     {
