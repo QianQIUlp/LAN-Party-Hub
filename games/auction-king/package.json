@@ -19,6 +19,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "dev": "npm run typecheck",
     "pack:dry-run": "npm pack --dry-run"
   },
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "phaser": "^3.90.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.10"
   }
 }

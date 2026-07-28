@@ -676,6 +676,134 @@ export interface MagicArenaLayoutModel {
   onReady: () => void;
 }
 
+export interface AuctionWarehouseNoteModel {
+  id: string;
+  source: "auctioneer" | "role" | "instrument";
+  round: number;
+  text: string;
+}
+
+export interface AuctionWarehouseVisibleItemModel {
+  instanceId: string;
+  anchorX: number;
+  anchorY: number;
+  x: number | null;
+  y: number | null;
+  width: number | null;
+  height: number | null;
+  outlineKnown: boolean;
+  rarityKnown: boolean;
+  categoryKnown: boolean;
+  identityKnown: boolean;
+  rarity: string | null;
+  category: string | null;
+  catalogId: string | null;
+  name: string | null;
+  imagePath?: string;
+  trueValue: number | null;
+}
+
+export interface AuctionWarehouseCandidateModel {
+  catalogId: string;
+  name: string;
+  category: string;
+  rarity: string;
+  width: number;
+  height: number;
+  value: number;
+  imagePath?: string;
+  probability: number;
+  confidence: "certain" | "likely" | "possible";
+  reasons: string[];
+}
+
+export interface AuctionWarehouseStateModel {
+  stage: "setup" | "round_active" | "round_reveal" | "finished";
+  currentRound: number;
+  totalRounds: number;
+  startingFunds: number;
+  stageEndsAt: number | null;
+  threshold: number;
+  players: Array<{
+    playerId: string;
+    name: string;
+    color: string;
+    roleId: string | null;
+    roleName: string | null;
+    setupConfirmed: boolean;
+  }>;
+  history: Array<{
+    round: number;
+    threshold: number;
+    bids: Record<string, number>;
+    instruments: Record<string, string | null>;
+    highestBid: number;
+    secondBid: number;
+    leaderPlayerId: string | null;
+    sold: boolean;
+    revealedAt: number;
+  }>;
+  publicNotes: AuctionWarehouseNoteModel[];
+  warehouse: {
+    cols: number;
+    rows: number;
+    items: AuctionWarehouseVisibleItemModel[];
+  };
+  soldToPlayerId: string | null;
+  soldFor: number;
+  trueWarehouseValue: number | null;
+  playerId: string;
+  spectator: boolean;
+  ownFunds: number;
+  ownBid: number | null;
+  ownRoleId: string | null;
+  ownKitId: string | null;
+  setupConfirmed: boolean;
+  availableRoles: Array<{
+    id: string;
+    name: string;
+    description: string;
+    accent: string;
+    portraitPath?: string;
+  }>;
+  availableKits: Array<{
+    id: string;
+    name: string;
+    description: string;
+    cost: number;
+    accent: string;
+  }>;
+  instruments: Array<{
+    id: string;
+    name: string;
+    description: string;
+    iconPath?: string;
+  }>;
+  ownInstrumentInventory: string[];
+  ownCurrentInstrument: string | null;
+  privateNotes: AuctionWarehouseNoteModel[];
+  estimatedWarehouseMin: number | null;
+  estimatedWarehouseMax: number | null;
+  candidatesByInstanceId: Record<string, AuctionWarehouseCandidateModel[]>;
+  canConfigure: boolean;
+  canAct: boolean;
+}
+
+export interface AuctionWarehouseLayoutModel {
+  kind: "auction_warehouse";
+  language: import("@open-party-lab/protocol").SupportedLanguage;
+  roomCode?: string;
+  message?: string;
+  disabled: boolean;
+  state: AuctionWarehouseStateModel | null;
+  ready?: ReadyLayoutModel;
+  onSelectRole: (roleId: string) => void;
+  onSelectKit: (kitId: string) => void;
+  onConfirmSetup: () => void;
+  onUseInstrument: (instrumentId: string) => void;
+  onSubmitBid: (amount: number) => void;
+}
+
 export type ControllerLayoutModel =
   | SingleButtonLayoutModel
   | ChoiceLayoutModel
@@ -694,6 +822,7 @@ export type ControllerLayoutModel =
   | DrawingGuessLayoutModel
   | SchaetzoramaLayoutModel
   | WordTilesLayoutModel
-  | MagicArenaLayoutModel;
+  | MagicArenaLayoutModel
+  | AuctionWarehouseLayoutModel;
 
 // TODO: Fuer spaetere Minispiele hier weitere Layout-Modelle wie Choice und Swipe ergaenzen.

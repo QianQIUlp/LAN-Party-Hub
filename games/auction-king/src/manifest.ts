@@ -2,15 +2,15 @@ import type { GameManifest } from "@open-party-lab/game-core";
 
 export const auctionKingManifest = {
   id: "auction-king",
-  displayName: "即刻落槌",
-  description: "暗拍博弈：鉴定神秘拍品，密封出价，落槌定盈亏。",
+  displayName: "迷雾仓库",
+  description: "调查同一座神秘仓库，用角色与仪器积累私人情报，在五轮递进竞拍中抢先落槌。",
   minPlayers: 2,
-  maxPlayers: 4,
+  maxPlayers: 6,
   hostView: "AuctionKingHostScene",
   controllerView: "auction-king",
-  controllerLayout: "choice",
+  controllerLayout: "auction_warehouse",
   supportsTeams: false,
-  estimatedRoundDurationMs: 100_000,
+  estimatedRoundDurationMs: 350_000,
   contentRating: "family",
   roundCompletionMode: "wait_for_ready",
   phaseDurations: {

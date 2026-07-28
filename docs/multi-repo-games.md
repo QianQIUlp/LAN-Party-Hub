@@ -1,7 +1,7 @@
 <!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Multi-Repo Games
 
-LAN Party Hub supports optional local game repos. You do not need every game repo. The platform always loads its seven bundled games and additionally loads optional games present under `local-games/` after `npm run games:sync-local`.
+LAN Party Hub supports optional local game repos. You do not need every game repo. The platform always loads its eight bundled games and additionally loads optional games present under `local-games/` after `npm run games:sync-local`.
 
 ## Recommended Layout
 
@@ -87,6 +87,8 @@ External games expose only these public entrypoints:
 For Magic Arena, Magic Duell, Air Hockey, Tabu, Imposter, Schaetzorama, Light Trails, Drift Racer, Word Tiles, Zeichnen & Erraten, Arena Survivor, MinionsTD, and Chaos-Kommando, the same contract uses the matching package name such as `@open-party-lab/game-magic-arena/...` or `@open-party-lab/game-chaos-kommando/...`.
 
 The platform generates registry imports only for local repos that exist and build successfully. Missing repos are skipped.
+
+Game-owned public assets may be placed under `public/host/` or `public/controller/` for one surface. Assets needed by both surfaces belong under `public/shared/`. `npm run games:sync-local` copies shared assets into both application public roots before development and production builds. Keep the game ID as the first directory below each public root, for example `public/shared/auction-king/images/`, so optional games cannot overwrite another game's files.
 
 ## Lobby Setup Boundary
 

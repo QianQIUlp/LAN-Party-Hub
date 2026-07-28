@@ -9,45 +9,55 @@ interface HostClientLike {
 
 interface HostAppStateLike {
   game?: { state?: unknown; phase?: string; message?: string } | null;
-  room?: { language?: "zh-CN" | "en" | "de"; players?: Array<{ id: string; name: string }> } | null;
+  room?: { language?: "zh-CN" | "en" | "de" } | null;
 }
 
 export class AuctionKingHostScene extends Phaser.Scene {
   private unsubscribe?: () => void;
-  private hasPreloaded = false;
+  private latestState: HostAppStateLike | null = null;
+  private lastRenderedSecond = -1;
 
   constructor() {
     super(auctionKingManifest.hostView);
   }
 
   preload(): void {
-    // Attempt to load optional image assets.
-    // If files are missing, Phaser logs a warning and the renderer
-    // falls back to graphics primitives.
     preloadAuctionKingAssets(this);
-    this.hasPreloaded = true;
   }
 
   create(): void {
     const client = this.registry.get("hostClient") as HostClientLike;
     this.unsubscribe = client.subscribe((state) => {
-      const gameState = (state.game?.state ?? {}) as Record<string, unknown>;
-      const playerNames = Object.fromEntries(
-        (state.room?.players ?? []).map((p) => [p.id, p.name])
-      );
-      this.children.removeAll(true);
-      this.cameras.main.setBackgroundColor("#0a0e27");
-      renderAuctionKingState(
-        this,
-        { ...gameState, message: state.game?.message } as Parameters<typeof renderAuctionKingState>[1],
-        playerNames,
-        state.room?.language
-      );
+      this.latestState = state;
+      this.renderLatestState();
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.unsubscribe?.();
       this.unsubscribe = undefined;
+      this.latestState = null;
     });
+  }
+
+  update(): void {
+    const gameState = this.latestState?.game?.state as { stageEndsAt?: number | null } | undefined;
+    if (gameState?.stageEndsAt === null || gameState?.stageEndsAt === undefined) return;
+    const second = Math.max(0, Math.ceil((gameState.stageEndsAt - Date.now()) / 1000));
+    if (second === this.lastRenderedSecond) return;
+    this.lastRenderedSecond = second;
+    this.renderLatestState();
+  }
+
+  private renderLatestState(): void {
+    const state = this.latestState;
+    if (!state?.game?.state) return;
+    const gameState = state.game.state as Record<string, unknown>;
+    this.children.removeAll(true);
+    this.cameras.main.setBackgroundColor("#080c0f");
+    renderAuctionKingState(
+      this,
+      { ...gameState, message: state.game.message } as Parameters<typeof renderAuctionKingState>[1],
+      state.room?.language ?? "zh-CN"
+    );
   }
 }
 

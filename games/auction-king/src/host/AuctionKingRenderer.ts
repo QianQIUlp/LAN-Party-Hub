@@ -2,895 +2,585 @@ import Phaser from "phaser";
 import type { SupportedLanguage } from "@open-party-lab/game-core";
 import type {
   AuctionKingPublicState,
-  AuctionRoundResult,
-  PublicAuctionItem
+  AuctionRoundHistory,
+  VisibleWarehouseItem
 } from "../protocol.js";
-import { rarityColors, rarityLabels } from "../server/auctionItems.js";
 import {
+  auctionInstruments,
+  localize
+} from "../server/content.js";
+import {
+  backgroundTextureKey,
   hasTexture,
-  getCategoryTexture,
-  getRarityFrameTexture,
-  TEXTURE_KEYS
+  instrumentTextureKey,
+  itemTextureKey
 } from "./textures.js";
-
-/* ────────────────────────── Types ────────────────────────── */
 
 interface AuctionKingRenderState extends AuctionKingPublicState {
   message?: string;
 }
 
-interface PlayerProgress {
-  playerId: string;
-  name: string;
-  color: string;
-  gold: number;
-  hasBid: boolean;
-}
-
-/* ────────────────────────── Theme ────────────────────────── */
-
-const C = {
-  bgTop: 0x0a0e27,
-  bgBottom: 0x0f172a,
-  bgGlow: 0x1e293b,
-  cardBg: 0x111827,
-  cardInner: 0x1e293b,
-  text: "#f8fafc",
-  textDim: "#cbd5e1",
-  textMuted: "#94a3b8",
-  gold: "#f59e0b",
-  goldBright: "#fbbf24",
-  goldNum: 0xf59e0b,
-  bid: "#38bdf8",
-  win: "#34d399",
-  loss: "#f87171",
-  panelBg: 0x0f172a,
-  panelBorder: 0x334155
+const colors = {
+  background: 0x080c0f,
+  panel: 0x141a1c,
+  panelSoft: 0x1b2224,
+  line: 0x5a4a34,
+  text: "#f5f0e6",
+  muted: "#94a09f",
+  gold: "#e4bd6c",
+  goldNumber: 0xe4bd6c,
+  mint: "#60d3bd",
+  mintNumber: 0x60d3bd,
+  copper: "#b86f40"
 } as const;
 
-const FONT = "Trebuchet MS, 'Noto Sans SC', Arial, sans-serif";
+const rarityColors: Record<string, number> = {
+  white: 0xcbd5d9,
+  green: 0x45c486,
+  blue: 0x4aa9ff,
+  purple: 0xa96cff,
+  gold: 0xf2bf51,
+  red: 0xff5b68
+};
 
-/* ────────────────────────── Helpers ────────────────────────── */
+const fontFamily = "Inter, 'Noto Sans SC', 'Microsoft YaHei', Arial, sans-serif";
 
-function hexToPhaser(hex: string): number {
-  return Number.parseInt(hex.slice(1), 16);
-}
-
-function drawGradientBg(scene: Phaser.Scene, W: number, H: number): void {
-  const g = scene.add.graphics();
-  // Main vertical gradient
-  g.fillGradientStyle(C.bgTop, C.bgTop, C.bgBottom, C.bgBottom, 1);
-  g.fillRect(0, 0, W, H);
-  // Center radial-ish glow
-  g.fillGradientStyle(C.bgGlow, C.bgGlow, C.bgTop, C.bgTop, 0.35);
-  const glowW = Math.min(W * 0.7, 900);
-  const glowH = Math.min(H * 0.5, 400);
-  g.fillRect((W - glowW) / 2, H * 0.15, glowW, glowH);
-  g.setDepth(-100);
-}
-
-function drawImageOrGradientBg(
-  scene: Phaser.Scene,
-  textureKey: string,
-  W: number,
-  H: number
-): void {
-  if (hasTexture(scene, textureKey)) {
-    const img = scene.add.image(W / 2, H / 2, textureKey);
-    const scale = Math.max(W / img.width, H / img.height);
-    img.setScale(scale).setDepth(-100);
-    // Dark overlay for readability
-    const overlay = scene.add.graphics();
-    overlay.fillStyle(0x0a0e27, 0.55);
-    overlay.fillRect(0, 0, W, H);
-    overlay.setDepth(-99);
-  } else {
-    drawGradientBg(scene, W, H);
-  }
-}
-
-function drawRoundedPanel(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  radius: number,
-  fillAlpha: number
-): Phaser.GameObjects.Graphics {
-  const g = scene.add.graphics();
-  g.fillStyle(C.cardBg, fillAlpha);
-  g.fillRoundedRect(x, y, w, h, radius);
-  return g;
-}
-
-function drawGlowBorder(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  radius: number,
-  colorHex: string,
-  intensity: number
-): Phaser.GameObjects.Graphics {
-  const colorNum = hexToPhaser(colorHex);
-  const g = scene.add.graphics();
-  // Outer glow (wider, low alpha)
-  g.fillStyle(colorNum, 0.08 * intensity);
-  g.fillRoundedRect(x - 8, y - 8, w + 16, h + 16, radius + 8);
-  // Middle glow
-  g.fillStyle(colorNum, 0.15 * intensity);
-  g.fillRoundedRect(x - 4, y - 4, w + 8, h + 8, radius + 4);
-  // Solid border
-  g.lineStyle(3, colorNum, 0.9);
-  g.strokeRoundedRect(x, y, w, h, radius);
-  return g;
-}
-
-function drawStageBanner(
-  scene: Phaser.Scene,
-  x: number,
-  y: number,
-  w: number,
-  text: string,
-  colorHex: string
-): void {
-  const colorNum = hexToPhaser(colorHex);
-  const g = scene.add.graphics();
-  g.fillStyle(colorNum, 0.15);
-  g.fillRoundedRect(x - w / 2, y, w, 32, 16);
-  g.lineStyle(1, colorNum, 0.4);
-  g.strokeRoundedRect(x - w / 2, y, w, 32, 16);
-
-  scene.add
-    .text(x, y + 16, text, {
-      fontFamily: FONT,
-      fontSize: "15px",
-      color: colorHex,
-      fontStyle: "bold"
-    })
-    .setOrigin(0.5, 0.5);
-}
-
-function drawCircularTimer(
-  scene: Phaser.Scene,
-  cx: number,
-  cy: number,
-  radius: number,
-  remaining: number,
-  total: number
-): void {
-  const g = scene.add.graphics();
-  const progress = total > 0 ? Math.max(0, remaining / total) : 0;
-  const isUrgent = remaining <= 5;
-  const isWarning = remaining <= 10 && remaining > 5;
-
-  const ringColor = isUrgent ? 0xef4444 : isWarning ? 0xf59e0b : 0x22d3ee;
-  const bgColor = 0x1e293b;
-
-  // Background ring
-  g.lineStyle(6, bgColor, 0.8);
-  g.beginPath();
-  g.arc(cx, cy, radius, 0, Math.PI * 2);
-  g.strokePath();
-
-  // Progress arc
-  if (progress > 0) {
-    g.lineStyle(6, ringColor, 1);
-    g.beginPath();
-    g.arc(
-      cx,
-      cy,
-      radius,
-      -Math.PI / 2,
-      -Math.PI / 2 + Math.PI * 2 * progress,
-      false
-    );
-    g.strokePath();
-  }
-
-  // Time text
-  const timeColor = isUrgent ? "#f87171" : isWarning ? "#fbbf24" : "#22d3ee";
-  scene.add
-    .text(cx, cy, `${Math.ceil(remaining)}`, {
-      fontFamily: FONT,
-      fontSize: `${Math.floor(radius * 0.9)}px`,
-      color: timeColor,
-      fontStyle: "bold"
-    })
-    .setOrigin(0.5, 0.5);
-
-  // Pulse effect for urgent
-  if (isUrgent && remaining > 0) {
-    const pulse = scene.add.graphics();
-    pulse.lineStyle(2, 0xef4444, 0.4);
-    pulse.beginPath();
-    pulse.arc(cx, cy, radius + 6, 0, Math.PI * 2);
-    pulse.strokePath();
-    scene.tweens.add({
-      targets: pulse,
-      alpha: 0,
-      scale: 1.3,
-      duration: 800,
-      repeat: -1,
-      ease: "Cubic.easeOut"
-    });
-  }
-}
-
-function drawCategoryIllustration(
-  scene: Phaser.Scene,
-  cx: number,
-  cy: number,
-  size: number,
-  category: string,
-  rarityColorHex: string
-): void {
-  const texKey = getCategoryTexture(category);
-  if (texKey && hasTexture(scene, texKey)) {
-    const img = scene.add.image(cx, cy, texKey);
-    const scale = Math.min(size / img.width, size / img.height);
-    img.setScale(scale).setDepth(1);
-    // Subtle glow behind image
-    const glow = scene.add.graphics();
-    const colorNum = hexToPhaser(rarityColorHex);
-    glow.fillStyle(colorNum, 0.12);
-    glow.fillCircle(cx, cy, size * 0.6);
-    glow.setDepth(0);
-  } else {
-    // Fallback: decorative gradient circle with category initial
-    const colorNum = hexToPhaser(rarityColorHex);
-    const g = scene.add.graphics();
-    // Outer glow
-    g.fillStyle(colorNum, 0.1);
-    g.fillCircle(cx, cy, size * 0.62);
-    // Inner circle
-    g.fillStyle(C.cardInner, 0.9);
-    g.fillCircle(cx, cy, size * 0.5);
-    // Border ring
-    g.lineStyle(2, colorNum, 0.6);
-    g.strokeCircle(cx, cy, size * 0.5);
-
-    // Category character
-    const initials: Record<string, string> = {
-      "古董": "古",
-      "珠宝": "珠",
-      "艺术品": "艺",
-      "奇物": "奇"
+function copy(language: SupportedLanguage) {
+  if (language === "en") {
+    return {
+      title: "VEILED WAREHOUSE",
+      setup: "PRE-AUCTION LOADOUT",
+      setupBody: "Specialist choices are public. Their discoveries remain private.",
+      ready: "LOADOUT LOCKED",
+      choosing: "CHOOSING LOADOUT",
+      round: "ROUND",
+      report: "ROUND REPORT",
+      final: "AUCTION COMPLETE",
+      condition: "CLOSE CONDITION",
+      unique: "UNIQUE HIGH BID",
+      lead: "LEAD OVER SECOND",
+      publicIntel: "AUCTIONEER PUBLIC INTEL",
+      warehouse: "PUBLIC WAREHOUSE MAP",
+      history: "PUBLIC BID & INSTRUMENT HISTORY",
+      noReport: "Waiting for the first report…",
+      sold: "WAREHOUSE SOLD",
+      unsold: "WAREHOUSE UNSOLD",
+      winner: "WINNER",
+      bid: "WINNING BID",
+      value: "TRUE VALUE",
+      noInstrument: "NONE",
+      hidden: "SEALED"
     };
-    scene.add
-      .text(cx, cy, initials[category] ?? "?", {
-        fontFamily: FONT,
-        fontSize: `${Math.floor(size * 0.5)}px`,
-        color: rarityColorHex,
-        fontStyle: "bold"
-      })
-      .setOrigin(0.5, 0.5);
+  }
+  if (language === "de") {
+    return {
+      title: "VERSCHLEIERTES LAGER",
+      setup: "AUSRUESTUNGSPHASE",
+      setupBody: "Spezialisten sind oeffentlich. Ihre Erkenntnisse bleiben privat.",
+      ready: "AUSWAHL GESPERRT",
+      choosing: "AUSWAHL LAEUFT",
+      round: "RUNDE",
+      report: "RUNDENBERICHT",
+      final: "AUKTION BEENDET",
+      condition: "ZUSCHLAGSREGEL",
+      unique: "EINDEUTIGES HOECHSTGEBOT",
+      lead: "VORSPRUNG AUF PLATZ ZWEI",
+      publicIntel: "OEFFENTLICHER AUKTIONSBERICHT",
+      warehouse: "OEFFENTLICHE LAGERKARTE",
+      history: "OEFFENTLICHE GEBOTE & INSTRUMENTE",
+      noReport: "Warte auf den ersten Bericht…",
+      sold: "LAGER VERKAUFT",
+      unsold: "LAGER NICHT VERKAUFT",
+      winner: "GEWINNER",
+      bid: "SIEGERGEBOT",
+      value: "WAHRER WERT",
+      noInstrument: "KEINS",
+      hidden: "VERSIEGELT"
+    };
+  }
+  return {
+    title: "迷雾仓库",
+    setup: "拍卖前配置",
+    setupBody: "角色选择公开，角色与仪器获得的具体情报仅本人可见",
+    ready: "配置已锁定",
+    choosing: "正在选择",
+    round: "竞拍回合",
+    report: "本轮公开结算",
+    final: "拍卖结束",
+    condition: "本轮成交条件",
+    unique: "唯一最高价",
+    lead: "领先第二名",
+    publicIntel: "拍卖师公开情报",
+    warehouse: "公共仓库视图",
+    history: "公开出价与仪器历史",
+    noReport: "等待首份公开情报…",
+    sold: "整座仓库已成交",
+    unsold: "整座仓库流拍",
+    winner: "拍得玩家",
+    bid: "成交价格",
+    value: "真实价值",
+    noInstrument: "未使用",
+    hidden: "等待公开"
+  };
+}
+
+function formatMoney(value: number, language: SupportedLanguage): string {
+  return new Intl.NumberFormat(language === "zh-CN" ? "zh-CN" : language === "de" ? "de-DE" : "en-US", {
+    maximumFractionDigits: 0
+  }).format(Math.max(0, Math.round(value)));
+}
+
+function addText(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  value: string,
+  size: number,
+  color: string = colors.text,
+  style: Phaser.Types.GameObjects.Text.TextStyle = {}
+): Phaser.GameObjects.Text {
+  return scene.add.text(x, y, value, {
+    fontFamily,
+    fontSize: `${Math.max(8, Math.round(size))}px`,
+    color,
+    ...style
+  });
+}
+
+function panel(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  alpha = 0.95
+): void {
+  const graphics = scene.add.graphics();
+  graphics.fillStyle(colors.panel, alpha);
+  graphics.fillRoundedRect(x, y, width, height, 13);
+  graphics.lineStyle(1, colors.line, 0.5);
+  graphics.strokeRoundedRect(x, y, width, height, 13);
+}
+
+function drawBackground(scene: Phaser.Scene, width: number, height: number): void {
+  if (hasTexture(scene, backgroundTextureKey)) {
+    const image = scene.add.image(width / 2, height / 2, backgroundTextureKey);
+    image.setScale(Math.max(width / image.width, height / image.height));
+    const overlay = scene.add.rectangle(width / 2, height / 2, width, height, 0x05090a, 0.66);
+    overlay.setDepth(0);
+    image.setDepth(-1);
+    return;
+  }
+  scene.cameras.main.setBackgroundColor(colors.background);
+  const graphics = scene.add.graphics();
+  graphics.fillGradientStyle(0x121c1a, 0x0b1011, 0x17120e, 0x080c0f, 1);
+  graphics.fillRect(0, 0, width, height);
+}
+
+function drawHeader(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  width: number,
+  scale: number
+): number {
+  const t = copy(language);
+  const headerHeight = 70 * scale;
+  const graphics = scene.add.graphics();
+  graphics.fillStyle(0x080c0f, 0.88);
+  graphics.fillRect(0, 0, width, headerHeight);
+  graphics.lineStyle(1, colors.line, 0.45);
+  graphics.lineBetween(0, headerHeight, width, headerHeight);
+
+  addText(scene, 28 * scale, 14 * scale, "LAN PARTY / SHARED AUCTION", 9 * scale, colors.gold, {
+    fontStyle: "bold",
+    letterSpacing: 2
+  });
+  addText(scene, 28 * scale, 31 * scale, t.title, 24 * scale, colors.text, {
+    fontStyle: "bold",
+    letterSpacing: 2
+  });
+
+  const stage = state.stage === "setup"
+    ? t.setup
+    : state.stage === "round_reveal"
+    ? t.report
+    : state.stage === "finished"
+    ? t.final
+    : `${t.round} ${state.currentRound} / ${state.totalRounds}`;
+  const stageText = addText(scene, width / 2, 20 * scale, stage, 14 * scale, colors.text, {
+    fontStyle: "bold",
+    align: "center"
+  }).setOrigin(0.5, 0);
+  stageText.setBackgroundColor("rgba(25,31,35,0.84)").setPadding(16 * scale, 8 * scale);
+
+  if (state.stageEndsAt !== null) {
+    const remaining = Math.max(0, Math.ceil((state.stageEndsAt - Date.now()) / 1000));
+    const timer = `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
+    addText(scene, width - 34 * scale, 20 * scale, timer, 22 * scale, remaining <= 10 ? "#ff707c" : colors.gold, {
+      fontStyle: "bold"
+    }).setOrigin(1, 0);
+  }
+  return headerHeight;
+}
+
+function renderSetup(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  width: number,
+  height: number,
+  top: number,
+  scale: number
+): void {
+  const t = copy(language);
+  const contentY = top + 18 * scale;
+  const contentH = height - contentY - 24 * scale;
+  panel(scene, 28 * scale, contentY, width - 56 * scale, contentH);
+  addText(scene, width / 2, contentY + 25 * scale, t.setupBody, 15 * scale, colors.muted, {
+    align: "center"
+  }).setOrigin(0.5, 0);
+
+  const playerCount = Math.max(1, state.players.length);
+  const gap = 12 * scale;
+  const cardWidth = Math.min(250 * scale, (width - 100 * scale - gap * (playerCount - 1)) / playerCount);
+  const totalWidth = cardWidth * playerCount + gap * (playerCount - 1);
+  const startX = (width - totalWidth) / 2;
+  const cardY = contentY + 80 * scale;
+  const cardH = Math.min(310 * scale, contentH - 125 * scale);
+
+  state.players.forEach((player, index) => {
+    const x = startX + index * (cardWidth + gap);
+    const card = scene.add.graphics();
+    const color = Phaser.Display.Color.HexStringToColor(player.color || "#94a3b8").color;
+    card.fillStyle(colors.panelSoft, 0.92);
+    card.fillRoundedRect(x, cardY, cardWidth, cardH, 12);
+    card.lineStyle(player.setupConfirmed ? 2 : 1, player.setupConfirmed ? colors.goldNumber : color, player.setupConfirmed ? 0.9 : 0.45);
+    card.strokeRoundedRect(x, cardY, cardWidth, cardH, 12);
+    card.fillStyle(color, 0.85);
+    card.fillRect(x, cardY, cardWidth, 5 * scale);
+
+    addText(scene, x + cardWidth / 2, cardY + 28 * scale, player.name, 18 * scale, colors.text, {
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: cardWidth - 20 * scale }
+    }).setOrigin(0.5, 0);
+    addText(scene, x + cardWidth / 2, cardY + cardH / 2 - 12 * scale, player.roleName ?? "—", 14 * scale, player.roleId ? colors.gold : colors.muted, {
+      align: "center",
+      wordWrap: { width: cardWidth - 24 * scale }
+    }).setOrigin(0.5, 0.5);
+    const status = player.setupConfirmed ? t.ready : t.choosing;
+    addText(scene, x + cardWidth / 2, cardY + cardH - 36 * scale, status, 10 * scale, player.setupConfirmed ? colors.mint : colors.muted, {
+      fontStyle: "bold",
+      align: "center",
+      letterSpacing: 1
+    }).setOrigin(0.5, 0);
+  });
+}
+
+function instrumentLabel(instrumentId: string | null, language: SupportedLanguage): string {
+  if (!instrumentId) return copy(language).noInstrument;
+  const instrument = auctionInstruments.find((entry) => entry.id === instrumentId);
+  return instrument ? localize(instrument.name, language) : instrumentId;
+}
+
+function drawPlayerHistory(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  scale: number
+): void {
+  const t = copy(language);
+  panel(scene, x, y, width, height);
+  addText(scene, x + 12 * scale, y + 11 * scale, t.history, 10 * scale, colors.gold, {
+    fontStyle: "bold",
+    letterSpacing: 1
+  });
+  const titleH = 34 * scale;
+  const rowGap = 5 * scale;
+  const rowH = (height - titleH - 10 * scale - rowGap * Math.max(0, state.players.length - 1)) / Math.max(1, state.players.length);
+
+  state.players.forEach((player, playerIndex) => {
+    const rowY = y + titleH + playerIndex * (rowH + rowGap);
+    const graphics = scene.add.graphics();
+    graphics.fillStyle(colors.panelSoft, playerIndex % 2 === 0 ? 0.72 : 0.5);
+    graphics.fillRoundedRect(x + 7 * scale, rowY, width - 14 * scale, rowH, 7 * scale);
+    const playerColor = Phaser.Display.Color.HexStringToColor(player.color || "#94a3b8").color;
+    graphics.fillStyle(playerColor, 0.9);
+    graphics.fillRect(x + 7 * scale, rowY, 4 * scale, rowH);
+
+    const identityW = width * 0.29;
+    addText(scene, x + 17 * scale, rowY + 9 * scale, player.name, 11 * scale, colors.text, {
+      fontStyle: "bold",
+      wordWrap: { width: identityW - 15 * scale }
+    });
+    addText(scene, x + 17 * scale, rowY + 27 * scale, player.roleName ?? "—", 8 * scale, colors.muted, {
+      wordWrap: { width: identityW - 15 * scale }
+    });
+
+    const historyX = x + identityW;
+    const historyW = width - identityW - 10 * scale;
+    const cellGap = 3 * scale;
+    const cellW = (historyW - cellGap * 4) / 5;
+    for (let round = 1; round <= 5; round += 1) {
+      const cellX = historyX + (round - 1) * (cellW + cellGap);
+      const cell = scene.add.graphics();
+      cell.fillStyle(0x070a0b, 0.58);
+      cell.fillRoundedRect(cellX, rowY + 5 * scale, cellW, rowH - 10 * scale, 5 * scale);
+      cell.lineStyle(1, colors.line, 0.3);
+      cell.strokeRoundedRect(cellX, rowY + 5 * scale, cellW, rowH - 10 * scale, 5 * scale);
+      addText(scene, cellX + cellW - 3 * scale, rowY + 6 * scale, `R${round}`, 6 * scale, "#606a6b").setOrigin(1, 0);
+      const history = state.history.find((entry) => entry.round === round);
+      if (history) {
+        const instrumentId = history.instruments[player.playerId] ?? null;
+        const texture = instrumentId ? instrumentTextureKey(instrumentId) : null;
+        if (texture && hasTexture(scene, texture)) {
+          const icon = scene.add.image(cellX + cellW / 2, rowY + rowH * 0.39, texture);
+          icon.setDisplaySize(Math.min(26 * scale, cellW * 0.55), Math.min(26 * scale, rowH * 0.38));
+        } else {
+          addText(scene, cellX + cellW / 2, rowY + rowH * 0.31, instrumentLabel(instrumentId, language).slice(0, 5), 6.2 * scale, colors.muted, {
+            align: "center",
+            wordWrap: { width: cellW - 4 * scale }
+          }).setOrigin(0.5, 0);
+        }
+        addText(scene, cellX + cellW / 2, rowY + rowH - 15 * scale, formatMoney(history.bids[player.playerId] ?? 0, language), 7 * scale, colors.gold, {
+          fontStyle: "bold",
+          align: "center"
+        }).setOrigin(0.5, 0);
+      } else if (state.stage === "round_active" && state.currentRound === round) {
+        addText(scene, cellX + cellW / 2, rowY + rowH / 2 - 2 * scale, t.hidden, 6.5 * scale, colors.muted, {
+          align: "center",
+          wordWrap: { width: cellW - 6 * scale }
+        }).setOrigin(0.5, 0.5);
+      }
+    }
+  });
+}
+
+function drawPublicIntel(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  scale: number
+): void {
+  const t = copy(language);
+  panel(scene, x, y, width, height);
+  addText(scene, x + 12 * scale, y + 11 * scale, t.publicIntel, 10 * scale, colors.mint, {
+    fontStyle: "bold",
+    letterSpacing: 1
+  });
+  const notes = [...state.publicNotes].sort((left, right) => right.round - left.round);
+  if (notes.length === 0) {
+    addText(scene, x + width / 2, y + height / 2, t.noReport, 13 * scale, colors.muted, {
+      align: "center"
+    }).setOrigin(0.5);
+    return;
+  }
+  const cardGap = 7 * scale;
+  const cardH = Math.min(78 * scale, (height - 50 * scale - cardGap * (notes.length - 1)) / Math.min(notes.length, 5));
+  notes.slice(0, 5).forEach((note, index) => {
+    const cardY = y + 36 * scale + index * (cardH + cardGap);
+    const graphics = scene.add.graphics();
+    graphics.fillStyle(0x1a2726, 0.76);
+    graphics.fillRoundedRect(x + 8 * scale, cardY, width - 16 * scale, cardH, 8 * scale);
+    graphics.lineStyle(1, 0x35645d, 0.45);
+    graphics.strokeRoundedRect(x + 8 * scale, cardY, width - 16 * scale, cardH, 8 * scale);
+    addText(scene, x + 17 * scale, cardY + 8 * scale, `ROUND ${note.round}`, 7 * scale, colors.mint, {
+      fontStyle: "bold",
+      letterSpacing: 1
+    });
+    addText(scene, x + 17 * scale, cardY + 23 * scale, note.text, 10 * scale, colors.text, {
+      wordWrap: { width: width - 34 * scale, useAdvancedWrap: true },
+      lineSpacing: 2 * scale
+    });
+  });
+}
+
+function drawVisibleItem(
+  scene: Phaser.Scene,
+  item: VisibleWarehouseItem,
+  gridX: number,
+  gridY: number,
+  cellW: number,
+  cellH: number,
+  scale: number
+): void {
+  const x = gridX + (item.outlineKnown ? item.x ?? item.anchorX : item.anchorX) * cellW + 2 * scale;
+  const y = gridY + (item.outlineKnown ? item.y ?? item.anchorY : item.anchorY) * cellH + 2 * scale;
+  const width = (item.outlineKnown ? item.width ?? 1 : 1) * cellW - 4 * scale;
+  const height = (item.outlineKnown ? item.height ?? 1 : 1) * cellH - 4 * scale;
+  const rarity = item.rarity ? rarityColors[item.rarity] ?? 0x87929b : 0x87929b;
+  const graphics = scene.add.graphics();
+  graphics.fillStyle(item.rarityKnown ? rarity : 0x777f80, item.rarityKnown ? 0.48 : 0.33);
+  graphics.fillRoundedRect(x, y, width, height, 5 * scale);
+  graphics.lineStyle(item.rarityKnown ? 2 * scale : 1 * scale, rarity, item.rarityKnown ? 0.95 : 0.7);
+  graphics.strokeRoundedRect(x, y, width, height, 5 * scale);
+
+  if (item.identityKnown && item.catalogId) {
+    const texture = itemTextureKey(item.catalogId);
+    if (hasTexture(scene, texture)) {
+      const image = scene.add.image(x + width / 2, y + height / 2 - 5 * scale, texture);
+      const availableW = Math.max(12, width - 8 * scale);
+      const availableH = Math.max(12, height - 18 * scale);
+      image.setScale(Math.min(availableW / image.width, availableH / image.height));
+    }
+    if (item.name && width > 56 * scale && height > 32 * scale) {
+      addText(scene, x + width / 2, y + height - 10 * scale, item.name, 7 * scale, colors.text, {
+        align: "center",
+        wordWrap: { width: width - 5 * scale }
+      }).setOrigin(0.5, 0);
+    }
   }
 }
 
-/* ────────────────────────── Main Render ────────────────────────── */
+function drawWarehouse(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  scale: number
+): void {
+  const t = copy(language);
+  panel(scene, x, y, width, height);
+  addText(scene, x + 12 * scale, y + 11 * scale, t.warehouse, 10 * scale, colors.gold, {
+    fontStyle: "bold",
+    letterSpacing: 1
+  });
+  const padding = 10 * scale;
+  const header = 35 * scale;
+  const maxW = width - padding * 2;
+  const maxH = height - header - padding;
+  const aspect = state.warehouse.cols / state.warehouse.rows;
+  let gridW = maxW;
+  let gridH = gridW / aspect;
+  if (gridH > maxH) {
+    gridH = maxH;
+    gridW = gridH * aspect;
+  }
+  const gridX = x + (width - gridW) / 2;
+  const gridY = y + header + (maxH - gridH) / 2;
+  const graphics = scene.add.graphics();
+  graphics.fillStyle(0x050809, 0.94);
+  graphics.fillRoundedRect(gridX, gridY, gridW, gridH, 7 * scale);
+  const cellW = gridW / state.warehouse.cols;
+  const cellH = gridH / state.warehouse.rows;
+  graphics.lineStyle(1, 0x5c6666, 0.23);
+  for (let col = 1; col < state.warehouse.cols; col += 1) {
+    graphics.lineBetween(gridX + col * cellW, gridY, gridX + col * cellW, gridY + gridH);
+  }
+  for (let row = 1; row < state.warehouse.rows; row += 1) {
+    graphics.lineBetween(gridX, gridY + row * cellH, gridX + gridW, gridY + row * cellH);
+  }
+  state.warehouse.items.forEach((item) => drawVisibleItem(scene, item, gridX, gridY, cellW, cellH, scale));
+}
+
+function drawRoundStatus(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  x: number,
+  y: number,
+  width: number,
+  scale: number
+): void {
+  const t = copy(language);
+  panel(scene, x, y, width, 68 * scale, 0.92);
+  addText(scene, x + 13 * scale, y + 10 * scale, t.condition, 8 * scale, colors.muted, {
+    letterSpacing: 1
+  });
+  const condition = state.currentRound >= 5 ? t.unique : `${state.threshold.toFixed(1)}× ${t.lead}`;
+  addText(scene, x + 13 * scale, y + 28 * scale, condition, 17 * scale, colors.gold, {
+    fontStyle: "bold"
+  });
+  if (state.message) {
+    addText(scene, x + width - 13 * scale, y + 18 * scale, state.message, 10 * scale, colors.text, {
+      align: "right",
+      wordWrap: { width: width * 0.56, useAdvancedWrap: true }
+    }).setOrigin(1, 0);
+  }
+}
+
+function drawFinalOverlay(
+  scene: Phaser.Scene,
+  state: AuctionKingRenderState,
+  language: SupportedLanguage,
+  width: number,
+  height: number,
+  scale: number
+): void {
+  if (state.stage !== "finished") return;
+  const t = copy(language);
+  const winner = state.players.find((player) => player.playerId === state.soldToPlayerId);
+  const overlayW = Math.min(720 * scale, width * 0.62);
+  const overlayH = 160 * scale;
+  const x = (width - overlayW) / 2;
+  const y = (height - overlayH) / 2;
+  const blocker = scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.62);
+  blocker.setDepth(20);
+  const graphics = scene.add.graphics().setDepth(21);
+  graphics.fillStyle(0x171d1e, 0.98);
+  graphics.fillRoundedRect(x, y, overlayW, overlayH, 16 * scale);
+  graphics.lineStyle(2, colors.goldNumber, 0.72);
+  graphics.strokeRoundedRect(x, y, overlayW, overlayH, 16 * scale);
+  addText(scene, width / 2, y + 18 * scale, winner ? t.sold : t.unsold, 11 * scale, winner ? colors.gold : colors.muted, {
+    fontStyle: "bold",
+    letterSpacing: 2
+  }).setOrigin(0.5, 0).setDepth(22);
+  addText(scene, width / 2, y + 45 * scale, winner?.name ?? t.unsold, 30 * scale, colors.text, {
+    fontStyle: "bold"
+  }).setOrigin(0.5, 0).setDepth(22);
+  const summary = winner
+    ? `${t.bid}  ${formatMoney(state.soldFor, language)}     ${t.value}  ${formatMoney(state.trueWarehouseValue ?? 0, language)}`
+    : `${t.value}  ${formatMoney(state.trueWarehouseValue ?? 0, language)}`;
+  addText(scene, width / 2, y + 105 * scale, summary, 13 * scale, colors.gold, {
+    align: "center"
+  }).setOrigin(0.5, 0).setDepth(22);
+}
 
 export function renderAuctionKingState(
   scene: Phaser.Scene,
   state: AuctionKingRenderState,
-  playerNames: Record<string, string>,
-  language?: SupportedLanguage
+  language: SupportedLanguage = "zh-CN"
 ): void {
-  const zh = language === "zh-CN";
-  const en = language === "en";
-  const W = scene.scale.width;
-  const H = scene.scale.height;
+  const width = scene.scale.width;
+  const height = scene.scale.height;
+  const scale = Math.max(0.68, Math.min(1.35, Math.min(width / 1280, height / 720)));
+  drawBackground(scene, width, height);
+  const top = drawHeader(scene, state, language, width, scale);
 
-  const stage = state.stage;
-  const round = state.currentRound;
-  const total = state.totalRounds;
-
-  // Background
-  if (stage === "finished") {
-    drawImageOrGradientBg(scene, TEXTURE_KEYS.bgScoreboard, W, H);
-  } else {
-    drawImageOrGradientBg(scene, TEXTURE_KEYS.bgAuctionHall, W, H);
-  }
-
-  // Title bar
-  drawTitleBar(scene, W, zh, en, hasTexture(scene, TEXTURE_KEYS.iconGavel));
-
-  // Round indicator
-  const roundLabel = zh
-    ? `第 ${round} / ${total} 轮`
-    : en
-    ? `Round ${round} / ${total}`
-    : `Runde ${round} / ${total}`;
-  scene.add
-    .text(W / 2, 88, roundLabel, {
-      fontFamily: FONT,
-      fontSize: "18px",
-      color: C.textMuted
-    })
-    .setOrigin(0.5, 0);
-
-  // Timer
-  if (state.stageEndsAt !== null) {
-    const remaining = Math.max(0, (state.stageEndsAt - Date.now()) / 1000);
-    const stageDurations: Record<string, number> = {
-      appraisal: 10,
-      bidding: 15,
-      reveal: 5
-    };
-    const totalDuration = stageDurations[stage] ?? 15;
-    drawCircularTimer(scene, W - 70, 60, 28, remaining, totalDuration);
-  }
-
-  // Stage-specific rendering
-  if (stage === "finished") {
-    renderScoreboard(scene, state, playerNames, W, H, zh, en);
+  if (state.stage === "setup") {
+    renderSetup(scene, state, language, width, height, top, scale);
     return;
   }
 
-  // Stage banner
-  const stageInfo = getStageInfo(stage, zh, en);
-  drawStageBanner(scene, W / 2, 118, 200, stageInfo.label, stageInfo.color);
-
-  // Item card
-  const item = state.currentItem;
-  if (item) {
-    renderItemCard(scene, item, stage, W, H, zh, en, language);
-  }
-
-  // Player panels
-  const progress = state.playerProgress;
-  renderPlayerPanel(scene, progress, stage, state, W, H, zh, en, playerNames);
-
-  // Message
-  if (state.message) {
-    scene.add
-      .text(W / 2, H - 30, state.message, {
-        fontFamily: FONT,
-        fontSize: "16px",
-        color: C.text,
-        align: "center",
-        wordWrap: { width: W - 120 }
-      })
-      .setOrigin(0.5, 1);
-  }
+  const outer = 16 * scale;
+  const statusH = 68 * scale;
+  const contentY = top + outer;
+  drawRoundStatus(scene, state, language, outer, contentY, width - outer * 2, scale);
+  const columnsY = contentY + statusH + 9 * scale;
+  const columnsH = height - columnsY - outer;
+  const gap = 9 * scale;
+  const availableW = width - outer * 2 - gap * 2;
+  const playerW = availableW * 0.36;
+  const intelW = availableW * 0.27;
+  const warehouseW = availableW - playerW - intelW;
+  drawPlayerHistory(scene, state, language, outer, columnsY, playerW, columnsH, scale);
+  drawPublicIntel(scene, state, language, outer + playerW + gap, columnsY, intelW, columnsH, scale);
+  drawWarehouse(scene, state, language, outer + playerW + gap + intelW + gap, columnsY, warehouseW, columnsH, scale);
+  drawFinalOverlay(scene, state, language, width, height, scale);
 }
 
-/* ────────────────────────── Title Bar ────────────────────────── */
-
-function drawTitleBar(
-  scene: Phaser.Scene,
-  W: number,
-  zh: boolean,
-  en: boolean,
-  hasGavel: boolean
-): void {
-  const title = zh ? "即刻落槌" : en ? "Instant Gavel" : "Hammer";
-
-  // Gavel icon
-  let titleX = W / 2;
-  if (hasGavel) {
-    const icon = scene.add.image(W / 2 - 110, 42, TEXTURE_KEYS.iconGavel);
-    icon.setScale(48 / icon.width).setOrigin(0.5, 0.5);
-    titleX = W / 2 + 25;
-  }
-
-  scene.add
-    .text(titleX, 42, title, {
-      fontFamily: FONT,
-      fontSize: "38px",
-      color: C.text,
-      fontStyle: "bold",
-      stroke: "#000",
-      strokeThickness: 4
-    })
-    .setOrigin(0.5, 0.5);
-
-  // Decorative line
-  const line = scene.add.graphics();
-  line.lineStyle(1, C.goldNum, 0.3);
-  line.beginPath();
-  line.moveTo(W * 0.2, 80);
-  line.lineTo(W * 0.8, 80);
-  line.strokePath();
-
-  // Decorative dots
-  const dotG = scene.add.graphics();
-  dotG.fillStyle(C.goldNum, 0.5);
-  dotG.fillCircle(W * 0.2, 80, 3);
-  dotG.fillCircle(W * 0.8, 80, 3);
-}
-
-/* ────────────────────────── Stage Info ────────────────────────── */
-
-function getStageInfo(stage: string, zh: boolean, en: boolean): { label: string; color: string } {
-  switch (stage) {
-    case "appraisal":
-      return {
-        label: zh ? "🔍 鉴定期" : en ? "🔍 Appraisal" : "🔍 Schaetzung",
-        color: "#22d3ee"
-      };
-    case "bidding":
-      return {
-        label: zh ? "🔨 出价期" : en ? "🔨 Bidding" : "🔨 Gebot",
-        color: "#f59e0b"
-      };
-    case "reveal":
-      return {
-        label: zh ? "✨ 揭晓" : en ? "✨ Reveal" : "✨ Aufdeckung",
-        color: "#a855f7"
-      };
-    default:
-      return { label: stage, color: "#94a3b8" };
-  }
-}
-
-/* ────────────────────────── Item Card ────────────────────────── */
-
-function renderItemCard(
-  scene: Phaser.Scene,
-  item: PublicAuctionItem,
-  stage: string,
-  W: number,
-  H: number,
-  zh: boolean,
-  en: boolean,
-  language?: SupportedLanguage
-): void {
-  const cardW = Math.min(520, W - 400);
-  const cardH = 340;
-  const cardX = (W - cardW) / 2 - 40;
-  const cardY = 160;
-
-  const rarityColor = rarityColors[item.rarity] ?? "#94a3b8";
-  const rarityLabel = language
-    ? (rarityLabels[item.rarity]?.[language] ?? item.rarity)
-    : item.rarity;
-
-  // Try frame texture overlay
-  const frameTex = getRarityFrameTexture(item.rarity);
-
-  // Glow border
-  drawGlowBorder(scene, cardX, cardY, cardW, cardH, 16, rarityColor, 1);
-
-  // Card background
-  const bg = scene.add.graphics();
-  bg.fillStyle(C.cardBg, 0.95);
-  bg.fillRoundedRect(cardX, cardY, cardW, cardH, 16);
-  // Inner panel
-  bg.fillStyle(C.cardInner, 0.5);
-  bg.fillRoundedRect(cardX + 12, cardY + 12, cardW - 24, cardH - 24, 12);
-
-  // Category illustration area
-  const illustSize = 110;
-  const illustCX = cardX + cardW / 2;
-  const illustCY = cardY + 75;
-  drawCategoryIllustration(scene, illustCX, illustCY, illustSize, item.category, rarityColor);
-
-  // Item name
-  scene.add
-    .text(cardX + cardW / 2, cardY + 155, item.name, {
-      fontFamily: FONT,
-      fontSize: "24px",
-      color: C.text,
-      fontStyle: "bold",
-      align: "center",
-      wordWrap: { width: cardW - 40 }
-    })
-    .setOrigin(0.5, 0);
-
-  // Category | Rarity badge
-  const badgeY = cardY + 195;
-  const badgeText = `${item.category}  |  ${rarityLabel}`;
-  const badgeColor = rarityColor;
-  const badgeG = scene.add.graphics();
-  const badgeW = 200;
-  badgeG.fillStyle(hexToPhaser(badgeColor), 0.15);
-  badgeG.fillRoundedRect(cardX + cardW / 2 - badgeW / 2, badgeY, badgeW, 26, 13);
-  badgeG.lineStyle(1, hexToPhaser(badgeColor), 0.4);
-  badgeG.strokeRoundedRect(cardX + cardW / 2 - badgeW / 2, badgeY, badgeW, 26, 13);
-  scene.add
-    .text(cardX + cardW / 2, badgeY + 13, badgeText, {
-      fontFamily: FONT,
-      fontSize: "14px",
-      color: badgeColor,
-      fontStyle: "bold"
-    })
-    .setOrigin(0.5, 0.5);
-
-  // Clues
-  const clueStartY = cardY + 232;
-  item.clues.forEach((clue, index) => {
-    const clueY = clueStartY + index * 30;
-    // Number circle
-    const numG = scene.add.graphics();
-    numG.fillStyle(hexToPhaser(rarityColor), 0.2);
-    numG.fillCircle(cardX + 30, clueY + 10, 11);
-    numG.lineStyle(1, hexToPhaser(rarityColor), 0.5);
-    numG.strokeCircle(cardX + 30, clueY + 10, 11);
-    scene.add
-      .text(cardX + 30, clueY + 10, `${index + 1}`, {
-        fontFamily: FONT,
-        fontSize: "12px",
-        color: rarityColor,
-        fontStyle: "bold"
-      })
-      .setOrigin(0.5, 0.5);
-    // Clue text
-    scene.add
-      .text(cardX + 50, clueY + 10, clue, {
-        fontFamily: FONT,
-        fontSize: "14px",
-        color: C.textDim,
-        wordWrap: { width: cardW - 80 }
-      })
-      .setOrigin(0, 0.5);
-  });
-
-  // Value display
-  if (item.trueValue !== null) {
-    const valueY = cardY + cardH - 22;
-    // Glow background for revealed value
-    const valG = scene.add.graphics();
-    valG.fillStyle(C.goldNum, 0.1);
-    valG.fillRoundedRect(cardX + cardW / 2 - 120, valueY - 18, 240, 36, 18);
-    const valueLabel = zh
-      ? `💰 真实价值: ${item.trueValue}`
-      : en
-      ? `💰 True value: ${item.trueValue}`
-      : `💰 Wert: ${item.trueValue}`;
-    scene.add
-      .text(cardX + cardW / 2, valueY, valueLabel, {
-        fontFamily: FONT,
-        fontSize: "20px",
-        color: C.goldBright,
-        fontStyle: "bold"
-      })
-      .setOrigin(0.5, 0.5);
-  } else if (stage === "appraisal" || stage === "bidding") {
-    const valueY = cardY + cardH - 22;
-    const mysteryText = zh ? "❓ 价值未知 ❓" : en ? "❓ Value unknown ❓" : "❓ Wert unbekannt ❓";
-    scene.add
-      .text(cardX + cardW / 2, valueY, mysteryText, {
-        fontFamily: FONT,
-        fontSize: "18px",
-        color: "#475569",
-        fontStyle: "bold"
-      })
-      .setOrigin(0.5, 0.5);
-  }
-
-  // Frame texture overlay (if available)
-  if (frameTex && hasTexture(scene, frameTex)) {
-    const frame = scene.add.image(cardX + cardW / 2, cardY + cardH / 2, frameTex);
-    const scale = Math.max(cardW / frame.width, cardH / frame.height);
-    frame.setScale(scale).setDepth(5);
-  }
-}
-
-/* ────────────────────────── Player Panel ────────────────────────── */
-
-function renderPlayerPanel(
-  scene: Phaser.Scene,
-  progress: PlayerProgress[],
-  stage: string,
-  state: AuctionKingRenderState,
-  W: number,
-  H: number,
-  zh: boolean,
-  en: boolean,
-  playerNames: Record<string, string>
-): void {
-  if (progress.length === 0) return;
-
-  const panelX = W - 320;
-  const panelY = 160;
-  const panelW = 280;
-  const panelH = Math.min(progress.length * 90 + 40, H - panelY - 60);
-
-  // Panel background
-  const panelBg = scene.add.graphics();
-  panelBg.fillStyle(C.panelBg, 0.85);
-  panelBg.fillRoundedRect(panelX, panelY, panelW, panelH, 14);
-  panelBg.lineStyle(1, C.panelBorder, 0.5);
-  panelBg.strokeRoundedRect(panelX, panelY, panelW, panelH, 14);
-
-  // Panel title
-  scene.add
-    .text(panelX + panelW / 2, panelY + 20, zh ? "竞拍者" : en ? "Bidders" : "Bieter", {
-      fontFamily: FONT,
-      fontSize: "14px",
-      color: C.textMuted,
-      fontStyle: "bold"
-    })
-    .setOrigin(0.5, 0.5);
-
-  // Player cards
-  const cardH = 80;
-  const cardStartY = panelY + 40;
-  const cardPadding = 8;
-
-  progress.forEach((player, index) => {
-    const y = cardStartY + index * (cardH + cardPadding);
-    const x = panelX + 12;
-    const w = panelW - 24;
-    const colorNum = hexToPhaser(player.color);
-
-    // Player card background
-    const pBg = scene.add.graphics();
-    pBg.fillStyle(C.cardInner, 0.8);
-    pBg.fillRoundedRect(x, y, w, cardH, 10);
-    // Left accent bar
-    pBg.fillStyle(colorNum, 0.8);
-    pBg.fillRect(x, y, 4, cardH);
-    // Border
-    pBg.lineStyle(1, colorNum, 0.3);
-    pBg.strokeRoundedRect(x, y, w, cardH, 10);
-
-    // Player name
-    scene.add
-      .text(x + 16, y + 12, player.name, {
-        fontFamily: FONT,
-        fontSize: "16px",
-        color: C.text,
-        fontStyle: "bold"
-      })
-      .setOrigin(0, 0);
-
-    // Gold display
-    const goldIcon = hasTexture(scene, TEXTURE_KEYS.iconGold)
-      ? "💰 "
-      : "";
-    scene.add
-      .text(x + 16, y + 34, `${goldIcon}${player.gold}`, {
-        fontFamily: FONT,
-        fontSize: "20px",
-        color: C.gold
-      })
-      .setOrigin(0, 0);
-
-    // Bid status
-    const bidText = getBidStatusText(stage, player, state, zh, en);
-    if (bidText) {
-      const bidColor = getBidStatusColor(stage, player, state, zh, en);
-      scene.add
-        .text(x + w - 12, y + cardH - 12, bidText, {
-          fontFamily: FONT,
-          fontSize: "13px",
-          color: bidColor,
-          fontStyle: "bold"
-        })
-        .setOrigin(1, 1);
-    }
-  });
-}
-
-function getBidStatusText(
-  stage: string,
-  player: PlayerProgress,
-  state: AuctionKingRenderState,
-  zh: boolean,
-  en: boolean
-): string {
-  if (stage === "bidding") {
-    return player.hasBid
-      ? zh ? "✓ 已出价" : en ? "✓ Bid placed" : "✓ Gebot"
-      : zh ? "思考中..." : en ? "Thinking..." : "Denkt...";
-  }
-  if (stage === "reveal") {
-    return formatBidForReveal(state, player, zh, en);
-  }
-  return "";
-}
-
-function getBidStatusColor(
-  stage: string,
-  player: PlayerProgress,
-  state: AuctionKingRenderState,
-  zh: boolean,
-  en: boolean
-): string {
-  if (stage === "bidding") {
-    return player.hasBid ? C.bid : C.textMuted;
-  }
-  if (stage === "reveal") {
-    const lastResult = state.roundResults[state.roundResults.length - 1];
-    if (!lastResult) return C.textDim;
-    const isWinner = lastResult.winnerPlayerId === player.playerId;
-    if (isWinner) {
-      const profit = lastResult.trueValue - (lastResult.allBids[player.playerId] ?? 0);
-      return profit >= 0 ? C.win : C.loss;
-    }
-  }
-  return C.textDim;
-}
-
-function formatBidForReveal(
-  state: AuctionKingRenderState,
-  player: PlayerProgress,
-  zh: boolean,
-  en: boolean
-): string {
-  const lastResult = state.roundResults[state.roundResults.length - 1];
-  if (!lastResult) return "";
-  const bid = lastResult.allBids[player.playerId] ?? 0;
-  if (bid === 0) return zh ? "放弃" : en ? "Passed" : "Passen";
-  const isWinner = lastResult.winnerPlayerId === player.playerId;
-  if (isWinner) {
-    const profit = lastResult.trueValue - bid;
-    const sign = profit >= 0 ? "+" : "";
-    return zh
-      ? `${bid} (赢) ${sign}${profit}`
-      : en
-      ? `${bid} (won) ${sign}${profit}`
-      : `${bid} (gewonnen) ${sign}${profit}`;
-  }
-  return zh ? `出价 ${bid}` : en ? `Bid ${bid}` : `Gebot ${bid}`;
-}
-
-/* ────────────────────────── Scoreboard ────────────────────────── */
-
-function renderScoreboard(
-  scene: Phaser.Scene,
-  state: AuctionKingRenderState,
-  playerNames: Record<string, string>,
-  W: number,
-  H: number,
-  zh: boolean,
-  en: boolean
-): void {
-  const progress = [...state.playerProgress].sort((a, b) => b.gold - a.gold);
-
-  // Title
-  scene.add
-    .text(W / 2, 140, zh ? "🏆 最终结算 🏆" : en ? "🏆 Final Results 🏆" : "🏆 Ergebnis 🏆", {
-      fontFamily: FONT,
-      fontSize: "36px",
-      color: C.goldBright,
-      fontStyle: "bold",
-      stroke: "#000",
-      strokeThickness: 4
-    })
-    .setOrigin(0.5, 0);
-
-  // Winner announcement
-  if (progress.length > 0) {
-    const winnerName = progress[0].name;
-    const winText = zh
-      ? `${winnerName} 是竞拍之王！`
-      : en
-      ? `${winnerName} is the Bid King!`
-      : `${winnerName} ist der Koenig!`;
-    scene.add
-      .text(W / 2, 190, winText, {
-        fontFamily: FONT,
-        fontSize: "22px",
-        color: C.gold
-      })
-      .setOrigin(0.5, 0);
-  }
-
-  // Ranked list
-  const listX = Math.max(60, W * 0.15);
-  const listW = W - listX * 2;
-  const startY = 250;
-  const rowH = 56;
-  const rowGap = 8;
-
-  // Container background
-  const listBg = scene.add.graphics();
-  listBg.fillStyle(C.panelBg, 0.6);
-  listBg.fillRoundedRect(listX - 10, startY - 10, listW + 20, progress.length * (rowH + rowGap) + 20, 14);
-
-  const medals = ["🥇", "🥈", "🥉", "4"];
-
-  progress.forEach((player, index) => {
-    const y = startY + index * (rowH + rowGap);
-    const colorNum = hexToPhaser(player.color);
-    const isWinner = index === 0;
-
-    // Row background
-    const rowBg = scene.add.graphics();
-    rowBg.fillStyle(isWinner ? 0x422006 : C.cardInner, 0.85);
-    rowBg.fillRoundedRect(listX, y, listW, rowH, 10);
-    // Left accent
-    rowBg.fillStyle(colorNum, 0.8);
-    rowBg.fillRect(listX, y, 4, rowH);
-    // Border
-    rowBg.lineStyle(1, isWinner ? C.goldNum : C.panelBorder, isWinner ? 0.6 : 0.3);
-    rowBg.strokeRoundedRect(listX, y, listW, rowH, 10);
-
-    // Medal / rank
-    scene.add
-      .text(listX + 30, y + rowH / 2, medals[index] ?? `${index + 1}`, {
-        fontFamily: FONT,
-        fontSize: "24px"
-      })
-      .setOrigin(0.5, 0.5);
-
-    // Player name
-    scene.add
-      .text(listX + 60, y + rowH / 2, player.name, {
-        fontFamily: FONT,
-        fontSize: "20px",
-        color: C.text,
-        fontStyle: "bold"
-      })
-      .setOrigin(0, 0.5);
-
-    // Gold amount
-    const goldIcon = hasTexture(scene, TEXTURE_KEYS.iconGold) ? "💰 " : "";
-    scene.add
-      .text(listX + listW - 180, y + rowH / 2, `${goldIcon}${player.gold}`, {
-        fontFamily: FONT,
-        fontSize: "20px",
-        color: C.gold,
-        fontStyle: "bold"
-      })
-      .setOrigin(0, 0.5);
-
-    // Profit / loss
-    const profit = player.gold - state.startingGold;
-    const profitColor = profit >= 0 ? C.win : C.loss;
-    const profitSign = profit >= 0 ? "+" : "";
-    const arrow = profit >= 0 ? "↑" : "↓";
-    const profitText = `${profitSign}${profit} ${arrow}`;
-    scene.add
-      .text(listX + listW - 20, y + rowH / 2, profitText, {
-        fontFamily: FONT,
-        fontSize: "18px",
-        color: profitColor,
-        fontStyle: "bold"
-      })
-      .setOrigin(1, 0.5);
-  });
-
-  // Auction log
-  if (state.roundResults.length > 0) {
-    const logY = startY + progress.length * (rowH + rowGap) + 30;
-    const logTitle = zh ? "📋 拍卖记录" : en ? "📋 Auction log" : "📋 Protokoll";
-    scene.add
-      .text(W / 2, logY, logTitle, {
-        fontFamily: FONT,
-        fontSize: "16px",
-        color: C.textMuted,
-        fontStyle: "bold"
-      })
-      .setOrigin(0.5, 0);
-
-    state.roundResults.forEach((result, index) => {
-      const y = logY + 28 + index * 22;
-      const winnerName = result.winnerPlayerId
-        ? (playerNames[result.winnerPlayerId] ?? "?")
-        : (zh ? "流拍" : en ? "No sale" : "Nicht verkauft");
-      const profit = result.winnerPlayerId ? result.trueValue - result.winningBid : 0;
-      const profitStr = result.winnerPlayerId
-        ? profit >= 0 ? `(+${profit})` : `(${profit})`
-        : "";
-      const profitColor = profit >= 0 ? C.win : C.loss;
-      const logText = zh
-        ? `R${result.round}: ${result.itemName} → ${winnerName} (${result.winningBid})`
-        : `R${result.round}: ${result.itemName} → ${winnerName} (${result.winningBid})`;
-
-      scene.add
-        .text(W / 2 - 60, y, logText, {
-          fontFamily: FONT,
-          fontSize: "13px",
-          color: C.textMuted
-        })
-        .setOrigin(1, 0);
-
-      if (profitStr) {
-        scene.add
-          .text(W / 2 + 60, y, profitStr, {
-            fontFamily: FONT,
-            fontSize: "13px",
-            color: profitColor,
-            fontStyle: "bold"
-          })
-          .setOrigin(0, 0);
-      }
-    });
-  }
+export function latestRoundHistory(state: AuctionKingPublicState): AuctionRoundHistory | null {
+  return state.history[state.history.length - 1] ?? null;
 }

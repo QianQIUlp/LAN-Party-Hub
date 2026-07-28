@@ -159,15 +159,16 @@ export function ControllerPage({ state, onLeaveRoom, onInput, onSetReady }: Cont
   const denseBoardChrome = gameId === "word-tiles";
   const joystickChrome = layoutModel.kind === "virtual_joystick" && layoutModel.minimal;
   const cardTableChrome = layoutModel.kind === "card_hand";
-  const minimalChrome = denseBoardChrome || gamepadChrome || joystickChrome || cardTableChrome;
+  const auctionWarehouseChrome = layoutModel.kind === "auction_warehouse";
+  const minimalChrome = denseBoardChrome || gamepadChrome || joystickChrome || cardTableChrome || auctionWarehouseChrome;
 
   return (
     <ControllerFrame
       title={minimalChrome ? "" : gameName}
       subtitle={minimalChrome ? undefined : `${text.phase}: ${text.formatPhase(game?.phase ?? text.unknown)} | ${orientation}`}
-      wide={gamepadChrome || denseBoardChrome}
-      bare={joystickChrome || cardTableChrome}
-      fullViewport={cardTableChrome}
+      wide={gamepadChrome || denseBoardChrome || auctionWarehouseChrome}
+      bare={joystickChrome || cardTableChrome || auctionWarehouseChrome}
+      fullViewport={cardTableChrome || auctionWarehouseChrome}
       footer={
         minimalChrome ? undefined :
         <div style={{ display: "grid", gap: 10 }}>

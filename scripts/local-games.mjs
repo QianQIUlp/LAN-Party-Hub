@@ -23,11 +23,11 @@ const syncLockPath = path.join(projectRoot, ".local-games-sync.lock");
 const scopeDir = path.join(projectRoot, "node_modules", "@open-party-lab");
 const publicAssetTargets = [
   {
-    sourceSubdir: ["public", "host"],
+    sourceSubdirs: [["public", "shared"], ["public", "host"]],
     targetDir: path.join(projectRoot, "apps", "host", "public")
   },
   {
-    sourceSubdir: ["public", "controller"],
+    sourceSubdirs: [["public", "shared"], ["public", "controller"]],
     targetDir: path.join(projectRoot, "apps", "controller", "public")
   }
 ];
@@ -113,24 +113,30 @@ async function syncPublicAssets(game, localPath) {
   await removePublicAssets(game);
 
   for (const target of publicAssetTargets) {
-    const sourceRoot = path.join(localPath, ...target.sourceSubdir);
+    const initializedTargetPaths = new Set();
+    for (const sourceSubdir of target.sourceSubdirs) {
+      const sourceRoot = path.join(localPath, ...sourceSubdir);
 
-    if (!existsSync(sourceRoot)) {
-      continue;
-    }
-
-    const entries = await readdir(sourceRoot, { withFileTypes: true });
-
-    for (const entry of entries) {
-      if (!entry.isDirectory() && !entry.isFile()) {
+      if (!existsSync(sourceRoot)) {
         continue;
       }
 
-      const sourcePath = path.join(sourceRoot, entry.name);
-      const targetPath = path.join(target.targetDir, entry.name);
-      await rm(targetPath, { recursive: true, force: true });
-      await mkdir(path.dirname(targetPath), { recursive: true });
-      await cp(sourcePath, targetPath, { recursive: true, force: true });
+      const entries = await readdir(sourceRoot, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (!entry.isDirectory() && !entry.isFile()) {
+          continue;
+        }
+
+        const sourcePath = path.join(sourceRoot, entry.name);
+        const targetPath = path.join(target.targetDir, entry.name);
+        if (!initializedTargetPaths.has(targetPath)) {
+          await rm(targetPath, { recursive: true, force: true });
+          initializedTargetPaths.add(targetPath);
+        }
+        await mkdir(path.dirname(targetPath), { recursive: true });
+        await cp(sourcePath, targetPath, { recursive: true, force: true });
+      }
     }
   }
 }

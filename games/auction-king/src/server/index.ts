@@ -3,370 +3,825 @@ import {
   roundPhaseDurations,
   transitionRoundState,
   type GamePlayerSummary,
-  type ScoreEntry,
   type ServerGame,
+  type ServerGameContext,
   type SupportedLanguage
 } from "@open-party-lab/game-core";
 import { auctionKingManifest } from "../manifest.js";
 import type {
+  AuctionInstrumentId,
   AuctionKingControllerState,
   AuctionKingInput,
   AuctionKingPublicState,
   AuctionKingState,
-  AuctionItem,
-  AuctionRoundResult,
-  PublicAuctionItem
+  AuctionKitId,
+  AuctionPlayerSetup,
+  AuctionRarity,
+  AuctionRoleId,
+  AuctionRoundHistory,
+  KnowledgeNote,
+  PlayerKnowledge,
+  WarehouseItem
 } from "../protocol.js";
-import { bidOptions, randomItems } from "./auctionItems.js";
+import {
+  allInstrumentIds,
+  auctionCatalog,
+  auctionInstruments,
+  auctionKits,
+  auctionRoles,
+  categoryNames,
+  instrumentById,
+  kitById,
+  localize,
+  rarityNames,
+  rarityOrder,
+  roleById
+} from "./content.js";
+import {
+  buildCandidates,
+  cloneKnowledge,
+  createEmptyKnowledge,
+  generateWarehouse,
+  mergeKnowledge,
+  randomItems,
+  revealCategory,
+  revealIdentity,
+  revealOutline,
+  revealRarity,
+  visibleWarehouseItems,
+  type RandomSource
+} from "./warehouse.js";
 
-const totalRounds = 3;
-const startingGold = 1000;
-const appraisalDurationMs = 10_000;
-const biddingDurationMs = 15_000;
-const revealDurationMs = 5_000;
+export const auctionStartingFunds = 1_000_000;
+export const auctionTotalRounds = 5;
+export const auctionSetupDurationMs = 90_000;
+export const auctionRoundDurationMs = 45_000;
+export const auctionRevealDurationMs = 7_000;
+export const auctionRoundThresholds = [2, 1.7, 1.5, 1.3, 1] as const;
 
-const auctionText = {
+const messages = {
   "zh-CN": {
-    intro: "欢迎来到即刻落槌！",
-    appraisal: "鉴定中……仔细看线索。",
-    bidding: "出价时间！暗拍密封，最高价者得。",
-    reveal: "落槌！",
-    finished: "拍卖结束，看看谁是竞拍之王！",
-    noWinner: "无人出价，流拍。",
-    tieNoSale: "最高出价相同，流拍！",
-    pass: "放弃",
-    gold: "金币",
-    round: (n: number, total: number) => `第 ${n} / ${total} 轮`,
-    wins: (name: string) => `${name} 拍得！`,
-    profit: (amount: number) => amount >= 0 ? `盈利 ${amount}` : `亏损 ${Math.abs(amount)}`,
-    bidPlaced: "已出价，等待其他玩家。",
-    waitingBid: "选择你的出价",
-    notEnoughGold: "金币不足"
+    intro: "仓库拍卖即将开始。",
+    setup: "选择角色与仪器组，然后确认准备。",
+    active: (round: number, threshold: number) =>
+      round === auctionTotalRounds
+        ? "最终回合：最高且唯一的出价将直接成交。"
+        : `第 ${round} 回合：领先第二名达到 ${threshold.toFixed(1)} 倍即可成交。`,
+    reveal: "回合结束：公开本轮出价与仪器。",
+    sold: (name: string, bid: number) => `${name} 以 ${bid.toLocaleString("zh-CN")} 拍得整座仓库！`,
+    unsold: "五轮结束仍未产生唯一最高价，仓库流拍。",
+    next: "领先倍率不足，追加情报后进入下一轮。"
   },
   en: {
-    intro: "Welcome to Instant Gavel!",
-    appraisal: "Appraising... study the clues.",
-    bidding: "Bidding time! Sealed bids, highest wins.",
-    reveal: "Hammer down!",
-    finished: "Auction over — who is the Bid King?",
-    noWinner: "No bids, item passed.",
-    tieNoSale: "Tied high bid, no sale!",
-    pass: "Pass",
-    gold: "Gold",
-    round: (n: number, total: number) => `Round ${n} / ${total}`,
-    wins: (name: string) => `${name} wins the item!`,
-    profit: (amount: number) => amount >= 0 ? `Profit ${amount}` : `Loss ${Math.abs(amount)}`,
-    bidPlaced: "Bid placed, waiting for others.",
-    waitingBid: "Choose your bid",
-    notEnoughGold: "Not enough gold"
+    intro: "The warehouse auction is about to begin.",
+    setup: "Choose a specialist and instrument kit, then confirm.",
+    active: (round: number, threshold: number) =>
+      round === auctionTotalRounds
+        ? "Final round: the unique highest bid wins."
+        : `Round ${round}: lead second place by ${threshold.toFixed(1)}× to win now.`,
+    reveal: "Round closed: bids and instruments are now public.",
+    sold: (name: string, bid: number) => `${name} wins the warehouse for ${bid.toLocaleString("en-US")}!`,
+    unsold: "No unique high bid after five rounds. The warehouse remains unsold.",
+    next: "The lead was too small. More intelligence arrives next round."
   },
   de: {
-    intro: "Willkommen beim Hammer!",
-    appraisal: "Begutachtung... Hinweise beachten.",
-    bidding: "Gebotszeit! Verdeckt, Hoechstes gewinnt.",
-    reveal: "Zuschlag!",
-    finished: "Auktion beendet — wer ist der Koenig?",
-    noWinner: "Keine Gebote, nicht verkauft.",
-    tieNoSale: "Gleichstand, nicht verkauft!",
-    pass: "Passen",
-    gold: "Gold",
-    round: (n: number, total: number) => `Runde ${n} / ${total}`,
-    wins: (name: string) => `${name} erhaelt den Zuschlag!`,
-    profit: (amount: number) => amount >= 0 ? `Gewinn ${amount}` : `Verlust ${Math.abs(amount)}`,
-    bidPlaced: "Gebot abgegeben, warte auf andere.",
-    waitingBid: "Waehle dein Gebot",
-    notEnoughGold: "Nicht genug Gold"
+    intro: "Die Lagerauktion beginnt gleich.",
+    setup: "Spezialist und Instrumentenset waehlen, dann bestaetigen.",
+    active: (round: number, threshold: number) =>
+      round === auctionTotalRounds
+        ? "Finalrunde: Das einzige Hoechstgebot gewinnt."
+        : `Runde ${round}: ${threshold.toFixed(1)}× Vorsprung auf Platz zwei gewinnt sofort.`,
+    reveal: "Runde beendet: Gebote und Instrumente sind jetzt oeffentlich.",
+    sold: (name: string, bid: number) => `${name} gewinnt das Lager fuer ${bid.toLocaleString("de-DE")}!`,
+    unsold: "Nach fuenf Runden gibt es kein eindeutiges Hoechstgebot. Nicht verkauft.",
+    next: "Der Vorsprung reicht nicht. Naechste Runde gibt es mehr Informationen."
   }
-} satisfies Record<SupportedLanguage, Record<string, unknown>>;
+} satisfies Record<SupportedLanguage, {
+  intro: string;
+  setup: string;
+  active: (round: number, threshold: number) => string;
+  reveal: string;
+  sold: (name: string, bid: number) => string;
+  unsold: string;
+  next: string;
+}>;
 
-function txt(language: SupportedLanguage) {
-  return auctionText[language] ?? auctionText["zh-CN"];
+function languageMessages(language: SupportedLanguage) {
+  return messages[language] ?? messages["zh-CN"];
 }
 
-function createGoldMap(playerIds: string[]): Record<string, number> {
-  return Object.fromEntries(playerIds.map((id) => [id, startingGold]));
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function toPublicItem(item: AuctionItem | null, stage: AuctionKingState["stage"]): PublicAuctionItem | null {
-  if (!item) return null;
+function isAuctionInput(value: unknown): value is AuctionKingInput {
+  if (!isRecord(value) || typeof value.playerId !== "string" || typeof value.sentAt !== "number") return false;
+  switch (value.type) {
+    case "select_role":
+      return auctionRoles.some((entry) => entry.id === value.roleId);
+    case "select_kit":
+      return auctionKits.some((entry) => entry.id === value.kitId);
+    case "confirm_setup":
+      return true;
+    case "use_instrument":
+      return auctionInstruments.some((entry) => entry.id === value.instrumentId);
+    case "submit_bid":
+      return typeof value.amount === "number" && Number.isSafeInteger(value.amount);
+    default:
+      return false;
+  }
+}
+
+function createSetupMap(playerIds: string[]): Record<string, AuctionPlayerSetup> {
+  return Object.fromEntries(
+    playerIds.map((playerId) => [playerId, { roleId: null, kitId: null, confirmed: false }])
+  );
+}
+
+function createFundsMap(playerIds: string[]): Record<string, number> {
+  return Object.fromEntries(playerIds.map((playerId) => [playerId, auctionStartingFunds]));
+}
+
+function createPrivateKnowledgeMap(playerIds: string[]): Record<string, PlayerKnowledge> {
+  return Object.fromEntries(playerIds.map((playerId) => [playerId, createEmptyKnowledge()]));
+}
+
+function cloneKnowledgeState(state: AuctionKingState): AuctionKingState {
   return {
-    id: item.id,
-    name: item.name,
-    category: item.category,
-    clues: item.clues,
-    rarity: item.rarity,
-    trueValue: stage === "reveal" || stage === "finished" ? item.trueValue : null
+    ...state,
+    publicKnowledge: cloneKnowledge(state.publicKnowledge),
+    privateKnowledgeByPlayerId: Object.fromEntries(
+      Object.entries(state.privateKnowledgeByPlayerId).map(([playerId, knowledge]) => [
+        playerId,
+        cloneKnowledge(knowledge)
+      ])
+    ),
+    auctioneerNotes: state.auctioneerNotes.map((entry) => ({ ...entry })),
+    roleMemoryByPlayerId: Object.fromEntries(
+      Object.entries(state.roleMemoryByPlayerId).map(([playerId, ids]) => [playerId, [...ids]])
+    )
   };
 }
 
-function determineWinner(
-  bids: Record<string, number>,
-  players: GamePlayerSummary[]
-): { winnerId: string | null; winningBid: number; tie: boolean } {
-  const playerBids = players
-    .map((p) => ({ playerId: p.id, bid: bids[p.id] ?? 0 }))
-    .filter((entry) => entry.bid > 0);
-
-  if (playerBids.length === 0) {
-    return { winnerId: null, winningBid: 0, tie: false };
-  }
-
-  playerBids.sort((a, b) => b.bid - a.bid);
-
-  if (playerBids.length >= 2 && playerBids[0].bid === playerBids[1].bid) {
-    return { winnerId: null, winningBid: playerBids[0].bid, tie: true };
-  }
-
-  return { winnerId: playerBids[0].playerId, winningBid: playerBids[0].bid, tie: false };
+function addNote(
+  knowledge: PlayerKnowledge,
+  note: Omit<KnowledgeNote, "id">
+): KnowledgeNote {
+  const created: KnowledgeNote = {
+    ...note,
+    id: `${note.source}-${note.round}-${knowledge.notes.length + 1}`
+  };
+  knowledge.notes.push(created);
+  return created;
 }
 
-function settleRound(
+function currentStageEndsAt(state: AuctionKingState): number | null {
+  if (state.stage === "setup") return state.setupEndsAt;
+  if (state.stage === "round_active") return state.roundEndsAt;
+  if (state.stage === "round_reveal") return state.revealEndsAt;
+  return null;
+}
+
+function currentThreshold(round: number): number {
+  return auctionRoundThresholds[Math.max(0, Math.min(auctionRoundThresholds.length - 1, round - 1))];
+}
+
+function randomRarity(random: RandomSource, maxIndex = rarityOrder.length - 1): AuctionRarity {
+  return rarityOrder[Math.floor(random() * (maxIndex + 1))] ?? "white";
+}
+
+function publicAuctioneerIntel(
   state: AuctionKingState,
-  players: GamePlayerSummary[],
-  now: number,
-  language: SupportedLanguage
-): AuctionKingState {
-  const t = txt(language);
-  const item = state.currentItem;
-  if (!item) return state;
+  round: number,
+  language: SupportedLanguage,
+  random: RandomSource
+): void {
+  const knowledge = state.publicKnowledge;
+  const publicNote = (text: string) => {
+    const note = addNote(knowledge, { source: "auctioneer", round, text });
+    state.auctioneerNotes.push(note);
+  };
 
-  const bids = { ...state.bidsByPlayerId };
+  if (round === 1) {
+    const revealed = randomItems(state.warehouse, 2, random);
+    revealed.forEach((item) => revealIdentity(knowledge, item));
+    publicNote(
+      language === "zh-CN"
+        ? `拍卖师公开展示 ${revealed.length} 件完整藏品。`
+        : language === "en"
+        ? `The auctioneer fully reveals ${revealed.length} collectibles.`
+        : `Der Auktionator zeigt ${revealed.length} Objekte vollstaendig.`
+    );
+    return;
+  }
 
-  for (const player of players) {
-    if (!Object.prototype.hasOwnProperty.call(bids, player.id)) {
-      bids[player.id] = 0;
+  if (round === 2) {
+    const revealed = randomItems(state.warehouse, 3, random);
+    revealed.forEach((item) => revealRarity(knowledge, item));
+    const rarity = randomRarity(random, 3);
+    const count = state.warehouse.items.filter((item) => item.rarity === rarity).length;
+    publicNote(
+      language === "zh-CN"
+        ? `公开 ${revealed.length} 件藏品的品质；${localize(rarityNames[rarity], language)}藏品共 ${count} 件。`
+        : `${revealed.length} rarities are public; ${localize(rarityNames[rarity], language)} items: ${count}.`
+    );
+    return;
+  }
+
+  if (round === 3) {
+    const outlined = randomItems(state.warehouse, 2, random, (item) => !knowledge.items[item.instanceId]?.outlineKnown);
+    outlined.forEach((item) => revealOutline(knowledge, item));
+    const category = outlined[0]?.category ?? state.warehouse.items[0]?.category;
+    const count = category ? state.warehouse.items.filter((item) => item.category === category).length : 0;
+    publicNote(
+      language === "zh-CN" && category
+        ? `新增 ${outlined.length} 个轮廓；${localize(categoryNames[category], language)}类藏品共 ${count} 件。`
+        : `Two more outlines are public; one category contains ${count} items.`
+    );
+    return;
+  }
+
+  if (round === 4) {
+    const outlined = randomItems(state.warehouse, 4, random, (item) => !knowledge.items[item.instanceId]?.outlineKnown);
+    outlined.forEach((item) => revealOutline(knowledge, item));
+    const highCount = state.warehouse.items.filter((item) => ["purple", "gold", "red"].includes(item.rarity)).length;
+    publicNote(
+      language === "zh-CN"
+        ? `新增 ${outlined.length} 个轮廓；紫、金、红品质藏品合计 ${highCount} 件。`
+        : `${outlined.length} more outlines; purple, gold and red items total ${highCount}.`
+    );
+    return;
+  }
+
+  const revealed = randomItems(state.warehouse, 4, random, (item) => !knowledge.items[item.instanceId]?.rarityKnown);
+  revealed.forEach((item) => revealRarity(knowledge, item));
+  publicNote(
+    language === "zh-CN"
+      ? `最终公开 ${revealed.length} 件藏品的品质。`
+      : `The final report reveals ${revealed.length} more rarities.`
+  );
+}
+
+function addPrivateRoleNote(
+  knowledge: PlayerKnowledge,
+  round: number,
+  text: string
+): void {
+  addNote(knowledge, { source: "role", round, text });
+}
+
+function applyRoleIntel(
+  state: AuctionKingState,
+  playerId: string,
+  roleId: AuctionRoleId,
+  round: number,
+  language: SupportedLanguage,
+  random: RandomSource
+): void {
+  const knowledge = state.privateKnowledgeByPlayerId[playerId];
+  if (!knowledge) return;
+
+  if (roleId === "spectrum_cartographer") {
+    const rarity = round <= 4 ? rarityOrder[round - 1] : null;
+    const targets = rarity
+      ? state.warehouse.items.filter((item) => item.rarity === rarity)
+      : randomItems(state.warehouse, 1, random, (item) => item.rarity === "gold" || item.rarity === "red");
+    targets.forEach((item) => revealOutline(knowledge, item));
+    addPrivateRoleNote(
+      knowledge,
+      round,
+      language === "zh-CN"
+        ? rarity
+          ? `色谱测绘：显示全部${localize(rarityNames[rarity], language)}藏品轮廓。`
+          : "色谱测绘：显示一件金色或红色藏品轮廓。"
+        : `Spectrum mapping reveals ${targets.length} matching outline(s).`
+    );
+    return;
+  }
+
+  if (roleId === "apex_hunter") {
+    if (round === 1) {
+      const highestIndex = Math.max(
+        ...state.warehouse.items.map((item) => rarityOrder.indexOf(item.rarity))
+      );
+      const apex = randomItems(state.warehouse, 1, random, (item) => rarityOrder.indexOf(item.rarity) === highestIndex);
+      apex.forEach((item) => revealOutline(knowledge, item));
     }
+    const target = randomItems(state.warehouse, 1, random)[0];
+    if (target) {
+      revealOutline(knowledge, target);
+      revealRarity(knowledge, target);
+    }
+    addPrivateRoleNote(
+      knowledge,
+      round,
+      language === "zh-CN" ? "巅峰猎手：锁定一件藏品的品质与轮廓。" : "Apex Hunter locks one rarity and outline."
+    );
+    return;
   }
 
-  const { winnerId, winningBid, tie } = determineWinner(bids, players);
-  const gold = { ...state.goldByPlayerId };
-
-  if (winnerId) {
-    gold[winnerId] = (gold[winnerId] ?? startingGold) - winningBid + item.trueValue;
+  if (roleId === "fog_classifier") {
+    if (round <= 3) {
+      const target = randomItems(state.warehouse, 1, random, (item) => !knowledge.items[item.instanceId]?.categoryKnown)[0];
+      if (target) revealOutline(knowledge, target);
+      addPrivateRoleNote(
+        knowledge,
+        round,
+        language === "zh-CN" ? "雾区分类：显示一种未知类别藏品的轮廓。" : "Fog classification reveals an unknown-category outline."
+      );
+    } else if (round === 5) {
+      const targets = state.warehouse.items.filter((item) => knowledge.items[item.instanceId]?.rarityKnown);
+      targets.forEach((item) => revealOutline(knowledge, item));
+      addPrivateRoleNote(
+        knowledge,
+        round,
+        language === "zh-CN" ? `雾区分类：补全 ${targets.length} 件品质已知藏品的轮廓。` : `Fog classification completes ${targets.length} known-rarity outlines.`
+      );
+    }
+    return;
   }
 
-  const result: AuctionRoundResult = {
-    round: state.currentRound,
-    itemId: item.id,
-    itemName: item.name,
-    category: item.category,
-    rarity: item.rarity,
-    trueValue: item.trueValue,
-    winnerPlayerId: winnerId,
-    winningBid,
-    allBids: bids
-  };
-
-  let message: string;
-  if (tie) {
-    message = t.tieNoSale;
-  } else if (winnerId) {
-    const winnerName = players.find((p) => p.id === winnerId)?.name ?? "?";
-    const profit = item.trueValue - winningBid;
-    message = `${t.wins(winnerName)} ${t.profit(profit)}`;
-  } else {
-    message = t.noWinner;
+  if (roleId === "echo_archivist") {
+    if (round === 1) {
+      const targets = randomItems(state.warehouse, 8, random);
+      targets.forEach((item) => revealOutline(knowledge, item));
+      state.roleMemoryByPlayerId[playerId] = targets.map((item) => item.instanceId);
+      addPrivateRoleNote(
+        knowledge,
+        round,
+        language === "zh-CN" ? "回声记录：记下八件随机藏品的轮廓。" : "Echo archive records eight random outlines."
+      );
+    } else if (round === 3) {
+      const ids = new Set(state.roleMemoryByPlayerId[playerId] ?? []);
+      const targets = state.warehouse.items.filter((item) => ids.has(item.instanceId));
+      targets.forEach((item) => revealOutline(knowledge, item));
+      addPrivateRoleNote(
+        knowledge,
+        round,
+        language === "zh-CN" ? "回声记录：再次确认第一回合的八件藏品。" : "Echo archive restores the first-round set."
+      );
+    }
+    return;
   }
 
-  return {
-    ...state,
-    bidsByPlayerId: bids,
-    goldByPlayerId: gold,
-    roundResults: [...state.roundResults, result],
-    stageEndsAt: now + revealDurationMs,
-    updatedAt: now,
-    message
-  };
+  if (roleId === "spatial_engineer") {
+    const unknown = state.warehouse.items.filter((item) => !knowledge.items[item.instanceId]?.outlineKnown);
+    const largestArea = Math.max(0, ...unknown.map((item) => item.width * item.height));
+    const target = randomItems(state.warehouse, 1, random, (item) => item.width * item.height === largestArea)[0];
+    if (target) revealOutline(knowledge, target);
+    const extra = round === 4
+      ? state.warehouse.items.filter((item) => item.width * item.height >= 6).reduce((sum, item) => sum + item.width * item.height, 0)
+      : null;
+    addPrivateRoleNote(
+      knowledge,
+      round,
+      language === "zh-CN"
+        ? extra === null
+          ? "空间工程：显示一件最大占格藏品的轮廓。"
+          : `空间工程：大型藏品合计占用 ${extra} 格。`
+        : extra === null
+        ? "Spatial engineering reveals one largest footprint."
+        : `Large items occupy ${extra} cells.`
+    );
+    return;
+  }
+
+  const rarity = rarityOrder[Math.min(round - 1, rarityOrder.length - 1)] ?? "white";
+  const values = state.warehouse.items.filter((item) => item.rarity === rarity).map((item) => item.trueValue);
+  const average = values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+  if (round === 5) {
+    knowledge.estimatedWarehouseMin = Math.round(state.warehouse.totalValue * 0.85);
+    knowledge.estimatedWarehouseMax = Math.round(state.warehouse.totalValue * 1.15);
+  }
+  addPrivateRoleNote(
+    knowledge,
+    round,
+    language === "zh-CN"
+      ? round === 5
+        ? `价值审计：整仓价值约为 ${knowledge.estimatedWarehouseMin?.toLocaleString("zh-CN")}–${knowledge.estimatedWarehouseMax?.toLocaleString("zh-CN")}。`
+        : `价值审计：${localize(rarityNames[rarity], language)}藏品平均价值约 ${average.toLocaleString("zh-CN")}。`
+      : round === 5
+      ? `Value audit estimates ${knowledge.estimatedWarehouseMin}–${knowledge.estimatedWarehouseMax}.`
+      : `${localize(rarityNames[rarity], language)} average value: ${average}.`
+  );
 }
 
-function startNextRound(
-  state: AuctionKingState,
+function startAuctionRound(
+  source: AuctionKingState,
+  round: number,
   now: number,
-  language: SupportedLanguage
+  language: SupportedLanguage,
+  random: RandomSource = Math.random
 ): AuctionKingState {
-  const t = txt(language);
-  const items = randomItems(1, state.usedItemIds);
-  const nextItem = items[0];
+  const state = cloneKnowledgeState(source);
+  state.currentRound = round;
+  state.stage = "round_active";
+  state.setupEndsAt = null;
+  state.roundEndsAt = now + auctionRoundDurationMs;
+  state.revealEndsAt = null;
+  state.currentBidByPlayerId = {};
+  state.currentInstrumentByPlayerId = Object.fromEntries(state.playerOrder.map((id) => [id, null]));
+  state.updatedAt = now;
+  state.message = languageMessages(language).active(round, currentThreshold(round));
 
+  publicAuctioneerIntel(state, round, language, random);
+  for (const playerId of state.playerOrder) {
+    const roleId = state.setupByPlayerId[playerId]?.roleId;
+    if (roleId) applyRoleIntel(state, playerId, roleId, round, language, random);
+  }
+
+  return state;
+}
+
+function allSetupConfirmed(state: AuctionKingState): boolean {
+  return state.playerOrder.every((playerId) => state.setupByPlayerId[playerId]?.confirmed);
+}
+
+function confirmPlayerSetup(state: AuctionKingState, playerId: string, now: number): AuctionKingState {
+  const current = state.setupByPlayerId[playerId];
+  if (!current || current.confirmed || !current.roleId || !current.kitId) return state;
+  const kit = kitById(current.kitId);
+  if (!kit || (state.fundsByPlayerId[playerId] ?? 0) < kit.cost) return state;
   return {
     ...state,
-    currentRound: state.currentRound + 1,
-    currentItem: nextItem,
-    usedItemIds: [...state.usedItemIds, nextItem.id],
-    bidsByPlayerId: {},
-    stage: "appraisal",
-    stageEndsAt: now + appraisalDurationMs,
-    updatedAt: now,
-    message: t.appraisal
+    setupByPlayerId: {
+      ...state.setupByPlayerId,
+      [playerId]: { ...current, confirmed: true }
+    },
+    fundsByPlayerId: {
+      ...state.fundsByPlayerId,
+      [playerId]: (state.fundsByPlayerId[playerId] ?? auctionStartingFunds) - kit.cost
+    },
+    instrumentInventoryByPlayerId: {
+      ...state.instrumentInventoryByPlayerId,
+      [playerId]: kit.id === "none" ? [] : [...allInstrumentIds]
+    },
+    updatedAt: now
   };
 }
 
-function buildPlayerProgress(
-  players: GamePlayerSummary[],
-  state: AuctionKingState
-): AuctionKingPublicState["playerProgress"] {
-  return players.map((player) => ({
-    playerId: player.id,
-    name: player.name,
-    color: player.color,
-    gold: state.goldByPlayerId[player.id] ?? startingGold,
-    hasBid: Object.prototype.hasOwnProperty.call(state.bidsByPlayerId, player.id)
-  }));
+function autoCompleteSetup(state: AuctionKingState, now: number): AuctionKingState {
+  let next = state;
+  const claimed = new Set(
+    Object.values(next.setupByPlayerId).map((entry) => entry.roleId).filter((id): id is AuctionRoleId => Boolean(id))
+  );
+  for (const playerId of next.playerOrder) {
+    const setup = next.setupByPlayerId[playerId];
+    if (setup?.confirmed) continue;
+    const roleId = setup?.roleId ?? auctionRoles.find((entry) => !claimed.has(entry.id))?.id ?? auctionRoles[0].id;
+    claimed.add(roleId);
+    next = {
+      ...next,
+      setupByPlayerId: {
+        ...next.setupByPlayerId,
+        [playerId]: { roleId, kitId: setup?.kitId ?? "none", confirmed: false }
+      }
+    };
+    next = confirmPlayerSetup(next, playerId, now);
+  }
+  return { ...next, updatedAt: now };
 }
 
-function toPublicState(
+export interface RoundWinnerEvaluation {
+  highestBid: number;
+  secondBid: number;
+  leaderPlayerId: string | null;
+  sold: boolean;
+}
+
+export function evaluateRoundWinner(
+  bids: Record<string, number>,
+  playerOrder: string[],
+  round: number
+): RoundWinnerEvaluation {
+  const sorted = playerOrder
+    .map((playerId) => ({ playerId, amount: Math.max(0, bids[playerId] ?? 0) }))
+    .sort((left, right) => right.amount - left.amount);
+  const highestBid = sorted[0]?.amount ?? 0;
+  const secondBid = sorted[1]?.amount ?? 0;
+  const tied = sorted.filter((entry) => entry.amount === highestBid).length > 1;
+  const threshold = currentThreshold(round);
+  const ratioMet = secondBid === 0 ? highestBid > 0 : highestBid / secondBid >= threshold;
+  return {
+    highestBid,
+    secondBid,
+    leaderPlayerId: highestBid > 0 && !tied ? sorted[0].playerId : null,
+    sold: highestBid > 0 && !tied && ratioMet
+  };
+}
+
+function closeRound(
   state: AuctionKingState,
-  players: GamePlayerSummary[]
-): AuctionKingPublicState {
+  context: ServerGameContext,
+  now: number
+): AuctionKingState {
+  const bids = Object.fromEntries(state.playerOrder.map((playerId) => [playerId, state.currentBidByPlayerId[playerId] ?? 0]));
+  const instruments = Object.fromEntries(
+    state.playerOrder.map((playerId) => [playerId, state.currentInstrumentByPlayerId[playerId] ?? null])
+  ) as Record<string, AuctionInstrumentId | null>;
+  const evaluation = evaluateRoundWinner(bids, state.playerOrder, state.currentRound);
+  const history: AuctionRoundHistory = {
+    round: state.currentRound,
+    threshold: currentThreshold(state.currentRound),
+    bids,
+    instruments,
+    highestBid: evaluation.highestBid,
+    secondBid: evaluation.secondBid,
+    leaderPlayerId: evaluation.leaderPlayerId,
+    sold: evaluation.sold,
+    revealedAt: now
+  };
+  const playerName = context.players.find((player) => player.id === evaluation.leaderPlayerId)?.name ?? "?";
+  const finalRound = state.currentRound >= auctionTotalRounds;
+  const fundsByPlayerId = { ...state.fundsByPlayerId };
+  if (evaluation.sold && evaluation.leaderPlayerId) {
+    fundsByPlayerId[evaluation.leaderPlayerId] =
+      (fundsByPlayerId[evaluation.leaderPlayerId] ?? 0) - evaluation.highestBid + state.warehouse.totalValue;
+  }
+  return {
+    ...state,
+    stage: "round_reveal",
+    roundEndsAt: null,
+    revealEndsAt: now + auctionRevealDurationMs,
+    history: [...state.history, history],
+    fundsByPlayerId,
+    soldToPlayerId: evaluation.sold ? evaluation.leaderPlayerId : null,
+    soldFor: evaluation.sold ? evaluation.highestBid : 0,
+    trueValueRevealed: evaluation.sold || finalRound,
+    updatedAt: now,
+    message: evaluation.sold
+      ? languageMessages(context.language).sold(playerName, evaluation.highestBid)
+      : finalRound
+      ? languageMessages(context.language).unsold
+      : languageMessages(context.language).next
+  };
+}
+
+function allPlayersBid(state: AuctionKingState): boolean {
+  return state.playerOrder.every((playerId) => Object.prototype.hasOwnProperty.call(state.currentBidByPlayerId, playerId));
+}
+
+function instrumentStrength(kitId: AuctionKitId | null): number {
+  return kitId ? kitById(kitId)?.strength ?? 0 : 0;
+}
+
+function useInstrument(
+  source: AuctionKingState,
+  playerId: string,
+  instrumentId: AuctionInstrumentId,
+  now: number,
+  language: SupportedLanguage,
+  random: RandomSource = Math.random
+): AuctionKingState {
+  if (source.stage !== "round_active" || source.currentInstrumentByPlayerId[playerId]) return source;
+  const inventory = source.instrumentInventoryByPlayerId[playerId] ?? [];
+  if (!inventory.includes(instrumentId)) return source;
+  const state = cloneKnowledgeState(source);
+  const knowledge = state.privateKnowledgeByPlayerId[playerId];
+  const strength = instrumentStrength(state.setupByPlayerId[playerId]?.kitId ?? null);
+  if (!knowledge || strength === 0) return source;
+  let resultText = "";
+
+  if (instrumentId === "largest_appraiser") {
+    const largestArea = Math.max(...state.warehouse.items.map((item) => item.width * item.height));
+    const target = randomItems(state.warehouse, 1, random, (item) => item.width * item.height === largestArea)[0];
+    if (target) {
+      revealOutline(knowledge, target);
+      revealRarity(knowledge, target);
+      resultText = language === "zh-CN"
+        ? `最大藏品为${localize(rarityNames[target.rarity], language)}品质，占 ${target.width * target.height} 格。`
+        : `Largest item rarity: ${localize(rarityNames[target.rarity], language)}.`;
+    }
+  } else if (instrumentId === "quality_array") {
+    const count = [0, 4, 6, 10][strength] ?? 4;
+    const targets = randomItems(state.warehouse, count, random, (item) => !knowledge.items[item.instanceId]?.rarityKnown);
+    targets.forEach((item) => revealRarity(knowledge, item));
+    resultText = language === "zh-CN" ? `显示 ${targets.length} 件藏品的品质。` : `Revealed ${targets.length} rarities.`;
+  } else if (instrumentId === "outline_engine") {
+    const count = [0, 6, 9, 12][strength] ?? 6;
+    const targets = randomItems(state.warehouse, count, random, (item) => !knowledge.items[item.instanceId]?.outlineKnown);
+    targets.forEach((item) => revealOutline(knowledge, item));
+    resultText = language === "zh-CN" ? `显示 ${targets.length} 件藏品的轮廓。` : `Revealed ${targets.length} outlines.`;
+  } else if (instrumentId === "gold_counter") {
+    const count = state.warehouse.items.filter((item) => item.rarity === "gold").length;
+    resultText = language === "zh-CN" ? `金色品质藏品共 ${count} 件。` : `Gold-rarity item count: ${count}.`;
+  } else if (instrumentId === "category_spectrometer") {
+    const count = [0, 3, 5, 7][strength] ?? 3;
+    const targets = randomItems(state.warehouse, count, random, (item) => !knowledge.items[item.instanceId]?.categoryKnown);
+    targets.forEach((item) => revealCategory(knowledge, item));
+    resultText = language === "zh-CN" ? `显示 ${targets.length} 件藏品的类别。` : `Revealed ${targets.length} categories.`;
+  } else {
+    const error = [0, 0.3, 0.18, 0.1][strength] ?? 0.3;
+    knowledge.estimatedWarehouseMin = Math.round(state.warehouse.totalValue * (1 - error));
+    knowledge.estimatedWarehouseMax = Math.round(state.warehouse.totalValue * (1 + error));
+    resultText = language === "zh-CN"
+      ? `估值区间 ${knowledge.estimatedWarehouseMin.toLocaleString("zh-CN")}–${knowledge.estimatedWarehouseMax.toLocaleString("zh-CN")}。`
+      : `Estimated range ${knowledge.estimatedWarehouseMin}–${knowledge.estimatedWarehouseMax}.`;
+  }
+
+  addNote(knowledge, {
+    source: "instrument",
+    round: state.currentRound,
+    text: `${localize(instrumentById(instrumentId)?.name ?? { "zh-CN": instrumentId, en: instrumentId, de: instrumentId }, language)}：${resultText}`
+  });
+
+  return {
+    ...state,
+    instrumentInventoryByPlayerId: {
+      ...state.instrumentInventoryByPlayerId,
+      [playerId]: inventory.filter((id) => id !== instrumentId)
+    },
+    currentInstrumentByPlayerId: {
+      ...state.currentInstrumentByPlayerId,
+      [playerId]: instrumentId
+    },
+    updatedAt: now
+  };
+}
+
+function playerViews(state: AuctionKingState, players: GamePlayerSummary[], language: SupportedLanguage) {
+  return state.playerOrder.map((playerId) => {
+    const player = players.find((entry) => entry.id === playerId);
+    const roleId = state.setupByPlayerId[playerId]?.roleId ?? null;
+    return {
+      playerId,
+      name: player?.name ?? "?",
+      color: player?.color ?? "#94a3b8",
+      roleId,
+      roleName: roleId ? localize(roleById(roleId)?.name ?? { "zh-CN": roleId, en: roleId, de: roleId }, language) : null,
+      setupConfirmed: Boolean(state.setupByPlayerId[playerId]?.confirmed)
+    };
+  });
+}
+
+function toPublicState(state: AuctionKingState, context: ServerGameContext): AuctionKingPublicState {
+  const revealAll = state.trueValueRevealed || state.stage === "finished";
   return {
     stage: state.stage,
     currentRound: state.currentRound,
     totalRounds: state.totalRounds,
-    startingGold: state.startingGold,
-    goldByPlayerId: state.goldByPlayerId,
-    currentItem: toPublicItem(state.currentItem, state.stage),
-    bidSubmittedByPlayerId: Object.fromEntries(
-      players.map((p) => [p.id, Object.prototype.hasOwnProperty.call(state.bidsByPlayerId, p.id)])
+    startingFunds: state.startingFunds,
+    stageEndsAt: currentStageEndsAt(state),
+    threshold: currentThreshold(Math.max(1, state.currentRound)),
+    players: playerViews(state, context.players, context.language),
+    history: state.history,
+    publicNotes: state.auctioneerNotes,
+    warehouse: {
+      cols: state.warehouse.cols,
+      rows: state.warehouse.rows,
+      items: visibleWarehouseItems(state.warehouse, state.publicKnowledge, context.language, revealAll)
+    },
+    submittedBidByPlayerId: Object.fromEntries(
+      state.playerOrder.map((playerId) => [playerId, false])
     ),
-    roundResults: state.roundResults,
-    stageEndsAt: state.stageEndsAt,
-    playerProgress: buildPlayerProgress(players, state)
+    usedInstrumentByPlayerId: Object.fromEntries(
+      state.playerOrder.map((playerId) => [playerId, false])
+    ),
+    soldToPlayerId: state.soldToPlayerId,
+    soldFor: state.soldFor,
+    trueWarehouseValue: revealAll ? state.warehouse.totalValue : null
   };
 }
 
-export const serverGame: ServerGame<
-  AuctionKingState,
-  AuctionKingInput,
-  AuctionKingPublicState
-> = {
+export const serverGame: ServerGame<AuctionKingState, AuctionKingInput, AuctionKingPublicState> = {
   manifest: auctionKingManifest,
 
   createInitialState(context) {
-    const t = txt(context.language);
-    const playerIds = context.players.map((p) => p.id);
-    const items = randomItems(totalRounds, []);
-    const firstItem = items[0];
-    const usedIds = items.map((item) => item.id);
-
+    const playerIds = context.players.map((player) => player.id).slice(0, auctionKingManifest.maxPlayers);
+    const warehouse = generateWarehouse();
     return {
       ...createBaseRoundState("round_intro", context.now, {
         durationMs: roundPhaseDurations.roundIntroMs,
-        message: t.intro
+        message: languageMessages(context.language).intro
       }),
-      stage: "appraisal",
-      currentRound: 1,
-      totalRounds,
-      startingGold,
-      goldByPlayerId: createGoldMap(playerIds),
-      currentItem: firstItem,
-      usedItemIds: usedIds,
-      bidsByPlayerId: {},
-      roundResults: [],
-      stageEndsAt: null
+      stage: "setup",
+      setupEndsAt: null,
+      roundEndsAt: null,
+      revealEndsAt: null,
+      currentRound: 0,
+      totalRounds: auctionTotalRounds,
+      startingFunds: auctionStartingFunds,
+      playerOrder: playerIds,
+      setupByPlayerId: createSetupMap(playerIds),
+      fundsByPlayerId: createFundsMap(playerIds),
+      instrumentInventoryByPlayerId: Object.fromEntries(playerIds.map((id) => [id, []])),
+      roleMemoryByPlayerId: Object.fromEntries(playerIds.map((id) => [id, []])),
+      currentInstrumentByPlayerId: Object.fromEntries(playerIds.map((id) => [id, null])),
+      currentBidByPlayerId: {},
+      warehouse,
+      publicKnowledge: createEmptyKnowledge(),
+      privateKnowledgeByPlayerId: createPrivateKnowledgeMap(playerIds),
+      history: [],
+      auctioneerNotes: [],
+      soldToPlayerId: null,
+      soldFor: 0,
+      trueValueRevealed: false
     };
   },
 
   startRound(state, context) {
-    const t = txt(context.language);
     return transitionRoundState(
       {
         ...state,
-        stage: "appraisal",
-        stageEndsAt: context.now + appraisalDurationMs,
-        message: t.appraisal
+        stage: "setup",
+        setupEndsAt: context.now + auctionSetupDurationMs,
+        message: languageMessages(context.language).setup
       },
       "playing",
       context.now,
-      { startedAt: context.now, message: t.appraisal }
+      { startedAt: context.now, message: languageMessages(context.language).setup }
     );
   },
 
-  handleInput(state, input, context) {
-    if (state.phase !== "playing" || state.stage !== "bidding") {
-      return state;
-    }
+  handleInput(state, rawInput, context) {
+    if (state.phase !== "playing" || !isAuctionInput(rawInput)) return state;
+    const input = rawInput;
+    if (!state.playerOrder.includes(input.playerId)) return state;
 
-    if (!context.players.some((p) => p.id === input.playerId)) {
-      return state;
-    }
+    if (state.stage === "setup") {
+      const current = state.setupByPlayerId[input.playerId];
+      if (!current || current.confirmed) return state;
 
-    if (Object.prototype.hasOwnProperty.call(state.bidsByPlayerId, input.playerId)) {
-      return state;
-    }
-
-    if (!bidOptions.includes(input.amount)) {
-      return state;
-    }
-
-    const playerGold = state.goldByPlayerId[input.playerId] ?? 0;
-    if (input.amount > 0 && input.amount > playerGold) {
-      return state;
-    }
-
-    const nextBids = {
-      ...state.bidsByPlayerId,
-      [input.playerId]: input.amount
-    };
-
-    const allBid = context.players.every((p) =>
-      Object.prototype.hasOwnProperty.call(nextBids, p.id)
-    );
-
-    if (allBid) {
-      const settled = settleRound(
-        { ...state, bidsByPlayerId: nextBids, updatedAt: context.now },
-        context.players,
-        context.now,
-        context.language
-      );
-      return { ...settled, stage: "reveal" };
-    }
-
-    return {
-      ...state,
-      bidsByPlayerId: nextBids,
-      updatedAt: context.now
-    };
-  },
-
-  tick(state, _deltaMs, context) {
-    if (state.phase !== "playing") {
-      return state;
-    }
-
-    const t = txt(context.language);
-    const now = context.now;
-
-    if (state.stage === "appraisal" && state.stageEndsAt !== null && now >= state.stageEndsAt) {
-      return {
-        ...state,
-        stage: "bidding",
-        stageEndsAt: now + biddingDurationMs,
-        updatedAt: now,
-        message: t.bidding
-      };
-    }
-
-    if (state.stage === "bidding" && state.stageEndsAt !== null && now >= state.stageEndsAt) {
-      const settled = settleRound(state, context.players, now, context.language);
-      return { ...settled, stage: "reveal" };
-    }
-
-    if (state.stage === "reveal" && state.stageEndsAt !== null && now >= state.stageEndsAt) {
-      if (state.currentRound >= state.totalRounds) {
+      if (input.type === "select_role") {
+        const claimedByOther = Object.entries(state.setupByPlayerId).some(
+          ([playerId, setup]) => playerId !== input.playerId && setup.roleId === input.roleId
+        );
+        if (claimedByOther) return state;
         return {
           ...state,
-          stage: "finished",
-          currentItem: null,
-          stageEndsAt: null,
-          updatedAt: now,
-          message: t.finished
+          setupByPlayerId: {
+            ...state.setupByPlayerId,
+            [input.playerId]: { ...current, roleId: input.roleId }
+          },
+          updatedAt: context.now
         };
       }
 
-      return startNextRound(state, now, context.language);
+      if (input.type === "select_kit") {
+        return {
+          ...state,
+          setupByPlayerId: {
+            ...state.setupByPlayerId,
+            [input.playerId]: { ...current, kitId: input.kitId }
+          },
+          updatedAt: context.now
+        };
+      }
+
+      if (input.type === "confirm_setup") {
+      const confirmed = confirmPlayerSetup(state, input.playerId, context.now);
+        return allSetupConfirmed(confirmed)
+          ? startAuctionRound(confirmed, 1, context.now, context.language)
+          : { ...confirmed, updatedAt: context.now };
+      }
+
+      return state;
     }
 
+    if (state.stage !== "round_active") return state;
+
+    if (input.type === "use_instrument") {
+      return useInstrument(state, input.playerId, input.instrumentId, context.now, context.language);
+    }
+
+    if (input.type === "submit_bid") {
+      const funds = state.fundsByPlayerId[input.playerId] ?? 0;
+      if (input.amount < 0 || input.amount > funds) return state;
+      const next = {
+        ...state,
+        currentBidByPlayerId: {
+          ...state.currentBidByPlayerId,
+          [input.playerId]: input.amount
+        },
+        updatedAt: context.now
+      };
+      return allPlayersBid(next) ? closeRound(next, context, context.now) : next;
+    }
+
+    return state;
+  },
+
+  tick(state, _deltaMs, context) {
+    if (state.phase !== "playing") return state;
+    if (state.stage === "setup" && state.setupEndsAt !== null && context.now >= state.setupEndsAt) {
+      const completed = autoCompleteSetup(state, context.now);
+      return startAuctionRound(completed, 1, context.now, context.language);
+    }
+    if (state.stage === "round_active" && state.roundEndsAt !== null && context.now >= state.roundEndsAt) {
+      return closeRound(state, context, context.now);
+    }
+    if (state.stage === "round_reveal" && state.revealEndsAt !== null && context.now >= state.revealEndsAt) {
+      if (state.soldToPlayerId || state.currentRound >= auctionTotalRounds) {
+        return {
+          ...state,
+          stage: "finished",
+          revealEndsAt: null,
+          trueValueRevealed: true,
+          updatedAt: context.now
+        };
+      }
+      return startAuctionRound(state, state.currentRound + 1, context.now, context.language);
+    }
     return state;
   },
 
@@ -375,39 +830,71 @@ export const serverGame: ServerGame<
   },
 
   buildScore(state) {
-    return Object.entries(state.goldByPlayerId).map(([playerId, gold]) => ({
+    return state.playerOrder.map((playerId) => ({
       playerId,
-      delta: gold - startingGold,
-      reason: "Auction King"
+      delta: (state.fundsByPlayerId[playerId] ?? auctionStartingFunds) - auctionStartingFunds,
+      reason: "Warehouse auction"
     }));
   },
 
   toPublicState(state, context) {
-    return toPublicState(state, context.players);
+    return toPublicState(state, context);
   },
 
   toControllerStateForPlayer(state, context, playerId) {
-    const publicState = toPublicState(state, context.players);
-    const playerGold = state.goldByPlayerId[playerId] ?? startingGold;
-    const ownBid = Object.prototype.hasOwnProperty.call(state.bidsByPlayerId, playerId)
-      ? state.bidsByPlayerId[playerId]
-      : null;
-
-    const canBid =
-      state.phase === "playing" &&
-      state.stage === "bidding" &&
-      !Object.prototype.hasOwnProperty.call(state.bidsByPlayerId, playerId);
-
-    const affordableBidOptions = bidOptions.filter(
-      (amount) => amount === 0 || amount <= playerGold
-    );
+    const publicState = toPublicState(state, context);
+    const spectator = !state.playerOrder.includes(playerId);
+    const privateKnowledge = state.privateKnowledgeByPlayerId[playerId] ?? createEmptyKnowledge();
+    const combined = mergeKnowledge(state.publicKnowledge, privateKnowledge);
+    const revealAll = state.trueValueRevealed || state.stage === "finished";
+    const ownSetup = state.setupByPlayerId[playerId] ?? { roleId: null, kitId: null, confirmed: false };
 
     return {
       ...publicState,
       playerId,
-      ownBid,
-      canBid,
-      bidOptions: affordableBidOptions
+      spectator,
+      ownFunds: state.fundsByPlayerId[playerId] ?? 0,
+      ownBid: Object.prototype.hasOwnProperty.call(state.currentBidByPlayerId, playerId)
+        ? state.currentBidByPlayerId[playerId]
+        : null,
+      ownRoleId: ownSetup.roleId,
+      ownKitId: ownSetup.kitId,
+      setupConfirmed: ownSetup.confirmed,
+      availableRoles: auctionRoles.map((role) => ({
+        id: role.id,
+        name: localize(role.name, context.language),
+        description: localize(role.description, context.language),
+        accent: role.accent,
+        portraitPath: role.portraitPath
+      })),
+      availableKits: auctionKits.map((kit) => ({
+        id: kit.id,
+        name: localize(kit.name, context.language),
+        description: localize(kit.description, context.language),
+        cost: kit.cost,
+        accent: kit.accent
+      })),
+      instruments: auctionInstruments.map((instrument) => ({
+        id: instrument.id,
+        name: localize(instrument.name, context.language),
+        description: localize(instrument.description, context.language),
+        iconPath: instrument.iconPath
+      })),
+      ownInstrumentInventory: [...(state.instrumentInventoryByPlayerId[playerId] ?? [])],
+      ownCurrentInstrument: state.currentInstrumentByPlayerId[playerId] ?? null,
+      privateNotes: privateKnowledge.notes,
+      estimatedWarehouseMin: combined.estimatedWarehouseMin,
+      estimatedWarehouseMax: combined.estimatedWarehouseMax,
+      warehouse: {
+        cols: state.warehouse.cols,
+        rows: state.warehouse.rows,
+        items: visibleWarehouseItems(state.warehouse, combined, context.language, revealAll)
+      },
+      candidatesByInstanceId: buildCandidates(state.warehouse, combined, context.language),
+      canConfigure: state.stage === "setup" && !ownSetup.confirmed && !spectator,
+      canAct: state.stage === "round_active" && !spectator
     } satisfies AuctionKingControllerState;
   }
 };
+
+export { auctionCatalog };

@@ -17,6 +17,7 @@ import { SchaetzoramaLayout } from "./SchaetzoramaLayout.js";
 import { WordTilesLayout } from "./WordTilesLayout.js";
 import { SpellCastingLayout } from "./SpellCastingLayout.js";
 import { MagicArenaLayout } from "./MagicArenaLayout.js";
+import { AuctionWarehouseLayout } from "./AuctionWarehouseLayout.js";
 import type { ControllerLayoutModel } from "./models.js";
 
 interface ControllerLayoutRendererProps {
@@ -61,6 +62,8 @@ export function ControllerLayoutRenderer({ model }: ControllerLayoutRendererProp
       return <WordTilesLayout model={model} />;
     case "magic_arena":
       return <MagicArenaLayout model={model} />;
+    case "auction_warehouse":
+      return <AuctionWarehouseLayout model={model} />;
     default:
       return null;
   }
