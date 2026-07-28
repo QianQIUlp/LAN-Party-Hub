@@ -8,6 +8,7 @@ LAN Party Hub 将下列游戏源代码作为首版内置组件。导入时使用
 | `zeichnen-und-erraten` | https://github.com/Hartwich/zeichnen-und-erraten | `bb9b1dca148ccca644ff6b970a60f21789263684` |
 | `schaetzorama` | https://github.com/Hartwich/schaetzorama | `d5c52c63769d00657deb1f4437b25adb10cf401a` |
 | `imposter` | https://github.com/Hartwich/imposter | `d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667` |
+| `auction-king` | https://github.com/QianQIUlp/LAN-Party-Hub | `77c6a23ebdcee1bff64419285a6b47304ce78497` |
 
 ## LAN Party Hub 中的修改
 

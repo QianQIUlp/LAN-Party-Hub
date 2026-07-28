@@ -100,7 +100,7 @@ async function check() {
   if (!notice.includes("Upstream Open Party Lab notice (preserved)") || !notice.includes("independently maintained derivative")) errors.push("NOTICE.md is missing preserved upstream or derivative attribution.");
 
   const bundled = knownGames.filter((game) => game.includeInRelease === true);
-  if (bundled.length !== 4) errors.push(`Expected 4 bundled games, found ${bundled.length}.`);
+  if (bundled.length !== 5) errors.push(`Expected 5 bundled games, found ${bundled.length}.`);
   for (const game of bundled) {
     if (!game.sourceRepo || !/^[0-9a-f]{40}$/.test(game.sourceRevision ?? "")) errors.push(`${game.id} is missing fixed source provenance.`);
     if (!existsSync(resolve(root, game.bundledPath ?? "", "LICENSE"))) errors.push(`${game.id} is missing its retained LICENSE.`);

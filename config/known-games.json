@@ -175,5 +175,18 @@
     "alternateLocalPaths": [
       "../chaos-kommando"
     ]
+  },
+  {
+    "id": "auction-king",
+    "package": "@open-party-lab/game-auction-king",
+    "sourceRepo": "https://github.com/QianQIUlp/LAN-Party-Hub",
+    "sourceRevision": "77c6a23ebdcee1bff64419285a6b47304ce78497",
+    "distribution": "bundled",
+    "bundledPath": "games/auction-king",
+    "includeInRelease": true,
+    "defaultLocalPath": "local-games/auction-king",
+    "alternateLocalPaths": [
+      "../auction-king"
+    ]
   }
 ]

@@ -44,3 +44,7 @@ pnpm-debug.log*
 
 apps/host/public/drift-racer/
 apps/controller/public/drift-racer/
+
+.workbuddy/
+overview.md
+apps/host/public/auction-king/
