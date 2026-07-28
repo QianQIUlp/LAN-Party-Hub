@@ -65,6 +65,20 @@ const gameVisuals: Record<string, GameVisual> = {
     surfaceHover: 0x124737,
     eyebrow: "Cards"
   },
+  roulette: {
+    accent: 0xdc2626,
+    accentSoft: 0xfca5a5,
+    surface: 0x260d0d,
+    surfaceHover: 0x3a1111,
+    eyebrow: "Duel"
+  },
+  "liars-table": {
+    accent: 0xd6a84b,
+    accentSoft: 0xfde68a,
+    surface: 0x10221b,
+    surfaceHover: 0x183329,
+    eyebrow: "Bluff"
+  },
   tabu: {
     accent: 0x60a5fa,
     accentSoft: 0xbfdbfe,

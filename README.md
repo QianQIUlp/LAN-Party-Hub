@@ -3,7 +3,7 @@
 
 LAN Party Hub 是一个本地优先的浏览器派对游戏平台：Windows 电脑运行权威服务器并显示共享主屏，玩家用同一 Wi‑Fi 下的手机浏览器扫码加入；每款游戏有自己的参与人数范围。默认简体中文，不需要账号、云服务或公网连接。
 
-> 当前状态：首个可玩版本的代码与自动化基线。五款游戏仍为 alpha，发布前还需要 Windows、Android、iPhone 和真人聚会验收。详见 [项目状态](docs/project-status.md)。
+> 当前状态：首个可玩版本已扩展为七款内置游戏。所有游戏仍为 alpha，发布前还需要 Windows、Android、iPhone 和真人聚会验收。详见 [项目状态](docs/project-status.md)。
 
 ## 首版内置游戏
 
@@ -14,8 +14,10 @@ LAN Party Hub 是一个本地优先的浏览器派对游戏平台：Windows 电�
 | 估个大概 `schaetzorama` | 2–4 | 约 2–3 分钟 | 全年龄；数字、百分比、排序与归类 |
 | 谁是卧底 `imposter` | 3–4 | 约 2 分钟 | 全年龄默认；成人词库需主机明确选择 |
 | 吹牛牌 `bullshit` | 2–52 | 视人数而定 | 全年龄；背面出牌、跟牌、质疑与每堆一次过牌 |
+| 命运轮盘 `roulette` | 2 | 约 2–4 分钟 | 虚构的双人风险博弈；隐藏弹序由服务端掌管 |
+| 谎言牌桌 `liars-table` | 3–4 | 约 4–8 分钟 | 秘密出牌、公开宣称、质疑与命运轮盘 |
 
-所有游戏源码都固定在本仓库的 `games/` 中。新克隆可以直接构建五款游戏，Release 不会临时下载游戏仓库。四款导入游戏的上游固定版本、原创游戏来源和修改说明见 [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md)。
+所有游戏源码都固定在本仓库的 `games/` 中。新克隆可以直接构建七款游戏，Release 不会临时下载游戏仓库。四款导入游戏的上游固定版本、三款原创游戏的来源和修改说明见 [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md)。
 
 ## Windows 便携版
 
@@ -64,7 +66,7 @@ apps/host         共享屏幕与主机操作，不决定游戏结果
 apps/controller   手机 UI，只发送玩家意图并显示私人状态
 packages/protocol 三端共享的房间与 Socket.IO 契约
 packages/game-core 游戏 manifest、生命周期与目录文本
-games/            五款内置游戏的固定源码
+games/            七款固定源码版本的内置游戏
 local-games/      可选外部游戏，仅用于本地开发，不进入源码控制
 ```
 
@@ -75,12 +77,12 @@ local-games/      可选外部游戏，仅用于本地开发，不进入源码�
 ```bash
 npm run test       # Vitest：平台恢复和游戏规则
 npm run test:e2e   # Playwright：主屏 + 独立手机浏览器上下文
-npm run typecheck  # 平台与五款内置游戏
+npm run typecheck  # 平台与七款内置游戏
 npm run build      # 完整生产构建
 npm run verify     # test → typecheck → build
 ```
 
-Playwright 冒烟测试会拦截公网请求，验证离线加入、刷新恢复、人数限制，以及三人连续启动并切换全部五款游戏。CI 也会执行这些检查；Windows Release 工作流负责组装 ZIP 和 SHA-256。
+Playwright 冒烟测试会拦截公网请求，验证离线加入、刷新恢复、人数限制、双人命运轮盘，以及三人连续启动并切换其余六款兼容游戏；吹牛牌还覆盖背面出牌与质疑流程。CI 也会执行这些检查；Windows Release 工作流负责组装 ZIP 和 SHA-256。
 
 ## 可选游戏与新游戏
 

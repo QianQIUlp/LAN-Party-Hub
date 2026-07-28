@@ -12,10 +12,14 @@ import { schaetzoramaText } from "./games/schaetzorama.js";
 import { wordTilesText } from "./games/wordTiles.js";
 import { tapRaceText } from "./games/tapRace.js";
 import { bullshitText } from "./games/bullshit.js";
+import { rouletteText } from "./games/roulette.js";
+import { liarsTableText } from "./games/liarsTable.js";
 
 const gameTextCatalog = {
   "tap-race": tapRaceText,
   bullshit: bullshitText,
+  roulette: rouletteText,
+  "liars-table": liarsTableText,
   "zeichnen-und-erraten": zeichnenUndErratenText,
   "arena-survivor": arenaSurvivorText,
   imposter: imposterText,

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const controllerOrigin = "http://127.0.0.1:" + (process.env.E2E_CONTROLLER_PORT ?? "5174");
+
 interface HostAutomationState {
   error: string | null;
   room: {
@@ -11,8 +13,8 @@ interface HostAutomationState {
   } | null;
 }
 
-test("offline phones recover and three players can switch through all bundled games", async ({ browser, page }) => {
-  test.setTimeout(60_000);
+test("offline phones recover and compatible groups can switch through all bundled games", async ({ browser, page }) => {
+  test.setTimeout(90_000);
   await page.goto("/");
 
   await expect.poll(() => page.evaluate(() => {
@@ -28,7 +30,15 @@ test("offline phones recover and three players can switch through all bundled ga
     }).__openPartyLabHost;
     return bridge?.getState().room?.availableGames.map((game) => game.id).sort() ?? [];
   });
-  expect(gameIds).toEqual(["bullshit", "imposter", "schaetzorama", "tap-race", "zeichnen-und-erraten"]);
+  expect(gameIds).toEqual([
+    "bullshit",
+    "imposter",
+    "liars-table",
+    "roulette",
+    "schaetzorama",
+    "tap-race",
+    "zeichnen-und-erraten"
+  ]);
 
   const phoneOne = await browser.newContext({ viewport: { width: 360, height: 800 }, isMobile: true, hasTouch: true });
   const phoneTwo = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -44,7 +54,7 @@ test("offline phones recover and three players can switch through all bundled ga
       }
       await route.continue();
     });
-    await controller.goto("http://127.0.0.1:5174/#join?room=E2E0");
+    await controller.goto(controllerOrigin + "/#join?room=E2E0");
   }
 
   await controllerOne.getByLabel("昵称").fill("玩家甲");
@@ -114,6 +124,54 @@ test("offline phones recover and three players can switch through all bundled ga
     return { selectedGameId: room?.selectedGameId ?? null, currentGameId: room?.currentRound?.gameId ?? null };
   })).toEqual({ selectedGameId: null, currentGameId: null });
 
+  await page.evaluate(() => {
+    (window as typeof window & {
+      __openPartyLabHost?: { selectGame(gameId: string): void };
+    }).__openPartyLabHost?.selectGame("roulette");
+  });
+  await expect.poll(() => page.evaluate(() => {
+    return (window as typeof window & {
+      __openPartyLabHost?: { getState(): HostAutomationState };
+    }).__openPartyLabHost?.getState().room?.selectedGameId ?? null;
+  })).toBe("roulette");
+
+  for (const controller of [controllerOne, controllerTwo]) {
+    const readyButton = controller.getByRole("button", { name: "准备", exact: true });
+    if (await readyButton.isVisible().catch(() => false)) {
+      await readyButton.click();
+    }
+  }
+  await expect.poll(() => page.evaluate(() => {
+    return (window as typeof window & {
+      __openPartyLabHost?: { getState(): HostAutomationState };
+    }).__openPartyLabHost?.getState().room?.currentRound?.gameId ?? null;
+  })).toBe("roulette");
+
+  const selfChoiceOne = controllerOne.getByRole("button", { name: /^对自己执行测试/ });
+  const selfChoiceTwo = controllerTwo.getByRole("button", { name: /^对自己执行测试/ });
+  await expect(selfChoiceOne).toBeVisible();
+  await expect(selfChoiceTwo).toBeVisible();
+  await expect.poll(async () =>
+    Number(await selfChoiceOne.isEnabled()) + Number(await selfChoiceTwo.isEnabled())
+  ).toBe(1);
+  if (await selfChoiceOne.isEnabled()) {
+    await selfChoiceOne.click();
+  } else {
+    await selfChoiceTwo.click();
+  }
+
+  await page.evaluate(() => {
+    (window as typeof window & {
+      __openPartyLabHost?: { returnToGameSelection(): void };
+    }).__openPartyLabHost?.returnToGameSelection();
+  });
+  await expect.poll(() => page.evaluate(() => {
+    const room = (window as typeof window & {
+      __openPartyLabHost?: { getState(): HostAutomationState };
+    }).__openPartyLabHost?.getState().room;
+    return { selectedGameId: room?.selectedGameId ?? null, currentGameId: room?.currentRound?.gameId ?? null };
+  })).toEqual({ selectedGameId: null, currentGameId: null });
+
   const phoneThree = await browser.newContext({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true });
   const controllerThree = await phoneThree.newPage();
   await controllerThree.route("**/*", async (route) => {
@@ -124,13 +182,13 @@ test("offline phones recover and three players can switch through all bundled ga
     }
     await route.continue();
   });
-  await controllerThree.goto("http://127.0.0.1:5174/#join?room=E2E0");
+  await controllerThree.goto(controllerOrigin + "/#join?room=E2E0");
   await controllerThree.getByLabel("昵称").fill("玩家丙");
   await controllerThree.getByRole("button", { name: "加入" }).click();
   await expect(controllerThree.getByRole("heading", { name: "房间 E2E0" })).toBeVisible();
 
   const controllers = [controllerOne, controllerTwo, controllerThree];
-  for (const gameId of ["tap-race", "zeichnen-und-erraten", "schaetzorama", "imposter", "bullshit"]) {
+  for (const gameId of ["tap-race", "zeichnen-und-erraten", "schaetzorama", "imposter", "liars-table", "bullshit"]) {
     await page.evaluate((nextGameId) => {
       (window as typeof window & {
         __openPartyLabHost?: { selectGame(gameId: string): void };
