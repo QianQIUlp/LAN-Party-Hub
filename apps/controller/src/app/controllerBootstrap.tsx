@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { startTransition, useEffect, useState } from "react";
 import { ControllerPage } from "../pages/ControllerPage.js";
 import { JoinPage } from "../pages/JoinPage.js";
@@ -12,7 +13,7 @@ import { mountControllerFullscreenOverlay } from "./fullscreenOverlay.js";
 import { ControllerSocketClient, type ControllerAppState } from "./controllerSocketClient.js";
 
 function resolveDefaultServerUrl(): string {
-  if (window.location.port === "3000") {
+  if (!new Set(["4174", "5174"]).has(window.location.port)) {
     return window.location.origin;
   }
 

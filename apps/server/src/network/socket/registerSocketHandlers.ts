@@ -819,6 +819,9 @@ export function registerSocketHandlers({
       }
 
       if (update.stateChanged) {
+        // Player-driven state such as loadout choices and sealed bids must be
+        // acknowledged reliably even while the general playing stream is volatile.
+        stateBroadcaster.sendControllerGameState(socket, room);
         stateBroadcaster.broadcastGameState(room);
       }
 

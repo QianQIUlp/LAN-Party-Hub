@@ -305,7 +305,7 @@ function SetupView({ model, state, copy }: {
                   key={role.id}
                   className={`auction-role-card${selected ? " is-selected" : ""}`}
                   style={{ "--auction-accent": role.accent } as CSSProperties}
-                  disabled={!state.canConfigure || claimed}
+                  disabled={model.disabled || !state.canConfigure || claimed}
                   onClick={() => model.onSelectRole(role.id)}
                 >
                   {role.portraitPath ? <img src={role.portraitPath} alt="" /> : null}
@@ -332,7 +332,7 @@ function SetupView({ model, state, copy }: {
                   key={kit.id}
                   className={`auction-kit-card${selected ? " is-selected" : ""}`}
                   style={{ "--auction-accent": kit.accent } as CSSProperties}
-                  disabled={!state.canConfigure}
+                  disabled={model.disabled || !state.canConfigure}
                   onClick={() => model.onSelectKit(kit.id)}
                 >
                   <span>
@@ -356,7 +356,7 @@ function SetupView({ model, state, copy }: {
           <button
             type="button"
             className="auction-confirm-button"
-            disabled={!state.canConfigure || !state.ownRoleId || !state.ownKitId}
+            disabled={model.disabled || !state.canConfigure || !state.ownRoleId || !state.ownKitId}
             onClick={model.onConfirmSetup}
           >
             {state.setupConfirmed ? copy.confirmed : copy.confirm}
