@@ -138,9 +138,8 @@ test("offline phones recover and compatible groups can switch through all bundle
 
   for (const controller of [controllerOne, controllerTwo]) {
     const readyButton = controller.getByRole("button", { name: "准备", exact: true });
-    if (await readyButton.isVisible().catch(() => false)) {
-      await readyButton.click();
-    }
+    await expect(readyButton).toBeVisible();
+    await readyButton.click();
   }
   await expect.poll(() => page.evaluate(() => {
     return (window as typeof window & {
@@ -204,9 +203,8 @@ test("offline phones recover and compatible groups can switch through all bundle
     for (const controller of controllers) {
       await expect(controller.getByRole("heading", { name: "房间 E2E0" })).toBeVisible();
       const readyButton = controller.getByRole("button", { name: "准备", exact: true });
-      if (await readyButton.isVisible().catch(() => false)) {
-        await readyButton.click();
-      }
+      await expect(readyButton).toBeVisible();
+      await readyButton.click();
     }
 
     if (gameId === "tap-race") {
