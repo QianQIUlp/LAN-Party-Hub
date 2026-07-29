@@ -52,3 +52,5 @@ CI 在 Ubuntu 上执行上述自动化；Windows Release 工作流编译启动�
 ## 可选游戏开发
 
 其他上游游戏仍可放入 `local-games/`，运行 `npm run games:sync-local` 后用于开发，但它们不进入首版菜单、CI 或发行包。缺少可选游戏仓库属于正常状态。
+
+可选的 `arena-survivor` 在生存成功或全队失败后，Host 都会保留外部游戏场景来显示完整结算总结。
