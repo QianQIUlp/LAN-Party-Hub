@@ -1,4 +1,5 @@
-﻿import Phaser from "phaser";
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import Phaser from "phaser";
 import { getRoomPhase } from "@open-party-lab/protocol";
 import type { HostAppState, HostSocketClient } from "./hostSocketClient.js";
 import { HostPerfTracker } from "./perfTelemetry.js";
@@ -25,7 +26,7 @@ function shouldKeepArenaSurvivorResultScene(
 
   const arenaState = state.game?.state as { result?: { outcome?: string } } | null | undefined;
 
-  return arenaState?.result?.outcome === "survived";
+  return arenaState?.result?.outcome === "survived" || arenaState?.result?.outcome === "defeated";
 }
 
 function shouldKeepZeichnenUndErratenResultScene(
@@ -48,7 +49,7 @@ function shouldKeepSchaetzoramaResultScene(
   );
 }
 
-function resolveSceneKey(state: HostAppState): string {
+export function resolveHostSceneKey(state: HostAppState): string {
   if (!state.room) {
     return hostSceneKeys.boot;
   }
@@ -98,7 +99,7 @@ export function createHostRouter(game: Phaser.Game, client: HostSocketClient): (
 
   const unsubscribe = client.subscribe((state) => {
     const routeStart = performance.now();
-    const nextSceneKey = resolveSceneKey(state);
+    const nextSceneKey = resolveHostSceneKey(state);
     const activeScenes = game.scene.getScenes(true);
     const strayScenes = activeScenes.filter((scene) => scene.scene.key !== nextSceneKey);
     const sceneChanged = nextSceneKey !== currentSceneKey || !game.scene.isActive(nextSceneKey);

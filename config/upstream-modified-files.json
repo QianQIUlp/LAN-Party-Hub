@@ -42,5 +42,8 @@
   { "path": "games/imposter/src/host/ImposterRenderer.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
   { "path": "games/imposter/src/manifest.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
   { "path": "games/imposter/src/protocol.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
-  { "path": "games/imposter/src/server/index.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" }
+  { "path": "games/imposter/src/server/index.ts", "noticeMode": "inline", "origin": "imposter@d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667" },
+  { "path": "apps/controller/src/controller-ui/layouts/SecretCardLayout.tsx", "noticeMode": "inline", "origin": "Open-Party-Lab@5df28a2107a1822087cb6f9e98a56cef7fca9757" },
+  { "path": "packages/game-core/src/catalog/i18n/games/buzzwort.ts", "noticeMode": "inline", "origin": "Open-Party-Lab@5df28a2107a1822087cb6f9e98a56cef7fca9757" },
+  { "path": "packages/protocol/src/games/buzzwort.ts", "noticeMode": "inline", "origin": "buzzwort@10f336ecb14400e505e67b6476aaa188712539c9" }
 ]

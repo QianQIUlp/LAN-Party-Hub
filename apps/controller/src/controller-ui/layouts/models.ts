@@ -78,6 +78,75 @@ export interface ChoiceLayoutModel {
   feed?: string[];
 }
 
+/**
+ * Generic layout for games where only selected roles may see a prompt card.
+ * The card is rendered only when the authoritative server includes it in the
+ * current player's private controller state.
+ */
+export type SecretCardRoleTone = "primary" | "watch" | "guess" | "bench";
+
+export interface SecretCardActionModel {
+  id: string;
+  label: string;
+  sublabel?: string;
+  tone: "positive" | "neutral" | "danger";
+  disabled?: boolean;
+  onPress: () => void;
+}
+
+export interface SecretCardTargetModel {
+  id: string;
+  name: string;
+  hint?: string;
+  disabled?: boolean;
+  onSelect: () => void;
+}
+
+export interface SecretCardScoreRow {
+  id: string;
+  label: string;
+  value: string;
+  accentColor?: string;
+  highlighted?: boolean;
+}
+
+export interface SecretCardFeedEntry {
+  id: string;
+  text: string;
+  tone?: "positive" | "neutral" | "danger";
+}
+
+export interface SecretCardLayoutModel {
+  kind: "secret_card";
+  title: string;
+  subtitle?: string;
+  disabled: boolean;
+  accentColor?: string;
+  roleLabel: string;
+  roleTone: SecretCardRoleTone;
+  statusLabel?: string;
+  helperText?: string;
+  countdownMs?: number | null;
+  timer?: {
+    remainingMs: number | null;
+    durationMs: number;
+  } | null;
+  card?: {
+    term: string;
+    forbidden: string[];
+    tag?: string;
+  } | null;
+  hiddenCardHint?: string;
+  actions?: SecretCardActionModel[];
+  targetsTitle?: string;
+  targets?: SecretCardTargetModel[];
+  scoreRows?: SecretCardScoreRow[];
+  feedTitle?: string;
+  feed?: SecretCardFeedEntry[];
+  stats?: LayoutStat[];
+  ready?: ReadyLayoutModel;
+}
+
 export type CardHandSuit = "clubs" | "diamonds" | "hearts" | "spades";
 
 export interface CardHandCardModel {
@@ -807,6 +876,7 @@ export interface AuctionWarehouseLayoutModel {
 export type ControllerLayoutModel =
   | SingleButtonLayoutModel
   | ChoiceLayoutModel
+  | SecretCardLayoutModel
   | CardHandLayoutModel
   | TapMashLayoutModel
   | LeftRightHoldLayoutModel

@@ -10,6 +10,7 @@ export type ControllerLayoutKey =
   | "tap_mash"
   | "choice"
   | "card_hand"
+  | "secret_card"
   | "dpad"
   | "spell_casting"
   | "racing_controls"

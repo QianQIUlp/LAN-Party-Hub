@@ -367,6 +367,7 @@ function drawGameIcon(
       graphics.fillCircle(size * 0.31, size * 0.34, size * 0.055);
       break;
     }
+    case "buzzwort":
     case "tabu": {
       graphics.fillRoundedRect(size * 0.2, size * 0.22, size * 0.54, size * 0.42, size * 0.06);
       graphics.strokeRoundedRect(size * 0.2, size * 0.22, size * 0.54, size * 0.42, size * 0.06);

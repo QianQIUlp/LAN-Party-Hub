@@ -71,9 +71,13 @@ function resolveDisplayPaths(game) {
   ].map((localPath) => path.resolve(projectRoot, localPath));
 }
 
-function resolvePackageLinkPath(game) {
-  const [_scope, name] = game.package.split("/");
+function resolvePackageLinkPathForPackage(packageName) {
+  const [_scope, name] = packageName.split("/");
   return path.join(scopeDir, name);
+}
+
+function resolvePackageLinkPath(game) {
+  return resolvePackageLinkPathForPackage(game.package);
 }
 
 async function pathExists(targetPath) {
@@ -90,10 +94,15 @@ async function pathExists(targetPath) {
 }
 
 async function removePackageLink(game) {
-  const linkPath = resolvePackageLinkPath(game);
+  const linkPaths = [
+    resolvePackageLinkPath(game),
+    ...(game.legacyPackages ?? []).map(resolvePackageLinkPathForPackage)
+  ];
 
-  if (existsSync(linkPath) || await pathExists(linkPath)) {
-    await rm(linkPath, { recursive: true, force: true });
+  for (const linkPath of linkPaths) {
+    if (existsSync(linkPath) || await pathExists(linkPath)) {
+      await rm(linkPath, { recursive: true, force: true });
+    }
   }
 }
 
@@ -104,8 +113,12 @@ async function ensurePackageLink(game, localPath) {
 }
 
 async function removePublicAssets(game) {
+  const gameIds = [game.id, ...(game.legacyIds ?? [])];
+
   for (const target of publicAssetTargets) {
-    await rm(path.join(target.targetDir, game.id), { recursive: true, force: true });
+    for (const gameId of gameIds) {
+      await rm(path.join(target.targetDir, gameId), { recursive: true, force: true });
+    }
   }
 }
 

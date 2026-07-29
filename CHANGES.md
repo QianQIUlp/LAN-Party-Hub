@@ -13,6 +13,7 @@ LAN Party Hub is an independently maintained derivative of Open Party Lab. This 
 - Added unit, Socket.IO integration, Playwright offline-flow, and Windows release smoke tests.
 - Added repository ownership, worktree, shared-interface, pull-request, and legal-notice rules for parallel human and AI-agent development.
 - Added two original bundled games: the two-player Fate Chamber duel and the three-to-four-player Liars' Table bluffing game, both with authoritative hidden state, phone controls, host scenes, and unit coverage.
+- Migrated the optional Tabu integration to Buzzwort with a reusable private `secret_card` controller contract while retaining legacy paths, package cleanup, game ID, protocol, catalog, Host visual, and music compatibility.
 
 ## File-level modification notices
 

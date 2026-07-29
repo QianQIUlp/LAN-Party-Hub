@@ -3,6 +3,7 @@ import { LeftRightHoldLayout } from "./LeftRightHoldLayout.js";
 import { DPadLayout } from "./DPadLayout.js";
 import { SingleButtonLayout } from "./SingleButtonLayout.js";
 import { ChoiceLayout } from "./ChoiceLayout.js";
+import { SecretCardLayout } from "./SecretCardLayout.js";
 import { CardHandLayout } from "./CardHandLayout.js";
 import { ShopLayout } from "./ShopLayout.js";
 import { ArenaSurvivorModernShopLayout } from "./ArenaSurvivorModernShopLayout.js";
@@ -50,6 +51,8 @@ export function ControllerLayoutRenderer({ model }: ControllerLayoutRendererProp
       return <SingleButtonLayout model={model} />;
     case "choice":
       return <ChoiceLayout model={model} />;
+    case "secret_card":
+      return <SecretCardLayout model={model} />;
     case "card_hand":
       return <CardHandLayout model={model} />;
     case "tap_mash":

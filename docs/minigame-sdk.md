@@ -1,3 +1,4 @@
+<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
 # Mini-Game SDK
 
 Each game should provide:
@@ -57,6 +58,8 @@ The platform must not import private files from a game repo.
 - Use DOM/React for text-heavy phone controls.
 - Use Phaser scenes for host playfield rendering.
 - Prefer small vertical changes over broad rewrites.
+- Reuse `secret_card` for player-private prompt cards with role badges, forbidden words, timers, actions, targets, scores, and event feeds. The server must omit the card from every unauthorized controller state and from the shared Host state.
+- Localize server messages, Host labels, Controller labels, and game-owned content in every platform language; a localized catalog entry alone is not a complete localized game.
 
 ## AI Checks
 

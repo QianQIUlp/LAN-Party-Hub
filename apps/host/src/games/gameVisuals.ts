@@ -79,6 +79,13 @@ const gameVisuals: Record<string, GameVisual> = {
     surfaceHover: 0x183329,
     eyebrow: "Bluff"
   },
+  buzzwort: {
+    accent: 0x60a5fa,
+    accentSoft: 0xbfdbfe,
+    surface: 0x0c1930,
+    surfaceHover: 0x132547,
+    eyebrow: "Words"
+  },
   tabu: {
     accent: 0x60a5fa,
     accentSoft: 0xbfdbfe,
