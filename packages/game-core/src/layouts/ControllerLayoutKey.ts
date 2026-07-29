@@ -1,6 +1,7 @@
 ﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 export type ControllerLayoutKey =
   | "chaos_kommando_controls"
+  | "auction_warehouse"
   | "drawing_guess"
   | "schaetzorama"
   | "word_tiles_board"

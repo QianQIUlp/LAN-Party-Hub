@@ -1,4 +1,5 @@
-﻿import Phaser from "phaser";
+﻿// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import Phaser from "phaser";
 import { hostTheme } from "../ui/theme/theme.js";
 import { mountDebugOverlay } from "./debugOverlay.js";
 import { mountHudOverlay } from "./hudOverlay.js";
@@ -52,7 +53,7 @@ function exposeHostAutomationBridge(hostClient: HostSocketClient): void {
 }
 
 function resolveDefaultServerUrl(): string {
-  if (window.location.port === "3000") {
+  if (!new Set(["4173", "5173"]).has(window.location.port)) {
     return window.location.origin;
   }
 

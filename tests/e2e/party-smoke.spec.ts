@@ -31,6 +31,7 @@ test("offline phones recover and compatible groups can switch through all bundle
     return bridge?.getState().room?.availableGames.map((game) => game.id).sort() ?? [];
   });
   expect(gameIds).toEqual([
+    "auction-king",
     "bullshit",
     "imposter",
     "liars-table",
