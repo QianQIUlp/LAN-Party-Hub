@@ -12,6 +12,12 @@ import { auctionCatalog, localize } from "./content.js";
 
 export type RandomSource = () => number;
 
+export const auctionWarehouseMinValue = 300_000;
+export const auctionWarehouseMaxValue = 1_000_000;
+export const auctionWarehouseLowBandWeight = 0.7;
+export const auctionWarehouseLowBand = { min: 300_000, mode: 450_000, max: 600_000 } as const;
+export const auctionWarehouseHighBand = { min: 700_000, mode: 850_000, max: 1_000_000 } as const;
+
 const warehouseRarities = [
   "white", "white", "white",
   "green", "green", "green",
@@ -28,6 +34,28 @@ function shuffle<T>(values: T[], random: RandomSource): T[] {
     [result[index], result[target]] = [result[target], result[index]];
   }
   return result;
+}
+
+function triangularValue(
+  random: RandomSource,
+  band: { min: number; mode: number; max: number }
+): number {
+  const sample = random();
+  const modeSplit = (band.mode - band.min) / (band.max - band.min);
+  const value = sample < modeSplit
+    ? band.min + Math.sqrt(sample * (band.max - band.min) * (band.mode - band.min))
+    : band.max - Math.sqrt((1 - sample) * (band.max - band.min) * (band.max - band.mode));
+  return Math.round(value / 1_000) * 1_000;
+}
+
+export function chooseWarehouseTargetValue(random: RandomSource = Math.random): number {
+  const band = random() < auctionWarehouseLowBandWeight
+    ? auctionWarehouseLowBand
+    : auctionWarehouseHighBand;
+  return Math.max(
+    auctionWarehouseMinValue,
+    Math.min(auctionWarehouseMaxValue, triangularValue(random, band))
+  );
 }
 
 function chooseCatalogItems(random: RandomSource): AuctionCatalogItem[] {
@@ -148,6 +176,7 @@ function placeCatalogItems(
 export function generateWarehouse(random: RandomSource = Math.random): AuctionWarehouse {
   const cols = 10;
   const rows = 8;
+  const targetValue = chooseWarehouseTargetValue(random);
   const catalogItems = chooseCatalogItems(random);
   let items: WarehouseItem[] = [];
 
@@ -160,12 +189,20 @@ export function generateWarehouse(random: RandomSource = Math.random): AuctionWa
     }
   }
 
+  const baseValue = items.reduce((sum, item) => sum + item.trueValue, 0);
+  const scaledItems = items.map((item) => ({
+    ...item,
+    trueValue: Math.max(1_000, Math.round((item.trueValue / baseValue) * targetValue / 1_000) * 1_000)
+  }));
+  const scaledTotal = scaledItems.reduce((sum, item) => sum + item.trueValue, 0);
+  if (scaledItems[0]) scaledItems[0].trueValue += targetValue - scaledTotal;
+
   return {
     cols,
     rows,
-    items,
-    totalValue: items.reduce((sum, item) => sum + item.trueValue, 0),
-    occupiedCells: items.reduce((sum, item) => sum + item.width * item.height, 0)
+    items: scaledItems,
+    totalValue: scaledItems.reduce((sum, item) => sum + item.trueValue, 0),
+    occupiedCells: scaledItems.reduce((sum, item) => sum + item.width * item.height, 0)
   };
 }
 
@@ -288,6 +325,10 @@ export function buildCandidates(
   knowledge: PlayerKnowledge,
   language: SupportedLanguage
 ): Record<string, AuctionCandidateView[]> {
+  const baseWarehouseValue = warehouse.items.reduce((sum, item) => {
+    return sum + (auctionCatalog.find((candidate) => candidate.id === item.catalogId)?.value ?? item.trueValue);
+  }, 0);
+  const warehouseValueScale = baseWarehouseValue > 0 ? warehouse.totalValue / baseWarehouseValue : 1;
   const reasonText = language === "zh-CN"
     ? { outline: (width: number, height: number) => `轮廓匹配 ${width}×${height}`, rarity: "品质匹配", category: "类型匹配" }
     : language === "de"
@@ -330,7 +371,9 @@ export function buildCandidates(
             rarity: candidate.rarity,
             width: candidate.width,
             height: candidate.height,
-            value: candidate.value,
+            value: known.identityKnown && candidate.id === item.catalogId
+              ? item.trueValue
+              : Math.round(candidate.value * warehouseValueScale / 1_000) * 1_000,
             imagePath: candidate.imagePath,
             probability,
             confidence: candidates.length === 1 ? "certain" : probability >= 0.35 ? "likely" : "possible",

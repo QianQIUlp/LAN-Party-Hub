@@ -14,7 +14,13 @@ import {
   serverGame
 } from "../src/server/index.js";
 import {
+  auctionWarehouseHighBand,
+  auctionWarehouseLowBand,
+  auctionWarehouseLowBandWeight,
+  auctionWarehouseMaxValue,
+  auctionWarehouseMinValue,
   buildCandidates,
+  chooseWarehouseTargetValue,
   createEmptyKnowledge,
   generateWarehouse,
   revealOutline,
@@ -106,6 +112,9 @@ describe("warehouse generation", () => {
       expect(warehouse.cols).toBe(10);
       expect(warehouse.rows).toBe(8);
       expect(warehouse.items).toHaveLength(12);
+      expect(warehouse.totalValue).toBeGreaterThanOrEqual(auctionWarehouseMinValue);
+      expect(warehouse.totalValue).toBeLessThanOrEqual(auctionWarehouseMaxValue);
+      expect(warehouse.items.reduce((sum, item) => sum + item.trueValue, 0)).toBe(warehouse.totalValue);
       expect(warehouse.occupiedCells).toBeGreaterThanOrEqual(44);
       expect(warehouse.occupiedCells).toBeLessThanOrEqual(60);
 
@@ -124,6 +133,35 @@ describe("warehouse generation", () => {
       }
       expect(occupied.size).toBe(warehouse.occupiedCells);
     }
+  });
+
+  it("weights warehouse values 70/30 around the 450k and 850k peaks", () => {
+    const random = seededRandom(7_307);
+    const samples = Array.from({ length: 20_000 }, () => chooseWarehouseTargetValue(random));
+    const low = samples.filter((value) => value <= auctionWarehouseLowBand.max);
+    const high = samples.filter((value) => value >= auctionWarehouseHighBand.min);
+    const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+
+    expect(samples.every((value) => value >= auctionWarehouseMinValue && value <= auctionWarehouseMaxValue)).toBe(true);
+    expect(samples.every((value) => value <= auctionWarehouseLowBand.max || value >= auctionWarehouseHighBand.min)).toBe(true);
+    expect(low.length / samples.length).toBeCloseTo(auctionWarehouseLowBandWeight, 1);
+    expect(high.length / samples.length).toBeCloseTo(1 - auctionWarehouseLowBandWeight, 1);
+    expect(average(low)).toBeGreaterThan(440_000);
+    expect(average(low)).toBeLessThan(460_000);
+    expect(average(high)).toBeGreaterThan(840_000);
+    expect(average(high)).toBeLessThan(860_000);
+  });
+
+  it("pins the configured minimum, peaks and maximum exactly", () => {
+    const sequence = (...values: number[]) => {
+      let index = 0;
+      return () => values[index++] ?? values.at(-1) ?? 0;
+    };
+
+    expect(chooseWarehouseTargetValue(sequence(0, 0))).toBe(300_000);
+    expect(chooseWarehouseTargetValue(sequence(0.69, 0.5))).toBe(450_000);
+    expect(chooseWarehouseTargetValue(sequence(0.7, 0.5))).toBe(850_000);
+    expect(chooseWarehouseTargetValue(sequence(0.99, 1))).toBe(1_000_000);
   });
 });
 
@@ -224,22 +262,26 @@ describe("private intelligence and public round history", () => {
     expect(publicState?.publicNotes.some((note) => note.source === "instrument")).toBe(false);
   });
 
-  it("adds more public and role intelligence when an unsold round advances", () => {
+  it("publishes system hints only in rounds one and three while roles continue every round", () => {
     let state = configuredState();
-    const publicNotesAtRoundOne = state.auctioneerNotes.length;
-    const privateNotesAtRoundOne = state.privateKnowledgeByPlayerId.p1.notes.length;
-    state = input(state, { type: "submit_bid", playerId: "p1", amount: 150_000 }, 3_010);
-    state = input(state, { type: "submit_bid", playerId: "p2", amount: 100_000 }, 3_020);
-    const advanced = serverGame.tick?.(
-      state,
-      0,
-      context(state.revealEndsAt ?? 10_020)
-    ) as AuctionKingState;
+    expect(state.auctioneerNotes.map((note) => note.round)).toEqual([1]);
 
-    expect(advanced.stage).toBe("round_active");
-    expect(advanced.currentRound).toBe(2);
-    expect(advanced.auctioneerNotes.length).toBeGreaterThan(publicNotesAtRoundOne);
-    expect(advanced.privateKnowledgeByPlayerId.p1.notes.length).toBeGreaterThan(privateNotesAtRoundOne);
+    for (let round = 1; round < 5; round += 1) {
+      const now = 3_000 + round * 100;
+      state = input(state, { type: "submit_bid", playerId: "p1", amount: 100_000 }, now);
+      state = input(state, { type: "submit_bid", playerId: "p2", amount: 100_000 }, now + 1);
+      expect(state.stage).toBe("round_reveal");
+      state = serverGame.tick?.(
+        state,
+        0,
+        context(state.revealEndsAt ?? now + 8_000)
+      ) as AuctionKingState;
+      expect(state.stage).toBe("round_active");
+      expect(state.currentRound).toBe(round + 1);
+    }
+
+    expect(state.auctioneerNotes.map((note) => note.round)).toEqual([1, 3]);
+    expect(state.privateKnowledgeByPlayerId.p1.notes.filter((note) => note.source === "role").map((note) => note.round)).toEqual([1, 2, 3, 4, 5]);
   });
 });
 

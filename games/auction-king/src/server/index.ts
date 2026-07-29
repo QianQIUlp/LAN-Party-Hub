@@ -16,7 +16,6 @@ import type {
   AuctionKingState,
   AuctionKitId,
   AuctionPlayerSetup,
-  AuctionRarity,
   AuctionRoleId,
   AuctionRoundHistory,
   KnowledgeNote,
@@ -29,7 +28,6 @@ import {
   auctionInstruments,
   auctionKits,
   auctionRoles,
-  categoryNames,
   instrumentById,
   kitById,
   localize,
@@ -186,10 +184,6 @@ function currentThreshold(round: number): number {
   return auctionRoundThresholds[Math.max(0, Math.min(auctionRoundThresholds.length - 1, round - 1))];
 }
 
-function randomRarity(random: RandomSource, maxIndex = rarityOrder.length - 1): AuctionRarity {
-  return rarityOrder[Math.floor(random() * (maxIndex + 1))] ?? "white";
-}
-
 function publicAuctioneerIntel(
   state: AuctionKingState,
   round: number,
@@ -203,7 +197,7 @@ function publicAuctioneerIntel(
   };
 
   if (round === 1) {
-    const revealed = randomItems(state.warehouse, 2, random);
+    const revealed = randomItems(state.warehouse, 1, random);
     revealed.forEach((item) => revealIdentity(knowledge, item));
     publicNote(
       language === "zh-CN"
@@ -215,51 +209,18 @@ function publicAuctioneerIntel(
     return;
   }
 
-  if (round === 2) {
-    const revealed = randomItems(state.warehouse, 3, random);
-    revealed.forEach((item) => revealRarity(knowledge, item));
-    const rarity = randomRarity(random, 3);
-    const count = state.warehouse.items.filter((item) => item.rarity === rarity).length;
-    publicNote(
-      language === "zh-CN"
-        ? `公开 ${revealed.length} 件藏品的品质；${localize(rarityNames[rarity], language)}藏品共 ${count} 件。`
-        : `${revealed.length} rarities are public; ${localize(rarityNames[rarity], language)} items: ${count}.`
-    );
-    return;
-  }
-
   if (round === 3) {
     const outlined = randomItems(state.warehouse, 2, random, (item) => !knowledge.items[item.instanceId]?.outlineKnown);
     outlined.forEach((item) => revealOutline(knowledge, item));
-    const category = outlined[0]?.category ?? state.warehouse.items[0]?.category;
-    const count = category ? state.warehouse.items.filter((item) => item.category === category).length : 0;
-    publicNote(
-      language === "zh-CN" && category
-        ? `新增 ${outlined.length} 个轮廓；${localize(categoryNames[category], language)}类藏品共 ${count} 件。`
-        : `Two more outlines are public; one category contains ${count} items.`
-    );
-    return;
-  }
-
-  if (round === 4) {
-    const outlined = randomItems(state.warehouse, 4, random, (item) => !knowledge.items[item.instanceId]?.outlineKnown);
-    outlined.forEach((item) => revealOutline(knowledge, item));
-    const highCount = state.warehouse.items.filter((item) => ["purple", "gold", "red"].includes(item.rarity)).length;
     publicNote(
       language === "zh-CN"
-        ? `新增 ${outlined.length} 个轮廓；紫、金、红品质藏品合计 ${highCount} 件。`
-        : `${outlined.length} more outlines; purple, gold and red items total ${highCount}.`
+        ? `拍卖师最后公开 ${outlined.length} 件藏品的轮廓；后续不再提供公共提示。`
+        : language === "en"
+        ? `The auctioneer reveals ${outlined.length} final public outlines; no more public hints follow.`
+        : `Der Auktionator zeigt ${outlined.length} letzte oeffentliche Umrisse; danach folgen keine Hinweise mehr.`
     );
     return;
   }
-
-  const revealed = randomItems(state.warehouse, 4, random, (item) => !knowledge.items[item.instanceId]?.rarityKnown);
-  revealed.forEach((item) => revealRarity(knowledge, item));
-  publicNote(
-    language === "zh-CN"
-      ? `最终公开 ${revealed.length} 件藏品的品质。`
-      : `The final report reveals ${revealed.length} more rarities.`
-  );
 }
 
 function addPrivateRoleNote(
