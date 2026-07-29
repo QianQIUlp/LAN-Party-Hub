@@ -8,6 +8,14 @@ LAN Party Hub 将下列游戏源代码作为首版内置组件。导入时使用
 | `zeichnen-und-erraten` | https://github.com/Hartwich/zeichnen-und-erraten | `bb9b1dca148ccca644ff6b970a60f21789263684` |
 | `schaetzorama` | https://github.com/Hartwich/schaetzorama | `d5c52c63769d00657deb1f4437b25adb10cf401a` |
 | `imposter` | https://github.com/Hartwich/imposter | `d3dc19e7b4cdcb30d4d0ac4e2a2c1a397ba30667` |
+
+## 可选游戏集成参考（不随发行包分发）
+
+平台的 Buzzwort 共享协议以 Apache-2.0 的
+https://github.com/Hartwich/buzzwort 提交
+`10f336ecb14400e505e67b6476aaa188712539c9` 为契约基线；通用 `secret_card`
+控制器布局适配自 Open Party Lab 提交
+`5df28a2107a1822087cb6f9e98a56cef7fca9757`。本仓库没有导入 Buzzwort 的词卡、图片、音频或其他游戏内容，外部游戏也不进入 LAN Party Hub 发行包。
 ## LAN Party Hub 原创游戏（非第三方）
 
 `bullshit` 由 LAN Party Hub 项目在

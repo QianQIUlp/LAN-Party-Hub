@@ -5,6 +5,7 @@ import { airHockeyText } from "./games/airHockey.js";
 import { arenaSurvivorText } from "./games/arenaSurvivor.js";
 import { imposterText } from "./games/imposter.js";
 import { pantomimeText } from "./games/pantomime.js";
+import { buzzwortText } from "./games/buzzwort.js";
 import { tabuText } from "./games/tabu.js";
 import { zeichnenUndErratenText } from "./games/zeichnenUndErraten.js";
 import { driftRacerText } from "./games/driftRacer.js";
@@ -23,6 +24,7 @@ const gameTextCatalog = {
   "zeichnen-und-erraten": zeichnenUndErratenText,
   "arena-survivor": arenaSurvivorText,
   imposter: imposterText,
+  buzzwort: buzzwortText,
   tabu: tabuText,
   pantomime: pantomimeText,
   "drift-racer": driftRacerText,

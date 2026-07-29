@@ -1,4 +1,5 @@
-﻿# Repository Descriptions
+﻿<!-- Modified for LAN Party Hub; see CHANGES.md and NOTICE.md. -->
+# Repository Descriptions
 
 Short descriptions and topics for GitHub repository metadata.
 
@@ -22,9 +23,13 @@ Topics: open-party-lab party-game browser-game phaser typescript local-multiplay
 Description: Two-player arcade air hockey for Open Party Lab with phone joystick controls.
 Topics: open-party-lab party-game browser-game phaser typescript local-multiplayer air-hockey
 
-## Tabu
-Description: Taboo-inspired word explanation game for Open Party Lab with team and party flow.
-Topics: open-party-lab party-game browser-game phaser typescript local-multiplayer word-game
+## Buzzwort
+Description: Fast word-explanation party game for Open Party Lab with forbidden words, rotating roles, and a watcher buzzer.
+Topics: open-party-lab party-game browser-game phaser typescript local-multiplayer word-game buzzword
+
+## Tabu (legacy)
+Description: Legacy Tabu package retained for compatibility with existing local Open Party Lab game checkouts.
+Topics: open-party-lab party-game browser-game phaser typescript local-multiplayer word-game legacy
 
 ## Imposter
 Description: Social deduction prompt game for Open Party Lab where players identify the bluffing player.

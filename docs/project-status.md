@@ -54,3 +54,5 @@ CI 在 Ubuntu 上执行上述自动化；Windows Release 工作流编译启动�
 其他上游游戏仍可放入 `local-games/`，运行 `npm run games:sync-local` 后用于开发，但它们不进入首版菜单、CI 或发行包。缺少可选游戏仓库属于正常状态。
 
 可选的 `arena-survivor` 在生存成功或全队失败后，Host 都会保留外部游戏场景来显示完整结算总结。
+
+原可选 `tabu` 入口已平滑迁移为 `buzzwort`：新仓库使用 `local-games/buzzwort`、`buzzwort` ID 和通用 `secret_card` 手机布局；已有 `local-games/tabu`、旧 Tabu ID、共享协议、目录中文、主屏图标与音乐仍保留兼容。平台侧已经提供德文、英文和简体中文目录文本；在 Buzzwort 外部游戏仓库同步加入简体中文服务端消息、Host/Controller 文案和有明确来源的中文卡片前，当前外部修订版的实际玩法仍只完整支持德文和英文。
