@@ -54,7 +54,9 @@ describe("Buzzwort platform migration", () => {
 
     expect(buzzwort).toMatchObject({
       package: "@open-party-lab/game-buzzwort",
-      repo: "https://github.com/Hartwich/buzzwort.git",
+      repo: "https://github.com/QianQIUlp/buzzwort.git",
+      sourceRepo: "https://github.com/Hartwich/buzzwort",
+      sourceRevision: "10f336ecb14400e505e67b6476aaa188712539c9",
       defaultLocalPath: "local-games/buzzwort"
     });
     expect(buzzwort?.alternateLocalPaths).toEqual(

@@ -40,7 +40,7 @@ git clone https://github.com/Hartwich/magic-arena.git local-games/magic-arena
 git clone https://github.com/Hartwich/magic-duell.git local-games/magic-duell
 git clone https://github.com/Hartwich/tap-race.git local-games/tap-race
 git clone https://github.com/Hartwich/air-hockey.git local-games/air-hockey
-git clone https://github.com/Hartwich/buzzwort.git local-games/buzzwort
+git clone https://github.com/QianQIUlp/buzzwort.git local-games/buzzwort
 git clone https://github.com/Hartwich/imposter.git local-games/imposter
 git clone https://github.com/Hartwich/schaetzorama.git local-games/schaetzorama
 git clone https://github.com/Hartwich/light-trails.git local-games/light-trails
