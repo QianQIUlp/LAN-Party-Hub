@@ -20,6 +20,22 @@ interface AuctionKingRenderState extends AuctionKingPublicState {
   message?: string;
 }
 
+interface AuctionKingRenderOptions {
+  animate?: boolean;
+}
+
+type MotionTarget = Phaser.GameObjects.GameObject & {
+  alpha: number;
+  depth: number;
+  name: string;
+  scaleX: number;
+  scaleY: number;
+  y: number;
+  setAlpha(value: number): MotionTarget;
+  setScale(x: number, y?: number): MotionTarget;
+  setY(value: number): MotionTarget;
+};
+
 const colors = {
   background: 0x080c0f,
   panel: 0x141a1c,
@@ -419,6 +435,7 @@ function drawVisibleItem(
   const height = (item.outlineKnown ? item.height ?? 1 : 1) * cellH - 4 * scale;
   const rarity = item.rarity ? rarityColors[item.rarity] ?? 0x87929b : 0x87929b;
   const graphics = scene.add.graphics();
+  graphics.setName(`auction-item-frame:${item.instanceId}`);
   graphics.fillStyle(item.rarityKnown ? rarity : 0x777f80, item.rarityKnown ? 0.48 : 0.33);
   graphics.fillRoundedRect(x, y, width, height, 5 * scale);
   graphics.lineStyle(item.rarityKnown ? 2 * scale : 1 * scale, rarity, item.rarityKnown ? 0.95 : 0.7);
@@ -428,6 +445,7 @@ function drawVisibleItem(
     const texture = itemTextureKey(item.catalogId);
     if (hasTexture(scene, texture)) {
       const image = scene.add.image(x + width / 2, y + height / 2 - 5 * scale, texture);
+      image.setName("auction-item-image");
       const availableW = Math.max(12, width - 8 * scale);
       const availableH = Math.max(12, height - 18 * scale);
       image.setScale(Math.min(availableW / image.width, availableH / image.height));
@@ -548,37 +566,95 @@ function drawFinalOverlay(
   }).setOrigin(0.5, 0).setDepth(22);
 }
 
+function asMotionTarget(object: Phaser.GameObjects.GameObject): MotionTarget | null {
+  const candidate = object as unknown as Partial<MotionTarget>;
+  return typeof candidate.setAlpha === "function"
+    && typeof candidate.setScale === "function"
+    && typeof candidate.setY === "function"
+    && typeof candidate.y === "number"
+    ? object as MotionTarget
+    : null;
+}
+
+function animateHostEntrance(
+  scene: Phaser.Scene,
+  objects: Phaser.GameObjects.GameObject[],
+  stage: AuctionKingPublicState["stage"]
+): void {
+  const targets = objects.map(asMotionTarget).filter((target): target is MotionTarget => target !== null);
+  targets.forEach((target, index) => {
+    const destinationY = target.y;
+    const delay = Math.min(420, Math.floor(index / 3) * 14);
+    target.setAlpha(0).setY(destinationY + Math.min(16, 8 + index * 0.05));
+    scene.tweens.add({
+      targets: target,
+      alpha: 1,
+      y: destinationY,
+      duration: 380,
+      delay,
+      ease: "Cubic.easeOut"
+    });
+
+    if (target.name === "auction-item-image") {
+      const scaleX = target.scaleX;
+      const scaleY = target.scaleY;
+      target.setScale(scaleX * 0.72, scaleY * 0.72);
+      scene.tweens.add({
+        targets: target,
+        scaleX,
+        scaleY,
+        duration: 520,
+        delay: delay + 90,
+        ease: "Back.easeOut"
+      });
+    }
+  });
+
+  if (stage === "round_reveal") {
+    scene.cameras.main.flash(260, 228, 189, 108, false);
+    scene.cameras.main.shake(160, 0.0014, false);
+  } else if (stage === "finished") {
+    scene.cameras.main.flash(360, 242, 191, 81, false);
+    scene.cameras.main.shake(220, 0.002, false);
+  }
+}
+
 export function renderAuctionKingState(
   scene: Phaser.Scene,
   state: AuctionKingRenderState,
-  language: SupportedLanguage = "zh-CN"
+  language: SupportedLanguage = "zh-CN",
+  options: AuctionKingRenderOptions = {}
 ): void {
   const width = scene.scale.width;
   const height = scene.scale.height;
   const scale = Math.max(0.68, Math.min(1.35, Math.min(width / 1280, height / 720)));
   drawBackground(scene, width, height);
+  const motionStartIndex = scene.children.list.length;
   const top = drawHeader(scene, state, language, width, scale);
 
   if (state.stage === "setup") {
     renderSetup(scene, state, language, width, height, top, scale);
-    return;
+  } else {
+    const outer = 16 * scale;
+    const statusH = 68 * scale;
+    const contentY = top + outer;
+    drawRoundStatus(scene, state, language, outer, contentY, width - outer * 2, scale);
+    const columnsY = contentY + statusH + 9 * scale;
+    const columnsH = height - columnsY - outer;
+    const gap = 9 * scale;
+    const availableW = width - outer * 2 - gap * 2;
+    const playerW = availableW * 0.36;
+    const intelW = availableW * 0.27;
+    const warehouseW = availableW - playerW - intelW;
+    drawPlayerHistory(scene, state, language, outer, columnsY, playerW, columnsH, scale);
+    drawPublicIntel(scene, state, language, outer + playerW + gap, columnsY, intelW, columnsH, scale);
+    drawWarehouse(scene, state, language, outer + playerW + gap + intelW + gap, columnsY, warehouseW, columnsH, scale);
+    drawFinalOverlay(scene, state, language, width, height, scale);
   }
 
-  const outer = 16 * scale;
-  const statusH = 68 * scale;
-  const contentY = top + outer;
-  drawRoundStatus(scene, state, language, outer, contentY, width - outer * 2, scale);
-  const columnsY = contentY + statusH + 9 * scale;
-  const columnsH = height - columnsY - outer;
-  const gap = 9 * scale;
-  const availableW = width - outer * 2 - gap * 2;
-  const playerW = availableW * 0.36;
-  const intelW = availableW * 0.27;
-  const warehouseW = availableW - playerW - intelW;
-  drawPlayerHistory(scene, state, language, outer, columnsY, playerW, columnsH, scale);
-  drawPublicIntel(scene, state, language, outer + playerW + gap, columnsY, intelW, columnsH, scale);
-  drawWarehouse(scene, state, language, outer + playerW + gap + intelW + gap, columnsY, warehouseW, columnsH, scale);
-  drawFinalOverlay(scene, state, language, width, height, scale);
+  if (options.animate) {
+    animateHostEntrance(scene, scene.children.list.slice(motionStartIndex), state.stage);
+  }
 }
 
 export function latestRoundHistory(state: AuctionKingPublicState): AuctionRoundHistory | null {

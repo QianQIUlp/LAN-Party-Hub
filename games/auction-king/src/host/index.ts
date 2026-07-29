@@ -16,6 +16,7 @@ export class AuctionKingHostScene extends Phaser.Scene {
   private unsubscribe?: () => void;
   private latestState: HostAppStateLike | null = null;
   private lastRenderedSecond = -1;
+  private lastMotionSignature = "";
 
   constructor() {
     super(auctionKingManifest.hostView);
@@ -35,6 +36,7 @@ export class AuctionKingHostScene extends Phaser.Scene {
       this.unsubscribe?.();
       this.unsubscribe = undefined;
       this.latestState = null;
+      this.lastMotionSignature = "";
     });
   }
 
@@ -51,12 +53,32 @@ export class AuctionKingHostScene extends Phaser.Scene {
     const state = this.latestState;
     if (!state?.game?.state) return;
     const gameState = state.game.state as Record<string, unknown>;
+    const renderState: Record<string, unknown> & { message?: string } = {
+      ...gameState,
+      message: state.game.message
+    };
+    const motionSignature = JSON.stringify({
+      stage: renderState.stage,
+      currentRound: renderState.currentRound,
+      players: renderState.players,
+      history: renderState.history,
+      publicNotes: renderState.publicNotes,
+      warehouse: renderState.warehouse,
+      soldToPlayerId: renderState.soldToPlayerId,
+      message: renderState.message
+    });
+    const prefersReducedMotion = typeof window !== "undefined"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const animate = motionSignature !== this.lastMotionSignature && !prefersReducedMotion;
+    this.lastMotionSignature = motionSignature;
+    this.tweens.killAll();
     this.children.removeAll(true);
     this.cameras.main.setBackgroundColor("#080c0f");
     renderAuctionKingState(
       this,
-      { ...gameState, message: state.game.message } as Parameters<typeof renderAuctionKingState>[1],
-      state.room?.language ?? "zh-CN"
+      renderState as unknown as Parameters<typeof renderAuctionKingState>[1],
+      state.room?.language ?? "zh-CN",
+      { animate }
     );
   }
 }

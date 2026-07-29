@@ -296,7 +296,7 @@ function SetupView({ model, state, copy }: {
             <span>{state.availableRoles.length}</span>
           </div>
           <div className="auction-role-grid">
-            {state.availableRoles.map((role) => {
+            {state.availableRoles.map((role, index) => {
               const selected = state.ownRoleId === role.id;
               const claimed = claimedRoleIds.has(role.id);
               return (
@@ -304,7 +304,7 @@ function SetupView({ model, state, copy }: {
                   type="button"
                   key={role.id}
                   className={`auction-role-card${selected ? " is-selected" : ""}`}
-                  style={{ "--auction-accent": role.accent } as CSSProperties}
+                  style={{ "--auction-accent": role.accent, "--auction-delay": `${index * 45}ms` } as CSSProperties}
                   disabled={model.disabled || !state.canConfigure || claimed}
                   onClick={() => model.onSelectRole(role.id)}
                 >
@@ -324,14 +324,14 @@ function SetupView({ model, state, copy }: {
             <h2>{copy.kits}</h2>
           </div>
           <div className="auction-kit-list">
-            {state.availableKits.map((kit) => {
+            {state.availableKits.map((kit, index) => {
               const selected = state.ownKitId === kit.id;
               return (
                 <button
                   type="button"
                   key={kit.id}
                   className={`auction-kit-card${selected ? " is-selected" : ""}`}
-                  style={{ "--auction-accent": kit.accent } as CSSProperties}
+                  style={{ "--auction-accent": kit.accent, "--auction-delay": `${index * 55}ms` } as CSSProperties}
                   disabled={model.disabled || !state.canConfigure}
                   onClick={() => model.onSelectKit(kit.id)}
                 >
@@ -383,11 +383,15 @@ function PlayerHistory({ state, language, copy, onInstrument }: {
         <small>{state.players.length}</small>
       </div>
       <div className="auction-player-list">
-        {state.players.map((player) => {
+        {state.players.map((player, playerIndex) => {
           const role = player.roleId ? roles.get(player.roleId) : undefined;
           const own = player.playerId === state.playerId;
           return (
-            <article className={`auction-player-row${own ? " is-own" : ""}`} key={player.playerId}>
+            <article
+              className={`auction-player-row${own ? " is-own" : ""}`}
+              key={player.playerId}
+              style={{ "--auction-delay": `${playerIndex * 55}ms` } as CSSProperties}
+            >
               <div className="auction-player-identity" style={{ "--player-color": player.color } as CSSProperties}>
                 {role?.portraitPath ? <img src={role.portraitPath} alt="" /> : null}
                 <span><strong>{player.name}</strong><small>{player.roleName ?? "—"}</small></span>
@@ -441,16 +445,16 @@ function IntelligencePanel({ state, copy, language }: {
       <div className="auction-intel-group is-public">
         <div className="auction-intel-heading"><span>{copy.publicIntel}</span><small>{publicNotes.length}</small></div>
         <div className="auction-intel-scroll">
-          {publicNotes.length ? publicNotes.map((note) => (
-            <article key={note.id}><small>ROUND {note.round}</small><p>{note.text}</p></article>
+          {publicNotes.length ? publicNotes.map((note, index) => (
+            <article key={note.id} style={{ "--auction-delay": `${index * 45}ms` } as CSSProperties}><small>ROUND {note.round}</small><p>{note.text}</p></article>
           )) : <p className="auction-empty-copy">{copy.noIntel}</p>}
         </div>
       </div>
       <div className="auction-intel-group is-private">
         <div className="auction-intel-heading"><span>{copy.privateIntel}</span><small>{privateNotes.length}</small></div>
         <div className="auction-intel-scroll">
-          {privateNotes.length ? privateNotes.map((note) => (
-            <article key={note.id} data-source={note.source}><small>ROUND {note.round} · {note.source.toUpperCase()}</small><p>{note.text}</p></article>
+          {privateNotes.length ? privateNotes.map((note, index) => (
+            <article key={note.id} data-source={note.source} style={{ "--auction-delay": `${index * 45}ms` } as CSSProperties}><small>ROUND {note.round} · {note.source.toUpperCase()}</small><p>{note.text}</p></article>
           )) : <p className="auction-empty-copy">{copy.noIntel}</p>}
         </div>
         {state.estimatedWarehouseMin !== null && state.estimatedWarehouseMax !== null ? (
@@ -495,12 +499,12 @@ function WarehouseBoard({ state, copy, language, onSelect }: {
           aspectRatio: `${state.warehouse.cols} / ${state.warehouse.rows}`
         } as CSSProperties}
       >
-        {state.warehouse.items.map((item) => (
+        {state.warehouse.items.map((item, index) => (
           <button
             type="button"
             key={item.instanceId}
             className={`auction-warehouse-item${item.outlineKnown ? " has-outline" : " is-anchor"}${item.rarityKnown ? " has-rarity" : ""}${item.identityKnown ? " is-identified" : ""}`}
-            style={itemGridStyle(item)}
+            style={{ ...itemGridStyle(item), "--auction-delay": `${index * 35}ms` } as CSSProperties}
             onClick={() => onSelect(item.instanceId)}
             aria-label={item.name ?? copy.catalog}
           >
@@ -528,8 +532,8 @@ function InstrumentModal({ state, copy, onClose, onUse }: {
       <section className="auction-modal auction-instrument-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
         <header><div><small>PRIVATE LOADOUT</small><h2>{copy.instruments}</h2></div><button type="button" onClick={onClose}>{copy.close}</button></header>
         <div className="auction-instrument-list">
-          {available.length ? available.map((instrument) => (
-            <button type="button" key={instrument.id} disabled={!state.canAct || Boolean(state.ownCurrentInstrument)} onClick={() => onUse(instrument.id)}>
+          {available.length ? available.map((instrument, index) => (
+            <button type="button" key={instrument.id} style={{ "--auction-delay": `${index * 50}ms` } as CSSProperties} disabled={!state.canAct || Boolean(state.ownCurrentInstrument)} onClick={() => onUse(instrument.id)}>
               {instrument.iconPath ? <img src={instrument.iconPath} alt="" /> : null}
               <span><strong>{instrument.name}</strong><small>{instrument.description}</small></span>
               <b>{copy.use}</b>
@@ -590,8 +594,8 @@ function CatalogModal({ model, state, item, copy, onClose }: {
           <button type="button" onClick={onClose}>{copy.close}</button>
         </aside>
         <div className="auction-candidate-list">
-          {candidates.map((candidate) => (
-            <article key={candidate.catalogId} style={{ "--rarity-color": rarityColors[candidate.rarity] } as CSSProperties}>
+          {candidates.map((candidate, index) => (
+            <article key={candidate.catalogId} style={{ "--rarity-color": rarityColors[candidate.rarity], "--auction-delay": `${index * 45}ms` } as CSSProperties}>
               {candidate.imagePath ? <img src={candidate.imagePath} alt="" /> : null}
               <div>
                 <small>{candidate.confidence === "certain" ? copy.certain : candidate.confidence === "likely" ? copy.likely : copy.possible}</small>
@@ -623,8 +627,8 @@ function AuctionActions({ model, state, copy, onOpenInstruments }: {
   const instrument = state.instruments.find((entry) => entry.id === state.ownCurrentInstrument);
 
   return (
-    <footer className="auction-action-bar">
-      <button type="button" className="auction-instrument-button" disabled={!state.canAct || Boolean(state.ownCurrentInstrument)} onClick={onOpenInstruments}>
+    <footer className={`auction-action-bar${state.ownBid !== null ? " is-submitted" : ""}`}>
+      <button type="button" className={`auction-instrument-button${instrument ? " is-committed" : ""}`} disabled={!state.canAct || Boolean(state.ownCurrentInstrument)} onClick={onOpenInstruments}>
         <span>{instrument ? copy.instrumentUsed : copy.instruments}</span>
         <small>{instrument?.name ?? `${state.ownInstrumentInventory.length} AVAILABLE`}</small>
       </button>
@@ -667,16 +671,16 @@ function AuctionView({ model, state, copy }: {
   const winner = state.players.find((player) => player.playerId === state.soldToPlayerId);
 
   return (
-    <div className="auction-play-view">
+    <div className="auction-play-view" data-stage={state.stage} data-round={state.currentRound}>
       <header className="auction-play-header">
         <div className="auction-brand"><small>LAN AUCTION / {model.roomCode ?? "—"}</small><strong>{copy.title}</strong></div>
-        <div className="auction-stage-chip"><span>{stageLabel(state, copy)}</span>{state.stageEndsAt !== null ? <b>{String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}</b> : null}</div>
-        <div className="auction-condition-card"><small>{copy.threshold}</small><strong>{state.currentRound >= 5 ? copy.uniqueHigh : `${state.threshold.toFixed(1)}× ${copy.lead}`}</strong></div>
+        <div className="auction-stage-chip" key={`${state.stage}-${state.currentRound}`}><span>{stageLabel(state, copy)}</span>{state.stageEndsAt !== null ? <b className={remaining <= 10 ? "is-urgent" : ""}>{String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}</b> : null}</div>
+        <div className="auction-condition-card" key={`condition-${state.currentRound}`}><small>{copy.threshold}</small><strong>{state.currentRound >= 5 ? copy.uniqueHigh : `${state.threshold.toFixed(1)}× ${copy.lead}`}</strong></div>
         <div className="auction-balance-card"><small>{copy.funds}</small><strong>{formatMoney(state.ownFunds, model.language)}</strong></div>
       </header>
 
       {state.spectator ? <div className="auction-spectator-banner">{copy.spectator}</div> : null}
-      {model.message ? <div className="auction-message-strip">{model.message}</div> : null}
+      {model.message ? <div className="auction-message-strip" key={model.message}>{model.message}</div> : null}
 
       <main className="auction-play-columns">
         <PlayerHistory state={state} language={model.language} copy={copy} onInstrument={setDetailInstrumentId} />
