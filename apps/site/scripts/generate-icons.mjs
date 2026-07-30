@@ -31,14 +31,15 @@ try {
             body { display: grid; place-items: center; }
             .icon {
               display: grid;
-              grid-template-columns: repeat(2, ${82 * scale}px);
-              grid-template-rows: repeat(2, ${82 * scale}px);
-              gap: ${34 * scale}px;
+              grid-template-columns: repeat(2, ${114 * scale}px);
+              grid-template-rows: repeat(2, ${114 * scale}px);
+              place-content: center;
+              gap: ${56 * scale}px;
               width: ${icon.size}px;
               height: ${icon.size}px;
-              padding: ${106 * scale}px;
-              border: ${10 * scale}px solid #31566b;
-              border-radius: ${108 * scale}px;
+              padding: 0;
+              border: ${14 * scale}px solid #31566b;
+              border-radius: ${112 * scale}px;
               background:
                 radial-gradient(circle at 50% 42%, #10273c 0, #07111f 68%),
                 #07111f;

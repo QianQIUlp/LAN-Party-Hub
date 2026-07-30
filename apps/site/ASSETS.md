@@ -28,13 +28,13 @@ Constraints: the full artwork must fill the card edge to edge; keep all text hig
 
 ## Browser and install icons
 
-The following icons reproduce the four-color CSS brand mark already used in the site header. They are generated deterministically by `npm run icons:generate --workspace @open-party-lab/site`; no external images, fonts, logos, or generated-media service are used.
+The site header's compact, centered four-color mark is the canonical LAN Party Hub icon. The following browser and install icons reproduce its proportions and color order. They are generated deterministically by `npm run icons:generate --workspace @open-party-lab/site`; no external images, fonts, logos, or generated-media service are used.
 
 | File | Size | SHA-256 |
 | --- | ---: | --- |
-| `public/favicon.png` | 64×64 | `26e5d9e7702f25d83d6263eae159277b28e33ed08e8c8a879320cf66abab0809` |
-| `public/apple-touch-icon.png` | 180×180 | `5431fb2a7d4feb67dcab335e7d7b2f0f89db0ba81d8df9c075bf1d76fd4536a7` |
-| `public/icon-192.png` | 192×192 | `496233d630684874e6d415a79c5fe0d619682602ff703938d05a9b9c1bba2243` |
-| `public/icon-512.png` | 512×512 | `ae72ac93550bd19541ac091f96a2b27b55e84ab835754a16cbc381c73b565318` |
+| `public/favicon.png` | 64×64 | `292659a3086f98bbe34c66e5d155329f7edf3e9c8deb4f1ddf1b02320b7eceaf` |
+| `public/apple-touch-icon.png` | 180×180 | `4abed94ef7799e17bad41945e0b34a9917651642a11e8859f8588cc1c5ff1eea` |
+| `public/icon-192.png` | 192×192 | `242dd819b86d7b58129647d0cc674793cb4003bf1357828bc8ae8e6ea2ed91b3` |
+| `public/icon-512.png` | 512×512 | `40841d998210d14dfd6b839ede34ffdb7d527150d14b2964e0d7eb95cdba7531` |
 
 The repository Git history and `scripts/generate-icons.mjs` are the provenance record for these original project assets.
