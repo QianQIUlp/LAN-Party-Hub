@@ -39,7 +39,7 @@ Snapshot date: 2026-07-30
 - `npm run build`：同一源码树构建平台与内置游戏。
 - `npm run verify`：依次执行测试、类型检查和完整构建。
 
-CI 在 Ubuntu 上执行上述自动化；Windows Release 工作流编译启动器、组装 ZIP 并生成 SHA-256。
+CI 在 Ubuntu 上执行上述自动化，并在 Windows 上编译启动器、冒烟测试便携包、组装 ZIP、生成 SHA-256，再把它们作为每次 PR 与 `main` 推送均可下载的 Actions artifact。版本标签和手动发布任务继续额外创建正式 GitHub Release。
 
 ## 尚需真实环境验收
 

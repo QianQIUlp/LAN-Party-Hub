@@ -13,9 +13,10 @@ function pngDimensions(png: Buffer): { width: number; height: number } {
 
 describe("LAN Party Hub application icons", () => {
   it("uses the checked-in favicon on host and controller pages", async () => {
-    const [hostHtml, controllerHtml, hostIcon, controllerIcon] = await Promise.all([
+    const [hostHtml, controllerHtml, siteIcon, hostIcon, controllerIcon] = await Promise.all([
       readFile(new URL("../apps/host/index.html", import.meta.url), "utf8"),
       readFile(new URL("../apps/controller/index.html", import.meta.url), "utf8"),
+      readFile(new URL("../apps/site/public/favicon.png", import.meta.url)),
       readFile(new URL("../apps/host/public/favicon.png", import.meta.url)),
       readFile(new URL("../apps/controller/public/favicon.png", import.meta.url))
     ]);
@@ -23,7 +24,8 @@ describe("LAN Party Hub application icons", () => {
     const faviconLink = 'rel="icon" type="image/png" sizes="64x64" href="%BASE_URL%favicon.png"';
     expect(hostHtml).toContain(faviconLink);
     expect(controllerHtml).toContain(faviconLink);
-    expect(hostIcon).toEqual(controllerIcon);
+    expect(hostIcon).toEqual(siteIcon);
+    expect(controllerIcon).toEqual(siteIcon);
     expect(pngDimensions(hostIcon)).toEqual({ width: 64, height: 64 });
   });
 

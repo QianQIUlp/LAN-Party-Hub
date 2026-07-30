@@ -16,7 +16,7 @@
     "games:clone-recommended": "node scripts/clone-recommended-games.mjs",
     "games:clone-all": "node scripts/clone-all-games.mjs",
     "screenshots:readme": "node scripts/capture-readme-screenshots.mjs",
-    "icons:generate": "node scripts/generate-brand-icons.mjs",
+    "icons:generate": "npm run icons:generate --workspace @open-party-lab/site",
     "ai:controllers": "node scripts/virtual-controllers.mjs",
     "postinstall": "node scripts/local-games.mjs ensure-generated",
     "build:packages": "tsc -b packages/utils packages/ui-kit packages/game-core packages/protocol",

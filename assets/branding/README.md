@@ -5,7 +5,8 @@ application icon. The browser favicon, Windows executable icon, and system-tray
 icon reproduce the same original CSS artwork without external images, fonts,
 logos, or generated-media services.
 
-Run `npm run icons:generate` to regenerate the checked-in assets with Chromium.
+Run `npm run icons:generate` to regenerate every checked-in site and application
+icon with Chromium from `apps/site/scripts/generate-icons.mjs`.
 The multi-resolution ICO contains 16, 24, 32, 48, 64, 128, and 256 pixel PNG
 frames so Windows can select a native-sized image for Explorer and the tray.
 

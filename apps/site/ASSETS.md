@@ -38,3 +38,4 @@ The site header's compact, centered four-color mark is the canonical LAN Party H
 | `public/icon-512.png` | 512×512 | `40841d998210d14dfd6b839ede34ffdb7d527150d14b2964e0d7eb95cdba7531` |
 
 The repository Git history and `scripts/generate-icons.mjs` are the provenance record for these original project assets.
+The same generator emits the Host, Controller, Windows executable, and tray assets documented in `../../assets/branding/README.md`.
