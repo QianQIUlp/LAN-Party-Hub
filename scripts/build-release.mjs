@@ -112,8 +112,9 @@ await cp(path.join(projectRoot, "docs", "release-build.md"), path.join(outputRoo
 
 if (process.platform === "win32") {
   const launcherSource = path.join(projectRoot, "scripts", "release", "Launcher.cs");
+  const launcherIcon = path.join(projectRoot, "assets", "branding", "lan-party-hub.ico");
   const launcherTarget = path.join(outputRoot, "LAN-Party-Hub.exe");
-  const command = `Add-Type -Path '${launcherSource.replaceAll("'", "''")}' -ReferencedAssemblies System.Windows.Forms,System.Drawing -OutputAssembly '${launcherTarget.replaceAll("'", "''")}' -OutputType WindowsApplication`;
+  const command = `$launcherIcon = '${launcherIcon.replaceAll("'", "''")}'; Add-Type -Path '${launcherSource.replaceAll("'", "''")}' -ReferencedAssemblies System.Windows.Forms,System.Drawing -OutputAssembly '${launcherTarget.replaceAll("'", "''")}' -OutputType WindowsApplication -CompilerOptions ('/win32icon:"' + $launcherIcon + '"')`;
   run("powershell.exe", ["-NoProfile", "-Command", command]);
 }
 

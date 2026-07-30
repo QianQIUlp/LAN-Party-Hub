@@ -128,6 +128,7 @@ internal static class Launcher
             Application.SetCompatibleTextRenderingDefault(false);
             var context = new ApplicationContext();
             var tray = new NotifyIcon();
+            var applicationIcon = LoadApplicationIcon();
             bool exitRequested = false;
 
             Action openHost = delegate { OpenBrowser(port); };
@@ -159,7 +160,7 @@ internal static class Launcher
                 context.ExitThread();
             };
 
-            tray.Icon = SystemIcons.Application;
+            tray.Icon = applicationIcon;
             tray.Text = "LAN Party Hub";
             tray.Visible = true;
             tray.ContextMenu = new ContextMenu(new[]
@@ -195,8 +196,21 @@ internal static class Launcher
             }
 
             tray.Dispose();
+            applicationIcon.Dispose();
             return server.HasExited ? server.ExitCode : 0;
         }
+    }
+
+    private static Icon LoadApplicationIcon()
+    {
+        try
+        {
+            Icon extracted = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            if (extracted != null) return extracted;
+        }
+        catch { }
+
+        return (Icon)SystemIcons.Application.Clone();
     }
 
     private static int FindFreePort()
