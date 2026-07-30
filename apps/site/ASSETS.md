@@ -25,3 +25,16 @@ Text (verbatim): “LAN PARTY HUB” and “ONE COMPUTER. EVERY PHONE IS A CONTR
 Typography: render exactly those two text elements and no others; bold clean geometric sans-serif; “LAN PARTY HUB” small uppercase at the top left, headline large and stacked below; preserve spelling and punctuation exactly.
 Constraints: the full artwork must fill the card edge to edge; keep all text highly legible at thumbnail size; no QR code, no tiny interface text, no extra words, no unrelated logos, no trademarks, no watermark, no signatures.
 ```
+
+## Browser and install icons
+
+The site header's compact, centered four-color mark is the canonical LAN Party Hub icon. The following browser and install icons reproduce its proportions and color order. They are generated deterministically by `npm run icons:generate --workspace @open-party-lab/site`; no external images, fonts, logos, or generated-media service are used.
+
+| File | Size | SHA-256 |
+| --- | ---: | --- |
+| `public/favicon.png` | 64×64 | `292659a3086f98bbe34c66e5d155329f7edf3e9c8deb4f1ddf1b02320b7eceaf` |
+| `public/apple-touch-icon.png` | 180×180 | `4abed94ef7799e17bad41945e0b34a9917651642a11e8859f8588cc1c5ff1eea` |
+| `public/icon-192.png` | 192×192 | `242dd819b86d7b58129647d0cc674793cb4003bf1357828bc8ae8e6ea2ed91b3` |
+| `public/icon-512.png` | 512×512 | `40841d998210d14dfd6b839ede34ffdb7d527150d14b2964e0d7eb95cdba7531` |
+
+The repository Git history and `scripts/generate-icons.mjs` are the provenance record for these original project assets.

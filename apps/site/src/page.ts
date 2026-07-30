@@ -35,6 +35,8 @@ export function renderMeta(locale: Locale, siteUrl: string, notFound = false): s
     `<link rel="alternate" hreflang="en" href="${englishUrl}" />`,
     `<link rel="alternate" hreflang="zh-CN" href="${chineseUrl}" />`,
     `<link rel="alternate" hreflang="x-default" href="${englishUrl}" />`,
+    `<link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />`,
+    `<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />`,
     `<link rel="manifest" href="/site.webmanifest" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="LAN Party Hub" />`,
