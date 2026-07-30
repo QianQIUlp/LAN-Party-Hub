@@ -40,6 +40,16 @@ GitHub Release 产物名为 `LAN-Party-Hub-windows-x64.zip`：
 3. 电脑主屏自动打开；手机连接同一 Wi‑Fi 后扫码加入。
 4. 退出时右键托盘图标并选择“退出”。
 
+每次 PR 和 `main` 推送的 `CI` 成功完成后，也会在该次 Actions 运行页底部的
+`Artifacts` 区域保留 14 天的 `LAN-Party-Hub-windows-x64` 测试构建。下载并解压
+artifact 后，再解压其中的 `LAN-Party-Hub-windows-x64.zip` 即可运行。也可以使用：
+
+```bash
+gh run download RUN_ID -n LAN-Party-Hub-windows-x64
+```
+
+Actions artifact 用于测试当前提交；正式版本仍以 GitHub Release 附件为准。
+
 便携包包含 Node.js 和全部运行资源，不要求安装开发工具。启动器支持单实例和 3000–3010 动态端口。房间数据与日志保存在发行目录的 `data/`。当前程序未签名，Windows 可能显示 SmartScreen 和防火墙提示；请允许专用网络访问。
 
 更完整的运行说明见 [Windows 便携版文档](docs/release-build.md)。

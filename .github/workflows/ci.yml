@@ -52,3 +52,9 @@ jobs:
 
       - name: Run browser smoke test
         run: npm run test:e2e
+
+  windows-portable:
+    name: Windows portable artifact
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-artifact.yml
