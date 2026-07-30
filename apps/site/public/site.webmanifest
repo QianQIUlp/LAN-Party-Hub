@@ -1,0 +1,9 @@
+{
+  "name": "LAN Party Hub",
+  "short_name": "Party Hub",
+  "description": "A local-first browser party game hub where phones become controllers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#19d3c5"
+}

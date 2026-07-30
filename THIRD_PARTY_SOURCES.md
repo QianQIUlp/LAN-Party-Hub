@@ -24,6 +24,10 @@ https://github.com/QianQIUlp/LAN-Party-Hub 中原创实现，来源是贡献者�
 
 `roulette`、`liars-table` 与 `auction-king` 同样由 LAN Party Hub 在本仓库内原创实现，没有外部源码提交号。本仓库 Git 历史是其代码、规则和视觉实现的审计来源；公开发行所用美术必须在对应游戏资产说明中记录原创生成或许可来源。
 
+## 项目介绍站生成素材（非第三方）
+
+`apps/site/public/og.png` 由 OpenAI 内置图像生成工具于 2026-07-29 为 LAN Party Hub 项目介绍站专门生成，没有使用输入图片、第三方徽标或外部素材。完整提示词、文件哈希与后处理记录见 `apps/site/ASSETS.md`。
+
 ## LAN Party Hub 中的修改
 
 - 将游戏放入根工作区 `games/<game-id>`，并由生成器同时合并可选的 `local-games/`。

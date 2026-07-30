@@ -3,7 +3,7 @@
 
 LAN Party Hub 是一个本地优先的浏览器派对游戏平台：Windows 电脑运行权威服务器并显示共享主屏，玩家用同一 Wi‑Fi 下的手机浏览器扫码加入；每款游戏有自己的参与人数范围。默认简体中文，不需要账号、云服务或公网连接。
 
-> 当前状态：首个可玩版本已扩展为七款内置游戏。所有游戏仍为 alpha，发布前还需要 Windows、Android、iPhone 和真人聚会验收。详见 [项目状态](docs/project-status.md)。
+> 当前状态：首个可玩版本已扩展为八款内置游戏。所有游戏仍为 alpha，发布前还需要 Windows、Android、iPhone 和真人聚会验收。详见 [项目状态](docs/project-status.md)。
 
 ## 首版内置游戏
 
@@ -18,7 +18,18 @@ LAN Party Hub 是一个本地优先的浏览器派对游戏平台：Windows 电�
 | 谎言牌桌 `liars-table` | 3–4 | 约 4–8 分钟 | 秘密出牌、公开宣称、质疑与命运轮盘 |
 | 迷雾仓库 `auction-king` | 2–6 | 约 4–7 分钟 | 角色与私人仪器推理同一座仓库，五轮递进竞拍可提前成交 |
 
-所有游戏源码都固定在本仓库的 `games/` 中。新克隆可以直接构建七款游戏，Release 不会临时下载游戏仓库。四款导入游戏的上游固定版本、三款原创游戏的来源和修改说明见 [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md)。
+所有游戏源码都固定在本仓库的 `games/` 中。新克隆可以直接构建八款游戏，Release 不会临时下载游戏仓库。四款导入游戏的上游固定版本、四款原创游戏的来源和修改说明见 [THIRD_PARTY_SOURCES.md](THIRD_PARTY_SOURCES.md)。
+
+## 项目介绍站
+
+`apps/site` 是独立的双语静态介绍站：英文入口为 `/`，中文入口为 `/zh/`。它可以由 Cloudflare Pages 从 `main` 分支单独构建，只展示项目定位、使用流程、八款内置游戏、架构边界、下载与源码入口；实际开房和游玩仍需下载 Windows 便携版并在局域网中运行。
+
+```bash
+npm run site:dev
+npm run site:build
+```
+
+Cloudflare Pages 的构建命令、输出目录、域名变量和安全响应头说明见 [介绍站部署文档](docs/site-deployment.md)。
 
 ## Windows 便携版
 
@@ -67,7 +78,7 @@ apps/host         共享屏幕与主机操作，不决定游戏结果
 apps/controller   手机 UI，只发送玩家意图并显示私人状态
 packages/protocol 三端共享的房间与 Socket.IO 契约
 packages/game-core 游戏 manifest、生命周期与目录文本
-games/            七款固定源码版本的内置游戏
+games/            八款固定源码版本的内置游戏
 local-games/      可选外部游戏，仅用于本地开发，不进入源码控制
 ```
 
@@ -78,7 +89,7 @@ local-games/      可选外部游戏，仅用于本地开发，不进入源码�
 ```bash
 npm run test       # Vitest：平台恢复和游戏规则
 npm run test:e2e   # Playwright：主屏 + 独立手机浏览器上下文
-npm run typecheck  # 平台与七款内置游戏
+npm run typecheck  # 平台与八款内置游戏
 npm run build      # 完整生产构建
 npm run verify     # test → typecheck → build
 ```

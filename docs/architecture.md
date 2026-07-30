@@ -8,6 +8,7 @@ LAN Party Hub is a TypeScript npm-workspace monorepo for local browser party gam
 - `apps/server` is the authoritative Socket.IO server. It owns rooms, players, round timing, gameplay rules, scoring, and lifecycle transitions.
 - `apps/host` is the shared-screen Phaser application. It renders the lobby, game select flow, QR join overlay, scoreboards, and game host scenes.
 - `apps/controller` is the React phone UI. It renders the player controller for the selected game and sends typed input to the server.
+- `apps/site` is a bilingual static project introduction site. It documents the product and links releases, but it does not import or deploy the gameplay runtime.
 
 ## Shared Packages
 
