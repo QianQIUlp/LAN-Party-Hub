@@ -1,0 +1,147 @@
+# Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+name: Windows portable artifact
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-portable:
+    name: Build Windows portable package
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out platform
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install platform dependencies
+        run: npm ci
+
+      - name: Check licenses and attribution
+        run: npm run legal:check
+
+      - name: Typecheck complete platform
+        run: npm run typecheck
+
+      - name: Build same-origin release assets
+        shell: pwsh
+        run: |
+          $env:OPEN_PARTY_LAB_RELEASE_BUILD = "1"
+          npm run build
+
+      - name: Assemble portable runtime
+        run: npm run release:windows
+
+      - name: Create ZIP and checksum
+        shell: pwsh
+        run: |
+          Compress-Archive -Path artifacts/LAN-Party-Hub-windows-x64/* -DestinationPath artifacts/LAN-Party-Hub-windows-x64.zip
+          (Get-FileHash artifacts/LAN-Party-Hub-windows-x64.zip -Algorithm SHA256).Hash.ToLower() + "  LAN-Party-Hub-windows-x64.zip" | Set-Content artifacts/LAN-Party-Hub-windows-x64.zip.sha256
+
+      - name: Smoke test extracted portable runtime
+        shell: pwsh
+        run: |
+          $extractRoot = "artifacts/smoke-test-extracted"
+          Remove-Item -Recurse -Force $extractRoot -ErrorAction SilentlyContinue
+          Expand-Archive -Path "artifacts/LAN-Party-Hub-windows-x64.zip" -DestinationPath $extractRoot
+          $root = (Resolve-Path $extractRoot).Path
+          $app = Join-Path $root "app"
+          $data = Join-Path $root "data"
+          New-Item -ItemType Directory -Force -Path $data | Out-Null
+          $required = @(
+            "LAN-Party-Hub.exe",
+            "runtime/node.exe",
+            "app/server/main.js",
+            "app/web/host/index.html",
+            "app/web/host/favicon.png",
+            "app/web/controller/index.html",
+            "app/web/controller/favicon.png",
+            "app/packages/games/tap-race/package.json",
+            "app/packages/games/zeichnen-und-erraten/package.json",
+            "app/packages/games/schaetzorama/package.json",
+            "app/packages/games/imposter/package.json",
+            "THIRD_PARTY_SOURCES.md",
+            "CHANGES.md",
+            "config/upstream-modified-files.json",
+            "config/upstream-derived-files.json"
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path (Join-Path $root $path))) { throw "Missing release file: $path" }
+          }
+
+          Add-Type -AssemblyName System.Drawing
+          $launcherIcon = [System.Drawing.Icon]::ExtractAssociatedIcon((Join-Path $root "LAN-Party-Hub.exe"))
+          if (-not $launcherIcon) { throw "Launcher does not contain an application icon." }
+          $iconBitmap = $launcherIcon.ToBitmap()
+          try {
+            $expectedColors = @(
+              [System.Drawing.Color]::FromArgb(81, 244, 231),
+              [System.Drawing.Color]::FromArgb(255, 194, 74),
+              [System.Drawing.Color]::FromArgb(255, 93, 125),
+              [System.Drawing.Color]::FromArgb(169, 130, 255)
+            )
+            foreach ($expected in $expectedColors) {
+              $found = $false
+              for ($x = 0; $x -lt $iconBitmap.Width -and -not $found; $x++) {
+                for ($y = 0; $y -lt $iconBitmap.Height -and -not $found; $y++) {
+                  $pixel = $iconBitmap.GetPixel($x, $y)
+                  if ([Math]::Abs($pixel.R - $expected.R) -le 4 -and
+                      [Math]::Abs($pixel.G - $expected.G) -le 4 -and
+                      [Math]::Abs($pixel.B - $expected.B) -le 4) {
+                    $found = $true
+                  }
+                }
+              }
+              if (-not $found) { throw "Launcher icon is missing expected brand color $($expected.Name)." }
+            }
+          }
+          finally {
+            $iconBitmap.Dispose()
+            $launcherIcon.Dispose()
+          }
+
+          $env:NODE_ENV = "production"
+          $env:PORT = "3010"
+          $env:OPEN_PARTY_LAB_WEB_ROOT = (Join-Path $app "web")
+          $env:JSON_SNAPSHOT_PATH = (Join-Path $data "ci-room-snapshots.json")
+          $env:LAN_PARTY_HUB_CONTROL_TOKEN = "ci-smoke-token"
+          $server = Start-Process -FilePath (Join-Path $root "runtime/node.exe") -ArgumentList "server/main.js" -WorkingDirectory $app -PassThru -NoNewWindow
+          try {
+            $health = $null
+            for ($attempt = 0; $attempt -lt 50 -and -not $health; $attempt++) {
+              Start-Sleep -Milliseconds 200
+              try { $health = Invoke-RestMethod "http://127.0.0.1:3010/health" -TimeoutSec 1 } catch { }
+            }
+            if (-not $health) { throw "Portable server did not become healthy." }
+            if ($health.product -ne "LAN Party Hub" -or $health.port -ne 3010) { throw "Unexpected health response." }
+            if ((Invoke-WebRequest "http://127.0.0.1:3010/" -UseBasicParsing).StatusCode -ne 200) { throw "Host page failed." }
+            if ((Invoke-WebRequest "http://127.0.0.1:3010/favicon.png" -UseBasicParsing).Headers["Content-Type"] -ne "image/png") { throw "Host favicon failed." }
+            if ((Invoke-WebRequest "http://127.0.0.1:3010/controller/" -UseBasicParsing).StatusCode -ne 200) { throw "Controller page failed." }
+            if ((Invoke-WebRequest "http://127.0.0.1:3010/controller/favicon.png" -UseBasicParsing).Headers["Content-Type"] -ne "image/png") { throw "Controller favicon failed." }
+            Invoke-RestMethod "http://127.0.0.1:3010/control/shutdown" -Method Post -Headers @{ "x-lan-party-hub-token" = "ci-smoke-token" } | Out-Null
+            if (-not $server.WaitForExit(5000)) { throw "Portable server did not shut down gracefully." }
+            if ($server.ExitCode -ne 0) { throw "Portable server exited with code $($server.ExitCode)." }
+          }
+          finally {
+            if (-not $server.HasExited) { Stop-Process -Id $server.Id -Force }
+          }
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LAN-Party-Hub-windows-x64
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            artifacts/LAN-Party-Hub-windows-x64.zip
+            artifacts/LAN-Party-Hub-windows-x64.zip.sha256
