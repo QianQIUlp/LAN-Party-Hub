@@ -25,3 +25,16 @@ Text (verbatim): “LAN PARTY HUB” and “ONE COMPUTER. EVERY PHONE IS A CONTR
 Typography: render exactly those two text elements and no others; bold clean geometric sans-serif; “LAN PARTY HUB” small uppercase at the top left, headline large and stacked below; preserve spelling and punctuation exactly.
 Constraints: the full artwork must fill the card edge to edge; keep all text highly legible at thumbnail size; no QR code, no tiny interface text, no extra words, no unrelated logos, no trademarks, no watermark, no signatures.
 ```
+
+## Browser and install icons
+
+The following icons reproduce the four-color CSS brand mark already used in the site header. They are generated deterministically by `npm run icons:generate --workspace @open-party-lab/site`; no external images, fonts, logos, or generated-media service are used.
+
+| File | Size | SHA-256 |
+| --- | ---: | --- |
+| `public/favicon.png` | 64×64 | `26e5d9e7702f25d83d6263eae159277b28e33ed08e8c8a879320cf66abab0809` |
+| `public/apple-touch-icon.png` | 180×180 | `5431fb2a7d4feb67dcab335e7d7b2f0f89db0ba81d8df9c075bf1d76fd4536a7` |
+| `public/icon-192.png` | 192×192 | `496233d630684874e6d415a79c5fe0d619682602ff703938d05a9b9c1bba2243` |
+| `public/icon-512.png` | 512×512 | `ae72ac93550bd19541ac091f96a2b27b55e84ab835754a16cbc381c73b565318` |
+
+The repository Git history and `scripts/generate-icons.mjs` are the provenance record for these original project assets.
