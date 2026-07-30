@@ -3,6 +3,7 @@ import { getRoomPhase } from "@open-party-lab/protocol";
 import QRCode from "qrcode";
 import type { HostSocketClient } from "./hostSocketClient.js";
 import { getHostText } from "../i18n/hostText.js";
+import { resolveEditorialLobbyLayout, resolveEditorialRailMetrics } from "../scenes/lobbyLayout.js";
 import { hostTheme } from "../ui/theme/theme.js";
 import {
   applyStyles,
@@ -44,7 +45,9 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
     gap: "10px"
   });
 
-  let isMinimized = false;
+  let isMinimized = true;
+  let currentState = client.getState();
+  let currentShowOverlay = shouldShowJoinOverlay(currentState);
 
   const minimizedButton = document.createElement("button");
   minimizedButton.type = "button";
@@ -83,6 +86,9 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
   overlay.appendChild(minimizedButton);
 
   const card = createChromeCard("paper");
+  card.style.maxHeight = "calc(100dvh - 36px)";
+  card.style.overflowY = "auto";
+  card.style.boxSizing = "border-box";
   overlay.appendChild(card);
 
   const header = document.createElement("div");
@@ -123,6 +129,7 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
   canvas.style.borderRadius = hostChrome.radius.section;
   canvas.style.background = "#ffffff";
   canvas.style.padding = "10px";
+  canvas.style.boxSizing = "border-box";
   card.appendChild(canvas);
 
   const link = document.createElement("a");
@@ -168,11 +175,38 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
   card.appendChild(hint);
 
   function renderMinimizedState(showOverlay: boolean): void {
+    const layout = resolveEditorialLobbyLayout(
+      window.innerWidth,
+      window.innerHeight,
+      currentState.room?.availableGames.length ?? 0
+    );
+    const editorialLobby =
+      !layout.stacked &&
+      getRoomPhase(currentState.room) === "lobby" &&
+      !currentState.room?.selectedGameId;
+
     overlay.style.display = showOverlay ? "grid" : "none";
     overlay.style.pointerEvents = showOverlay ? "auto" : "none";
-    overlay.style.left = isMinimized ? "" : hostChrome.offset.edge;
-    overlay.style.right = isMinimized ? hostChrome.offset.edge : "";
-    overlay.style.justifyItems = isMinimized ? "end" : "stretch";
+
+    if (editorialLobby && isMinimized) {
+      const railPadding = Math.min(Math.max(layout.railWidth * 0.09, 26), 38);
+      const railMetrics = resolveEditorialRailMetrics(window.innerHeight, layout.railWidth);
+
+      overlay.style.top = `${Math.round(railMetrics.qrY + 10)}px`;
+      overlay.style.left = `${Math.round(layout.railWidth - railPadding - 40)}px`;
+      overlay.style.right = "";
+      overlay.style.justifyItems = "start";
+      minimizedButton.style.width = "38px";
+      minimizedButton.style.height = "38px";
+    } else {
+      overlay.style.top = hostChrome.offset.edge;
+      overlay.style.left = isMinimized ? "" : hostChrome.offset.edge;
+      overlay.style.right = isMinimized ? hostChrome.offset.edge : "";
+      overlay.style.justifyItems = isMinimized ? "end" : "stretch";
+      minimizedButton.style.width = "44px";
+      minimizedButton.style.height = "44px";
+    }
+
     minimizedButton.style.display = showOverlay && isMinimized ? "grid" : "none";
     card.style.display = showOverlay && !isMinimized ? "grid" : "none";
   }
@@ -192,10 +226,14 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
   });
 
   document.body.appendChild(overlay);
+  const handleResize = () => renderMinimizedState(currentShowOverlay);
+  window.addEventListener("resize", handleResize);
 
   const unsubscribe = client.subscribe((state) => {
+    currentState = state;
     const room = state.room;
     const showOverlay = shouldShowJoinOverlay(state);
+    currentShowOverlay = showOverlay;
     const text = getHostText(room?.language ?? state.preferredLanguage);
 
     minimizedButton.title = text.showPhoneController;
@@ -274,6 +312,7 @@ export function mountJoinOverlay(client: HostSocketClient): () => void {
   });
 
   return () => {
+    window.removeEventListener("resize", handleResize);
     unsubscribe();
     overlay.remove();
   };

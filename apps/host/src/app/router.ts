@@ -99,6 +99,7 @@ export function createHostRouter(game: Phaser.Game, client: HostSocketClient): (
 
   const unsubscribe = client.subscribe((state) => {
     const routeStart = performance.now();
+    document.documentElement.lang = state.room?.language ?? state.preferredLanguage;
     const nextSceneKey = resolveHostSceneKey(state);
     const activeScenes = game.scene.getScenes(true);
     const strayScenes = activeScenes.filter((scene) => scene.scene.key !== nextSceneKey);

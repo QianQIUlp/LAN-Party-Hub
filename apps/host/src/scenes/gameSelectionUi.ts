@@ -236,7 +236,7 @@ function drawSparkBurst(
   );
 }
 
-function drawGameIcon(
+export function drawGameIcon(
   graphics: Phaser.GameObjects.Graphics,
   gameId: string,
   size: number,

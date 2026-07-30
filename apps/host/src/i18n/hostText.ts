@@ -63,6 +63,9 @@ export interface HostText {
   roomCode: string;
   join: string;
   lobbyTitle: string;
+  lobbyCatalogTitle: string;
+  lobbyCatalogShortcut: string;
+  lobbyWaitingFirstPlayer: string;
   lobbyPlayersTitle: string;
   quickStartTitle: string;
   quickStartLines: string[];
@@ -156,6 +159,9 @@ const hostText = {
     roomCode: "房间码",
     join: "加入",
     lobbyTitle: "派对大厅",
+    lobbyCatalogTitle: "选择今晚的游戏",
+    lobbyCatalogShortcut: "按 1–8 快速选择",
+    lobbyWaitingFirstPlayer: "等待第一位玩家加入",
     lobbyPlayersTitle: "大厅玩家",
     quickStartTitle: "快速开始",
     quickStartLines: ["点击游戏卡或按数字键选择游戏。", "所有人准备后自动开始，部分游戏可按空格开始。"],
@@ -260,6 +266,9 @@ const hostText = {
     roomCode: "RAUMCODE",
     join: "Join",
     lobbyTitle: "Party Lobby",
+    lobbyCatalogTitle: "Waehle das Spiel fuer heute",
+    lobbyCatalogShortcut: "Mit 1–8 schnell waehlen",
+    lobbyWaitingFirstPlayer: "Warte auf den ersten Spieler",
     lobbyPlayersTitle: "Spieler in der Lobby",
     quickStartTitle: "Schnellstart",
     quickStartLines: [
@@ -360,6 +369,9 @@ const hostText = {
     roomCode: "ROOM CODE",
     join: "Join",
     lobbyTitle: "Party Lobby",
+    lobbyCatalogTitle: "Choose tonight's game",
+    lobbyCatalogShortcut: "Press 1–8 to choose",
+    lobbyWaitingFirstPlayer: "Waiting for the first player",
     lobbyPlayersTitle: "Players in Lobby",
     quickStartTitle: "Quick Start",
     quickStartLines: [

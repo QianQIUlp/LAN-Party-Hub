@@ -1,5 +1,8 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
+import { getRoomPhase } from "@open-party-lab/protocol";
 import type { HostSocketClient } from "./hostSocketClient.js";
 import { getHostText } from "../i18n/hostText.js";
+import { resolveEditorialLobbyLayout } from "../scenes/lobbyLayout.js";
 import {
   applyStyles,
   createChromeIconButton,
@@ -88,6 +91,46 @@ export function mountFullscreenOverlay(client: HostSocketClient): () => void {
   overlay.appendChild(fullscreenButton);
   document.body.appendChild(overlay);
 
+  function syncPlacement(): void {
+    const state = client.getState();
+    const layout = resolveEditorialLobbyLayout(
+      window.innerWidth,
+      window.innerHeight,
+      state.room?.availableGames.length ?? 0
+    );
+    const lobby = getRoomPhase(state.room) === "lobby" && !state.room?.selectedGameId;
+    const editorialLobby = !layout.stacked && lobby;
+
+    if (layout.stacked && lobby) {
+      overlay.style.left = hostChrome.offset.edge;
+      overlay.style.right = "";
+      overlay.style.bottom = hostChrome.offset.dockBottom;
+      overlay.style.width = "116px";
+      overlay.style.flexDirection = "row";
+      overlay.style.justifyContent = "space-between";
+      return;
+    }
+
+    if (editorialLobby) {
+      const railPadding = Math.min(Math.max(layout.railWidth * 0.09, 26), 38);
+      const centerButtonX = (layout.railWidth - 52) / 2;
+      overlay.style.left = `${Math.round(railPadding)}px`;
+      overlay.style.right = "";
+      overlay.style.bottom = hostChrome.offset.dockBottom;
+      overlay.style.width = `${Math.max(116, Math.round(centerButtonX - railPadding + 52))}px`;
+      overlay.style.flexDirection = "row";
+      overlay.style.justifyContent = "space-between";
+      return;
+    }
+
+    overlay.style.left = "";
+    overlay.style.right = hostChrome.offset.edge;
+    overlay.style.bottom = `calc(${hostChrome.offset.dockBottom} + 64px)`;
+    overlay.style.width = "auto";
+    overlay.style.flexDirection = "column";
+    overlay.style.justifyContent = "center";
+  }
+
   function updateButtonLabel(): void {
     const state = client.getState();
     const text = getHostText(state.room?.language ?? state.preferredLanguage);
@@ -173,10 +216,13 @@ export function mountFullscreenOverlay(client: HostSocketClient): () => void {
   targetDocument.addEventListener("fullscreenchange", updateButtonLabel);
   targetDocument.addEventListener("webkitfullscreenchange", updateButtonLabel as EventListener);
   window.addEventListener("keydown", handleKeydown);
+  window.addEventListener("resize", syncPlacement);
   const unsubscribe = client.subscribe(() => {
+    syncPlacement();
     updateButtonLabel();
     updateGameSelectButton();
   });
+  syncPlacement();
   updateButtonLabel();
   updateGameSelectButton();
 
@@ -184,6 +230,7 @@ export function mountFullscreenOverlay(client: HostSocketClient): () => void {
     targetDocument.removeEventListener("fullscreenchange", updateButtonLabel);
     targetDocument.removeEventListener("webkitfullscreenchange", updateButtonLabel as EventListener);
     window.removeEventListener("keydown", handleKeydown);
+    window.removeEventListener("resize", syncPlacement);
     unsubscribe();
     overlay.remove();
   };
