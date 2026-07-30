@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { cp, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -114,8 +115,24 @@ if (process.platform === "win32") {
   const launcherSource = path.join(projectRoot, "scripts", "release", "Launcher.cs");
   const launcherIcon = path.join(projectRoot, "assets", "branding", "lan-party-hub.ico");
   const launcherTarget = path.join(outputRoot, "LAN-Party-Hub.exe");
-  const command = `$launcherIcon = '${launcherIcon.replaceAll("'", "''")}'; Add-Type -Path '${launcherSource.replaceAll("'", "''")}' -ReferencedAssemblies System.Windows.Forms,System.Drawing -OutputAssembly '${launcherTarget.replaceAll("'", "''")}' -OutputType WindowsApplication -CompilerOptions ('/win32icon:"' + $launcherIcon + '"')`;
-  run("powershell.exe", ["-NoProfile", "-Command", command]);
+  const windowsRoot = process.env.WINDIR ?? "C:\\Windows";
+  const compilerPath = ["Framework64", "Framework"]
+    .map((framework) => path.join(windowsRoot, "Microsoft.NET", framework, "v4.0.30319", "csc.exe"))
+    .find((candidate) => existsSync(candidate));
+
+  if (!compilerPath) {
+    throw new Error("Could not find the .NET Framework C# compiler required for the Windows launcher.");
+  }
+
+  run(compilerPath, [
+    "/nologo",
+    "/target:winexe",
+    `/win32icon:${launcherIcon}`,
+    "/reference:System.Windows.Forms.dll",
+    "/reference:System.Drawing.dll",
+    `/out:${launcherTarget}`,
+    launcherSource
+  ]);
 }
 
 console.log(`Portable release assembled at ${outputRoot}`);

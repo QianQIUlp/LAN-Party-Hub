@@ -61,6 +61,8 @@ describe("LAN Party Hub application icons", () => {
     ]);
 
     expect(buildScript).toContain('"assets", "branding", "lan-party-hub.ico"');
+    expect(buildScript).toContain('"Microsoft.NET", framework, "v4.0.30319", "csc.exe"');
+    expect(buildScript).toContain("/target:winexe");
     expect(buildScript).toContain("/win32icon:");
     expect(launcher).toContain("Icon.ExtractAssociatedIcon(Application.ExecutablePath)");
     expect(launcher).toContain("tray.Icon = applicationIcon;");
