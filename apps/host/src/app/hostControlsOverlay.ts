@@ -1,3 +1,4 @@
+// Modified for LAN Party Hub; see CHANGES.md and NOTICE.md.
 import Phaser from "phaser";
 import {
   canManagePlayerRoster,
@@ -8,6 +9,7 @@ import {
 } from "@open-party-lab/protocol";
 import type { HostAppState, HostSocketClient } from "./hostSocketClient.js";
 import { getHostText } from "../i18n/hostText.js";
+import { resolveEditorialLobbyLayout } from "../scenes/lobbyLayout.js";
 import { hostTheme } from "../ui/theme/theme.js";
 import {
   applyStyles,
@@ -189,8 +191,9 @@ export function mountHostControlsOverlay(
     pointerEvents: "auto",
     display: isOpen ? "grid" : "none",
     width: "min(396px, calc(100vw - 24px))",
-    maxHeight: "calc(100vh - 32px)",
-    overflowY: "auto"
+    maxHeight: "calc(100dvh - 96px)",
+    overflowY: "auto",
+    boxSizing: "border-box"
   });
   overlay.insertBefore(card, toggleButton);
 
@@ -496,6 +499,29 @@ export function mountHostControlsOverlay(
   }
 
   function syncView(): void {
+    const layout = resolveEditorialLobbyLayout(
+      window.innerWidth,
+      window.innerHeight,
+      currentState.room?.availableGames.length ?? 0
+    );
+    const editorialLobby =
+      !layout.stacked &&
+      getRoomPhase(currentState.room) === "lobby" &&
+      !currentState.room?.selectedGameId;
+
+    if (editorialLobby) {
+      const railPadding = Math.min(Math.max(layout.railWidth * 0.09, 26), 38);
+      overlay.style.left = "";
+      overlay.style.right = `${Math.round(window.innerWidth - layout.railWidth + railPadding)}px`;
+      overlay.style.alignItems = "flex-end";
+      card.style.width = `${Math.max(220, Math.floor(layout.railWidth - railPadding * 2))}px`;
+    } else {
+      overlay.style.left = "";
+      overlay.style.right = hostChrome.offset.edge;
+      overlay.style.alignItems = "flex-end";
+      card.style.width = "min(396px, calc(100vw - 24px))";
+    }
+
     const text = getHostText(resolveLanguage());
     syncOpenState(text.hostControlsTitle);
     title.textContent = text.hostControlsTitle;
@@ -539,6 +565,7 @@ export function mountHostControlsOverlay(
 
   document.body.appendChild(overlay);
   applyHostFps(game, currentFps);
+  window.addEventListener("resize", syncView);
 
   const unsubscribe = client.subscribe((state) => {
     currentState = state;
@@ -553,6 +580,7 @@ export function mountHostControlsOverlay(
 
   return () => {
     destroyed = true;
+    window.removeEventListener("resize", syncView);
     unsubscribe();
     overlay.remove();
   };
