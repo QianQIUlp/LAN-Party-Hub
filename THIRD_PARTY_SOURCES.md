@@ -26,7 +26,7 @@ https://github.com/QianQIUlp/LAN-Party-Hub 中原创实现，来源是贡献者�
 
 ## 项目介绍站生成素材（非第三方）
 
-`apps/site/public/og.png` 由 OpenAI 内置图像生成工具于 2026-07-29 为 LAN Party Hub 项目介绍站专门生成，没有使用输入图片、第三方徽标或外部素材。完整提示词、文件哈希与后处理记录见 `apps/site/ASSETS.md`。
+`apps/site/public/og.png` 由 OpenAI 内置图像生成工具于 2026-07-29 为 LAN Party Hub 项目介绍站专门生成，没有使用输入图片、第三方徽标或外部素材。浏览器与安装图标由仓库脚本从站点既有四点 CSS 品牌标记确定性生成，同样没有使用外部素材。完整提示词、生成方式与文件哈希见 `apps/site/ASSETS.md`。
 
 LAN Party Hub 应用图标由仓库脚本从项目介绍站既有的四点 CSS 品牌标记确定性生成，没有使用外部图片、字体、徽标或生成媒体服务。浏览器、Windows EXE 与系统托盘资产的生成方式、尺寸和文件哈希见 `assets/branding/README.md`。
 

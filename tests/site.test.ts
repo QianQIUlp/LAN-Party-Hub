@@ -38,6 +38,8 @@ describe("project introduction site", () => {
 
     expect(metadata).toContain('rel="canonical" href="https://party.example.com/zh/"');
     expect(metadata).toContain('hreflang="en" href="https://party.example.com/"');
+    expect(metadata).toContain('rel="icon" type="image/png" sizes="64x64" href="/favicon.png"');
+    expect(metadata).toContain('rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"');
     expect(metadata).toContain('property="og:image" content="https://party.example.com/og.png"');
   });
 });

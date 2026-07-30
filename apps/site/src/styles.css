@@ -150,12 +150,13 @@ h3 {
 .brand-mark {
   display: grid;
   flex: 0 0 auto;
-  grid-template-columns: repeat(2, 8px);
-  grid-template-rows: repeat(2, 8px);
+  grid-template-columns: repeat(2, 6px);
+  grid-template-rows: repeat(2, 6px);
+  place-content: center;
   gap: 3px;
   width: 27px;
   height: 27px;
-  padding: 4px;
+  padding: 0;
   border: 1px solid rgba(81, 244, 231, 0.5);
   border-radius: 7px;
   background: rgba(25, 211, 197, 0.08);
@@ -1314,12 +1315,12 @@ h3 {
 }
 
 .brand-mark--large {
-  grid-template-columns: repeat(2, 17px);
-  grid-template-rows: repeat(2, 17px);
+  grid-template-columns: repeat(2, 14px);
+  grid-template-rows: repeat(2, 14px);
   width: 56px;
   height: 56px;
-  gap: 5px;
-  padding: 8px;
+  gap: 6px;
+  padding: 0;
   border-color: rgba(17, 109, 102, 0.45);
   border-radius: 12px;
   background: rgba(25, 211, 197, 0.08);
