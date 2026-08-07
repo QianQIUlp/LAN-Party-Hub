@@ -217,7 +217,7 @@ export const siteCopy = {
           label: "PLAY",
           title: "Switch games without reconnecting",
           body: "The host selects a game. Every phone automatically becomes the controller that round needs.",
-          note: "One room · eight built-in games"
+          note: "One room · nine built-in games"
         }
       ]
     },
@@ -301,6 +301,15 @@ export const siteCopy = {
           description: "Combine private clues and instruments, then bid through five escalating rounds.",
           players: "2–6",
           duration: "4–7 min"
+        },
+        {
+          id: "fish-eat-fish",
+          glyph: "🐟",
+          tone: "cyan",
+          name: "Fish Eat Fish",
+          description: "Steer your fish with the phone joystick and eat smaller fish to become the biggest in the tank.",
+          players: "1–4",
+          duration: "90 s rounds"
         }
       ]
     },
@@ -358,7 +367,7 @@ export const siteCopy = {
       eyebrow: "SOURCE AND RELEASES",
       title: "Inspect it, download it, keep it in the room.",
       body:
-        "The platform, eight bundled games, tests, Windows packaging, attribution records, and architecture notes are developed in public under Apache-2.0.",
+        "The platform, nine bundled games, tests, Windows packaging, attribution records, and architecture notes are developed in public under Apache-2.0.",
       repositoryAction: "View on GitHub",
       releaseAction: "Get the latest release",
       statusLabel: "PROJECT STATUS",
@@ -454,7 +463,7 @@ export const siteCopy = {
           label: "开玩",
           title: "换游戏也不用重新连接",
           body: "主机选择游戏后，每部手机都会自动变成这一局所需的控制器。",
-          note: "一个房间 · 八款内置游戏"
+          note: "一个房间 · 九款内置游戏"
         }
       ]
     },
@@ -538,6 +547,15 @@ export const siteCopy = {
           description: "组合私人角色与仪器情报，在五轮递进竞拍中抢先落槌。",
           players: "2–6",
           duration: "4–7 分钟"
+        },
+        {
+          id: "fish-eat-fish",
+          glyph: "🐟",
+          tone: "cyan",
+          name: "大鱼吃小鱼",
+          description: "手机摇杆控制小鱼游向，吃掉更小的鱼越长越大，90 秒后体型最大者获胜。",
+          players: "1–4",
+          duration: "90 秒一局"
         }
       ]
     },
@@ -593,7 +611,7 @@ export const siteCopy = {
       eyebrow: "源码与发行版",
       title: "先检查，再下载，然后留在房间里开玩。",
       body:
-        "平台、八款内置游戏、自动化测试、Windows 打包、署名记录和架构说明都以 Apache-2.0 在公开仓库开发。",
+        "平台、九款内置游戏、自动化测试、Windows 打包、署名记录和架构说明都以 Apache-2.0 在公开仓库开发。",
       repositoryAction: "前往 GitHub",
       releaseAction: "下载最新发行版",
       statusLabel: "项目状态",

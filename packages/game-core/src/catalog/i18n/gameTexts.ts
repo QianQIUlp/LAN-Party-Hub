@@ -15,6 +15,7 @@ import { tapRaceText } from "./games/tapRace.js";
 import { bullshitText } from "./games/bullshit.js";
 import { rouletteText } from "./games/roulette.js";
 import { liarsTableText } from "./games/liarsTable.js";
+import { fishEatFishText } from "./games/fishEatFish.js";
 
 const gameTextCatalog = {
   "tap-race": tapRaceText,
@@ -31,7 +32,8 @@ const gameTextCatalog = {
   "air-hockey": airHockeyText,
   schaetzorama: schaetzoramaText,
   "word-tiles": wordTilesText,
-  "light-trails": lightTrailsText
+  "light-trails": lightTrailsText,
+  "fish-eat-fish": fishEatFishText
 } as const satisfies Record<string, LocalizedGameTextMap>;
 
 export const gameTextById: Record<string, LocalizedGameTextMap> = gameTextCatalog;
