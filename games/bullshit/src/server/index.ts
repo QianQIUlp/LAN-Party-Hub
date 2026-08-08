@@ -17,7 +17,7 @@ import type {
   BullshitRank,
   BullshitState
 } from "../protocol.js";
-import { createStandardDeck, isBullshitRank, isTruthfulBatch, sortCards } from "./cards.js";
+import { createDoubleDeck, isBullshitRank, isTruthfulBatch, sortCards } from "./cards.js";
 
 const bullshitText = {
   "zh-CN": {
@@ -26,6 +26,7 @@ const bullshitText = {
     starts: (name: string) => `${name} 率先出牌。`,
     declares: (name: string, count: number, rank: string) => `${name} 宣称打出了 ${count} 张 ${rank}。`,
     passes: (name: string) => `${name} 选择过牌。`,
+    pileDiscarded: (name: string, count: number) => `其他玩家都过牌了；本堆 ${count} 张牌弃置，${name} 开启新堆。`,
     liarCaught: (challenged: string, challenger: string, count: number) =>
       `${challenger} 抓到了 ${challenged} 的谎言；${challenged} 拿走全部 ${count} 张牌。`,
     honestChecked: (challenged: string, challenger: string, count: number) =>
@@ -40,6 +41,7 @@ const bullshitText = {
     starts: (name: string) => `${name} leads the first pile.`,
     declares: (name: string, count: number, rank: string) => `${name} claims ${count} × ${rank}.`,
     passes: (name: string) => `${name} passes.`,
+    pileDiscarded: (name: string, count: number) => `Everyone else passed; the pile of ${count} is discarded. ${name} leads a new pile.`,
     liarCaught: (challenged: string, challenger: string, count: number) =>
       `${challenger} catches ${challenged} bluffing; ${challenged} takes all ${count} cards.`,
     honestChecked: (challenged: string, challenger: string, count: number) =>
@@ -54,6 +56,7 @@ const bullshitText = {
     starts: (name: string) => `${name} eroeffnet den ersten Stapel.`,
     declares: (name: string, count: number, rank: string) => `${name} behauptet: ${count} × ${rank}.`,
     passes: (name: string) => `${name} passt.`,
+    pileDiscarded: (name: string, count: number) => `Alle anderen passen; der Stapel mit ${count} Karten wird abgelegt. ${name} eroeffnet einen neuen Stapel.`,
     liarCaught: (challenged: string, challenger: string, count: number) =>
       `${challenger} erwischt ${challenged} beim Bluffen; ${challenged} nimmt alle ${count} Karten.`,
     honestChecked: (challenged: string, challenger: string, count: number) =>
@@ -68,6 +71,7 @@ const bullshitText = {
   starts: (name: string) => string;
   declares: (name: string, count: number, rank: string) => string;
   passes: (name: string) => string;
+  pileDiscarded: (name: string, count: number) => string;
   liarCaught: (challenged: string, challenger: string, count: number) => string;
   honestChecked: (challenged: string, challenger: string, count: number) => string;
   pendingWin: (name: string) => string;
@@ -113,17 +117,27 @@ export function dealDeck(playerIds: readonly string[], deck: readonly BullshitCa
   return hands;
 }
 
-function nextPlayerId(turnOrder: readonly string[], currentPlayerId: string): string | null {
+function nextPlayerId(
+  turnOrder: readonly string[],
+  currentPlayerId: string,
+  excludedPlayerIds: readonly string[] = []
+): string | null {
   if (turnOrder.length === 0) {
     return null;
   }
 
+  const excluded = new Set(excludedPlayerIds);
   const currentIndex = turnOrder.indexOf(currentPlayerId);
-  if (currentIndex < 0) {
-    return turnOrder[0] ?? null;
+  const startIndex = currentIndex < 0 ? 0 : currentIndex + 1;
+
+  for (let offset = 0; offset < turnOrder.length; offset += 1) {
+    const candidate = turnOrder[(startIndex + offset) % turnOrder.length];
+    if (candidate && !excluded.has(candidate)) {
+      return candidate;
+    }
   }
 
-  return turnOrder[(currentIndex + 1) % turnOrder.length] ?? null;
+  return null;
 }
 
 function playerName(
@@ -144,6 +158,38 @@ function clearPrivateSelections(state: BullshitState): Pick<
   return {
     selectedCardIdsByPlayer: Object.fromEntries(state.turnOrder.map((playerId) => [playerId, []])),
     selectedRankByPlayer: Object.fromEntries(state.turnOrder.map((playerId) => [playerId, null]))
+  };
+}
+
+function allOtherPlayersPassed(state: BullshitState): boolean {
+  const lastPlayerId = state.lastPlay?.playerId;
+  if (!lastPlayerId) {
+    return false;
+  }
+
+  return state.turnOrder
+    .filter((playerId) => playerId !== lastPlayerId)
+    .every((playerId) => state.passedPlayerIds.includes(playerId));
+}
+
+function discardPile(state: BullshitState, context: ServerGameContext): BullshitState {
+  const leaderPlayerId = state.lastPlay?.playerId ?? state.currentTurnPlayerId;
+  const leaderName = playerName(leaderPlayerId, context);
+  const text = bullshitText[context.language];
+  const clearedSelections = clearPrivateSelections(state);
+
+  return {
+    ...state,
+    ...clearedSelections,
+    currentTurnPlayerId: leaderPlayerId,
+    activeRank: null,
+    pile: [],
+    lastPlay: null,
+    passedPlayerIds: [],
+    pendingWinnerPlayerId: null,
+    lastResolution: null,
+    updatedAt: context.now,
+    message: text.pileDiscarded(leaderName, state.pile.length)
   };
 }
 
@@ -220,7 +266,11 @@ function buildPublicState(
 }
 
 function handleToggleCard(state: BullshitState, input: BullshitInput, now: number): BullshitState {
-  if (input.type !== "toggle_card" || typeof input.cardId !== "string") {
+  if (
+    input.type !== "toggle_card" ||
+    typeof input.cardId !== "string" ||
+    state.passedPlayerIds.includes(input.playerId)
+  ) {
     return state;
   }
 
@@ -249,6 +299,7 @@ function handleSelectRank(state: BullshitState, input: BullshitInput, now: numbe
     input.type !== "select_rank" ||
     state.activeRank !== null ||
     state.lastPlay !== null ||
+    state.passedPlayerIds.includes(input.playerId) ||
     !isBullshitRank(input.rank)
   ) {
     return state;
@@ -269,7 +320,7 @@ function handlePlaySelected(
   input: BullshitInput,
   context: ServerGameContext
 ): BullshitState {
-  if (input.type !== "play_selected") {
+  if (input.type !== "play_selected" || state.passedPlayerIds.includes(input.playerId)) {
     return state;
   }
 
@@ -297,12 +348,12 @@ function handlePlaySelected(
 
   const selectedSet = new Set(selectedIds);
   const nextHand = hand.filter((card) => !selectedSet.has(card.id));
-  const nextTurn = nextPlayerId(state.turnOrder, input.playerId);
+  const nextTurn = nextPlayerId(state.turnOrder, input.playerId, state.passedPlayerIds);
   const pendingWinnerPlayerId = nextHand.length === 0 ? input.playerId : null;
   const actorName = playerName(input.playerId, context);
   const text = bullshitText[context.language];
 
-  return {
+  const nextState: BullshitState = {
     ...state,
     currentTurnPlayerId: nextTurn,
     handsByPlayer: {
@@ -332,6 +383,18 @@ function handlePlaySelected(
       ? text.pendingWin(actorName)
       : text.declares(actorName, selectedCards.length, claimedRank)
   };
+
+  if (nextState.pendingWinnerPlayerId && allOtherPlayersPassed(nextState)) {
+    return finishWithWinner(
+      nextState,
+      nextState.pendingWinnerPlayerId,
+      context.now,
+      context.language,
+      playerName(nextState.pendingWinnerPlayerId, context)
+    );
+  }
+
+  return allOtherPlayersPassed(nextState) ? discardPile(nextState, context) : nextState;
 }
 
 function handlePass(
@@ -347,11 +410,12 @@ function handlePass(
     return state;
   }
 
-  const nextTurn = nextPlayerId(state.turnOrder, input.playerId);
+  const passedPlayerIds = [...state.passedPlayerIds, input.playerId];
+  const nextTurn = nextPlayerId(state.turnOrder, input.playerId, passedPlayerIds);
   const nextState: BullshitState = {
     ...state,
     currentTurnPlayerId: nextTurn,
-    passedPlayerIds: [...state.passedPlayerIds, input.playerId],
+    passedPlayerIds,
     selectedCardIdsByPlayer: {
       ...state.selectedCardIdsByPlayer,
       [input.playerId]: []
@@ -364,17 +428,17 @@ function handlePass(
     message: bullshitText[context.language].passes(playerName(input.playerId, context))
   };
 
-  if (state.pendingWinnerPlayerId && nextTurn === state.pendingWinnerPlayerId) {
+  if (nextState.pendingWinnerPlayerId && allOtherPlayersPassed(nextState)) {
     return finishWithWinner(
       nextState,
-      state.pendingWinnerPlayerId,
+      nextState.pendingWinnerPlayerId,
       context.now,
       context.language,
-      playerName(state.pendingWinnerPlayerId, context)
+      playerName(nextState.pendingWinnerPlayerId, context)
     );
   }
 
-  return nextState;
+  return allOtherPlayersPassed(nextState) ? discardPile(nextState, context) : nextState;
 }
 
 function handleCheck(
@@ -386,6 +450,7 @@ function handleCheck(
     input.type !== "check" ||
     !state.lastPlay ||
     !state.activeRank ||
+    state.passedPlayerIds.includes(input.playerId) ||
     input.playerId === state.lastPlay.playerId
   ) {
     return state;
@@ -457,7 +522,7 @@ export const serverGame: ServerGame<
   createInitialState(context) {
     const turnOrder = rotateToRandomLeader(context.players.map((player) => player.id));
     const privateMaps = createPrivateMaps(turnOrder);
-    const handsByPlayer = dealDeck(turnOrder, shuffle(createStandardDeck()));
+    const handsByPlayer = dealDeck(turnOrder, shuffle(createDoubleDeck()));
     const currentTurnPlayerId = turnOrder[0] ?? null;
     const text = bullshitText[context.language];
 
@@ -546,8 +611,8 @@ export const serverGame: ServerGame<
       (state.handsByPlayer[playerId] ?? []).some((card) => card.id === cardId)
     );
     const selectedRank = state.selectedRankByPlayer[playerId] ?? null;
-    const isCurrentTurn = state.currentTurnPlayerId === playerId && state.winnerPlayerId === null;
     const passUsed = state.passedPlayerIds.includes(playerId);
+    const isCurrentTurn = state.currentTurnPlayerId === playerId && state.winnerPlayerId === null && !passUsed;
 
     return {
       ...publicState,
@@ -557,10 +622,10 @@ export const serverGame: ServerGame<
       isCurrentTurn,
       canPlay: isCurrentTurn && selectedCardIds.length > 0 && Boolean(state.activeRank ?? selectedRank),
       canCheck: isCurrentTurn && Boolean(state.lastPlay && state.lastPlay.playerId !== playerId),
-      canPass: isCurrentTurn && Boolean(state.lastPlay) && !passUsed,
+      canPass: isCurrentTurn && Boolean(state.lastPlay),
       passUsed
     };
   }
 };
 
-export { createStandardDeck, isTruthfulBatch, sortCards } from "./cards.js";
+export { createDoubleDeck, createStandardDeck, isTruthfulBatch, sortCards } from "./cards.js";

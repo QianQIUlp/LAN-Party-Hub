@@ -270,9 +270,13 @@
 }
 
 .card-hand-fan {
+  --card-w: clamp(68px, 8.2vw, 96px);
+  --card-w-mobile: clamp(66px, 21vw, 80px);
+  --card-slot: 52px;
   position: relative;
   min-height: 148px;
   height: 100%;
+  min-width: max(280px, calc(var(--card-count) * var(--card-slot)));
   margin: 0 24px;
 }
 
@@ -283,7 +287,7 @@
   position: absolute;
   left: var(--card-left);
   bottom: 18px;
-  width: clamp(68px, 8.2vw, 96px);
+  width: var(--card-w);
   aspect-ratio: 2 / 3;
   padding: 6px;
   overflow: hidden;
@@ -364,16 +368,19 @@
 
 .card-hand-card-hit {
   position: absolute;
-  inset-block: 0;
+  inset-block: auto;
+  bottom: 0;
   left: var(--card-hit-left);
   width: var(--card-hit-width);
+  height: var(--card-hit-height);
   min-width: 0;
   padding: 0;
   overflow: hidden;
   color: transparent;
   background: transparent;
   border: 0;
-  transform: translateX(-50%);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .card-hand-card-hit:not(:disabled) {
@@ -865,18 +872,20 @@
   }
 
   .card-hand-fan {
+    --card-slot: 56px;
     margin: 0;
     min-height: 220px;
   }
 
   .card-hand-card {
     left: var(--card-left-mobile);
-    width: clamp(66px, 21vw, 80px);
+    width: var(--card-w-mobile);
   }
 
   .card-hand-card-hit {
     left: var(--card-hit-left-mobile);
     width: var(--card-hit-width-mobile);
+    height: var(--card-hit-height-mobile);
   }
 
   .card-hand-actions {
@@ -895,9 +904,9 @@
   }
 }
 
-@media (max-height: 600px) and (orientation: landscape) {
+@media (max-height: 620px) and (orientation: landscape) {
   .card-hand-board {
-    grid-template-rows: auto auto minmax(120px, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     gap: 4px;
   }
 
@@ -914,6 +923,7 @@
   }
 
   .card-hand-message {
+    top: 56px;
     padding-block: 4px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -924,29 +934,37 @@
   }
 
   .card-hand-playfield {
-    min-height: 120px;
+    min-height: 0;
   }
 
   .card-hand-hand-zone {
-    grid-template-rows: auto minmax(100px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .card-hand-fan-scroll,
   .card-hand-fan {
-    min-height: 104px;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .card-hand-fan {
+    --card-w: clamp(74px, 10vh, 104px);
   }
 
   .card-hand-card {
-    width: clamp(62px, 7vw, 78px);
+    width: var(--card-w);
+    bottom: 10px;
   }
 
-  .card-hand-pile-stack {
-    transform-origin: center;
+  .card-hand-card-hit {
+    width: var(--card-hit-width);
+    height: var(--card-hit-height);
+    bottom: 10px;
   }
 
   .card-hand-pile-zone {
-    top: 30%;
-    transform: translate(-50%, -50%) scale(0.62);
+    top: 26%;
+    transform: translate(-50%, -50%) scale(0.55);
   }
 
   .card-hand-actions {
