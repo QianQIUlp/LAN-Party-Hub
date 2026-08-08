@@ -33,6 +33,7 @@ test("offline phones recover and compatible groups can switch through all bundle
   expect(gameIds).toEqual([
     "auction-king",
     "bullshit",
+    "fish-eat-fish",
     "imposter",
     "liars-table",
     "roulette",
