@@ -131,7 +131,7 @@ describe("bundled game contracts", () => {
       { id: "zeichnen-und-erraten", minPlayers: 2, maxPlayers: 4 },
       { id: "schaetzorama", minPlayers: 2, maxPlayers: 4 },
       { id: "imposter", minPlayers: 3, maxPlayers: 4 },
-      { id: "bullshit", minPlayers: 2, maxPlayers: 52 },
+      { id: "bullshit", minPlayers: 4, maxPlayers: 6 },
       { id: "roulette", minPlayers: 2, maxPlayers: 2 },
       { id: "liars-table", minPlayers: 3, maxPlayers: 4 },
       { id: "auction-king", minPlayers: 2, maxPlayers: 6 }

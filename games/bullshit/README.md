@@ -2,10 +2,17 @@
 
 An authoritative, turn-based bluffing card game for LAN Party Hub.
 
-Players receive a shuffled 52-card deck. The lead player declares a rank and
-places one or more cards face down. Every following play must claim the same
-rank, but the actual cards may be anything. On a turn, a player may add cards,
-check the most recent play, or pass once for the current pile.
+Four to six players receive a shuffled two-deck pack of 104 cards. The lead
+player declares a rank and places one or more cards face down. Every following
+play must claim the same rank, but the actual cards may be anything. On a turn,
+a player may add cards, check the most recent play, or pass once for the current
+pile.
+
+Passing exits the current pile completely: that player cannot play, pass again,
+or check for the rest of the pile. Other players continue in turn order. Once
+every player except the last player who actually played has passed, the pile is
+discarded without being taken into a hand, and that last player leads a new
+pile.
 
 Checking reveals only the most recent batch. If any revealed card has the wrong
 rank, that player takes the whole pile. If every card is truthful, the challenger

@@ -18,6 +18,18 @@ export function createStandardDeck(): BullshitCard[] {
   );
 }
 
+export function createDoubleDeck(): BullshitCard[] {
+  return [0, 1].flatMap((deckIndex) =>
+    bullshitSuits.flatMap((suit) =>
+      bullshitRanks.map((rank) => ({
+        id: `${deckIndex + 1}-${suit}-${rank}`,
+        rank,
+        suit
+      }))
+    )
+  );
+}
+
 export function sortCards(cards: readonly BullshitCard[]): BullshitCard[] {
   return [...cards].sort((left, right) => {
     const rankDifference = (rankOrder.get(left.rank) ?? 0) - (rankOrder.get(right.rank) ?? 0);

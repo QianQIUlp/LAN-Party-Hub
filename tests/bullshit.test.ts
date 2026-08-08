@@ -13,6 +13,7 @@ import type {
 } from "../games/bullshit/src/protocol.js";
 import {
   createStandardDeck,
+  createDoubleDeck,
   dealDeck,
   serverGame
 } from "../games/bullshit/src/server/index.js";
@@ -20,7 +21,10 @@ import {
 const players = [
   { id: "p1", name: "甲", color: "#f00", score: 0, isReady: true, connected: true },
   { id: "p2", name: "乙", color: "#0f0", score: 0, isReady: true, connected: true },
-  { id: "p3", name: "丙", color: "#00f", score: 0, isReady: true, connected: true }
+  { id: "p3", name: "丙", color: "#00f", score: 0, isReady: true, connected: true },
+  { id: "p4", name: "丁", color: "#ff0", score: 0, isReady: true, connected: true },
+  { id: "p5", name: "戊", color: "#0ff", score: 0, isReady: true, connected: true },
+  { id: "p6", name: "己", color: "#f0f", score: 0, isReady: true, connected: true }
 ];
 
 function context(now = 1_000): ServerGameContext {
@@ -41,18 +45,20 @@ function card(rank: BullshitRank, suit: BullshitSuit): BullshitCard {
   return { id: `${suit}-${rank}`, rank, suit };
 }
 
-function playingState(hands: Record<string, BullshitCard[]>): BullshitState {
+function playingState(
+  hands: Record<string, BullshitCard[]>,
+  turnOrder: string[] = ["p1", "p2", "p3"]
+): BullshitState {
+  const privateMaps = Object.fromEntries(turnOrder.map((playerId) => [playerId, [] as string[]]));
+  const rankMaps = Object.fromEntries(turnOrder.map((playerId) => [playerId, null]));
+
   return {
     ...createBaseRoundState("playing", 1_000, { startedAt: 1_000 }),
-    turnOrder: ["p1", "p2", "p3"],
+    turnOrder,
     currentTurnPlayerId: "p1",
-    handsByPlayer: {
-      p1: hands.p1 ?? [],
-      p2: hands.p2 ?? [],
-      p3: hands.p3 ?? []
-    },
-    selectedCardIdsByPlayer: { p1: [], p2: [], p3: [] },
-    selectedRankByPlayer: { p1: null, p2: null, p3: null },
+    handsByPlayer: Object.fromEntries(turnOrder.map((playerId) => [playerId, hands[playerId] ?? []])),
+    selectedCardIdsByPlayer: privateMaps,
+    selectedRankByPlayer: rankMaps,
     activeRank: null,
     pile: [],
     lastPlay: null,
@@ -100,7 +106,10 @@ function selectAndPlay(
 }
 
 describe("Bullshit authoritative rules", () => {
-  it("builds and deals a unique 52-card deck without jokers", () => {
+  it("uses four to six players and deals standard or double decks without jokers", () => {
+    expect(bullshitManifest.minPlayers).toBe(4);
+    expect(bullshitManifest.maxPlayers).toBe(6);
+
     const deck = createStandardDeck();
     expect(deck).toHaveLength(52);
     expect(new Set(deck.map((entry) => entry.id))).toHaveLength(52);
@@ -111,6 +120,17 @@ describe("Bullshit authoritative rules", () => {
 
     const threeHands = dealDeck(["p1", "p2", "p3"], deck);
     expect(Object.values(threeHands).map((hand) => hand.length)).toEqual([18, 17, 17]);
+
+    const doubleDeck = createDoubleDeck();
+    expect(doubleDeck).toHaveLength(104);
+    expect(new Set(doubleDeck.map((entry) => entry.id))).toHaveLength(104);
+    expect(doubleDeck.filter((entry) => entry.rank === "A" && entry.suit === "spades")).toHaveLength(2);
+
+    const doubleFourHands = dealDeck(["p1", "p2", "p3", "p4"], doubleDeck);
+    expect(Object.values(doubleFourHands).map((hand) => hand.length)).toEqual([26, 26, 26, 26]);
+
+    const sixHands = dealDeck(["p1", "p2", "p3", "p4", "p5", "p6"], doubleDeck);
+    expect(Object.values(sixHands).map((hand) => hand.length)).toEqual([18, 18, 17, 17, 17, 17]);
   });
 
   it("checks only the latest batch and gives the whole pile to a wrong challenger", () => {
@@ -165,7 +185,7 @@ describe("Bullshit authoritative rules", () => {
     expect(state.winnerPlayerId).toBeNull();
   });
 
-  it("allows one pass per player per active pile without changing the checked batch", () => {
+  it("skips passers and discards the pile once every other player passes", () => {
     const king = card("K", "spades");
     let state = playingState({
       p1: [king, card("A", "clubs")],
@@ -176,13 +196,39 @@ describe("Bullshit authoritative rules", () => {
     state = selectAndPlay(state, "p1", [king.id], 1_010, "K");
     state = act(state, "p2", { type: "pass" }, 1_020);
     state = act(state, "p3", { type: "pass" }, 1_030);
-    state = act(state, "p1", { type: "pass" }, 1_040);
-    const repeatedPass = act(state, "p2", { type: "pass" }, 1_050);
 
-    expect(repeatedPass).toBe(state);
-    expect(state.passedPlayerIds).toEqual(["p2", "p3", "p1"]);
-    expect(state.lastPlay?.playerId).toBe("p1");
-    expect(state.currentTurnPlayerId).toBe("p2");
+    expect(state.passedPlayerIds).toEqual([]);
+    expect(state.lastPlay).toBeNull();
+    expect(state.activeRank).toBeNull();
+    expect(state.pile).toEqual([]);
+    expect(state.currentTurnPlayerId).toBe("p1");
+    expect(state.message).toContain("弃置");
+  });
+
+  it("removes a passer from the current pile and rejects their later play", () => {
+    const firstKing = card("K", "spades");
+    const secondKing = card("K", "hearts");
+    let state = playingState(
+      {
+        p1: [firstKing, card("A", "clubs")],
+        p2: [card("2", "hearts")],
+        p3: [secondKing],
+        p4: [card("3", "diamonds")]
+      },
+      ["p1", "p2", "p3", "p4"]
+    );
+
+    state = selectAndPlay(state, "p1", [firstKing.id], 1_010, "K");
+    state = act(state, "p2", { type: "pass" }, 1_020);
+    const afterInvalidPlay = act(state, "p2", { type: "play_selected" }, 1_025);
+
+    expect(afterInvalidPlay).toBe(state);
+    expect(state.currentTurnPlayerId).toBe("p3");
+    expect(state.passedPlayerIds).toEqual(["p2"]);
+
+    state = selectAndPlay(state, "p3", [secondKing.id], 1_030);
+    expect(state.currentTurnPlayerId).toBe("p4");
+    expect(state.passedPlayerIds).toEqual(["p2"]);
   });
 
   it("keeps an empty hand pending until the final play survives", () => {

@@ -307,6 +307,8 @@ export function renderBullshitState(
 
   if (state.pendingWinnerName && !state.winnerName) {
     addCenteredText(scene, width / 2, 150, text.pending(state.pendingWinnerName), 18, palette.accentText, "700");
+  } else if (state.message && state.pileCount === 0 && !state.lastPlay) {
+    addCenteredText(scene, width / 2, 150, state.message, 18, palette.accentText, "700");
   } else if (state.lastPlay && !state.lastResolution) {
     addCenteredText(
       scene,

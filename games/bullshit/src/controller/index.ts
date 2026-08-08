@@ -167,6 +167,10 @@ function buildHelperText(
     return resolution;
   }
 
+  if (state.message && !state.lastPlay && state.pileCount === 0) {
+    return state.message;
+  }
+
   if (!state.isCurrentTurn) {
     if (state.pendingWinnerPlayerId) {
       return zh
@@ -195,6 +199,7 @@ function buildControllerState(context: ControllerGameRenderContext): BullshitCon
     winnerPlayerId: gameState.winnerPlayerId ?? null,
     winnerName: gameState.winnerName ?? null,
     lastResolution: gameState.lastResolution ?? null,
+    message: gameState.message,
     ownHand: gameState.ownHand ?? [],
     selectedCardIds: gameState.selectedCardIds ?? [],
     selectedRank: gameState.selectedRank ?? null,
