@@ -50,8 +50,8 @@ function compareCards(a: CardHandCardModel, b: CardHandCardModel, mode: SortMode
 function fanStyle(index: number, count: number, selected: boolean): CSSProperties {
   const center = (count - 1) / 2;
   const distance = count <= 1 ? 0 : (index - center) / Math.max(center, 1);
-  const left = count <= 1 ? 50 : 5 + (index / (count - 1)) * 90;
-  const mobileLeft = count <= 1 ? 50 : 11 + (index / (count - 1)) * 78;
+  const left = count <= 1 ? 50 : 8 + (index / (count - 1)) * 84;
+  const mobileLeft = count <= 1 ? 50 : 12 + (index / (count - 1)) * 76;
   const curve = Math.pow(Math.abs(distance), 1.6) * 18;
   const angle = distance * Math.min(11, 4 + count * 0.45);
 
@@ -322,7 +322,7 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
             <div
               className="card-hand-fan"
               data-card-count={sortedCards.length}
-              style={{ minWidth: `${Math.max(280, sortedCards.length * 32)}px` }}
+              style={{ "--card-count": sortedCards.length } as CSSProperties}
             >
               {sortedCards.map((card, index) => {
                 const symbol = suitSymbols[card.suit];
@@ -354,23 +354,25 @@ export function CardHandLayout({ model }: CardHandLayoutProps) {
               })}
               <div className="card-hand-hit-map">
                 {sortedCards.map((card, index) => {
-                  const left = sortedCards.length <= 1 ? 50 : 5 + (index / (sortedCards.length - 1)) * 90;
-                  const width = sortedCards.length <= 1 ? 100 : 90 / (sortedCards.length - 1);
-                  const mobileLeft = sortedCards.length <= 1 ? 50 : 11 + (index / (sortedCards.length - 1)) * 78;
-                  const mobileWidth = sortedCards.length <= 1 ? 100 : 78 / (sortedCards.length - 1);
+                  const left = sortedCards.length <= 1 ? 50 : 8 + (index / (sortedCards.length - 1)) * 84;
+                  const mobileLeft = sortedCards.length <= 1 ? 50 : 12 + (index / (sortedCards.length - 1)) * 76;
+                  const selected = card.selected;
                   return (
                     <button
                       key={card.id}
                       type="button"
                       className="card-hand-card-hit"
                       style={{
-                        "--card-hit-left": `${left}%`,
-                        "--card-hit-left-mobile": `${mobileLeft}%`,
-                        "--card-hit-width": `${width}%`,
-                        "--card-hit-width-mobile": `${mobileWidth}%`
+                        "--card-hit-left": `calc(${left}% - var(--card-w) / 2)`,
+                        "--card-hit-left-mobile": `calc(${mobileLeft}% - var(--card-w-mobile) / 2)`,
+                        "--card-hit-width": "var(--card-w)",
+                        "--card-hit-width-mobile": "var(--card-w-mobile)",
+                        "--card-hit-height": "calc(var(--card-w) * 1.5 + 72px)",
+                        "--card-hit-height-mobile": "calc(var(--card-w-mobile) * 1.5 + 72px)",
+                        zIndex: selected ? 100 + index : 10 + index
                       } as CSSProperties}
                       aria-label={card.accessibilityLabel}
-                      aria-pressed={card.selected}
+                      aria-pressed={selected}
                       disabled={model.disabled || card.disabled || isPlayingCards || isChecking}
                       onPointerEnter={() => setHoveredCardId(card.id)}
                       onPointerLeave={() => setHoveredCardId((current) => current === card.id ? null : current)}
