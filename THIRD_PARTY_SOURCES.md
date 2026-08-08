@@ -22,7 +22,9 @@ https://github.com/Hartwich/buzzwort 提交
 https://github.com/QianQIUlp/LAN-Party-Hub 中原创实现，来源是贡献者描述的传统纸牌玩法。
 代码、规则状态机和牌面 UI 均以本仓库 Git 历史为审计来源；未导入第三方牌面、字体、音频或数据集。控制器使用的两张原创像素素材由 OpenAI 内置图像生成工具于 2026-07-23 生成，其提示词边界、后处理方式与许可记录在 `games/bullshit/assets/README.md`。
 
-`roulette`、`liars-table` 与 `auction-king` 同样由 LAN Party Hub 在本仓库内原创实现，没有外部源码提交号。本仓库 Git 历史是其代码、规则和视觉实现的审计来源；公开发行所用美术必须在对应游戏资产说明中记录原创生成或许可来源。
+`roulette`、`liars-table`、`auction-king` 与 `fish-eat-fish` 同样由 LAN Party Hub 在本仓库内原创实现，没有外部源码提交号。本仓库 Git 历史是其代码、规则和视觉实现的审计来源；公开发行所用美术必须在对应游戏资产说明中记录原创生成或许可来源。
+
+`fish-eat-fish` 的玩法与数值设计参考了维护者本地无许可的原型项目 `../BigFish2P`（双人键盘版大鱼吃小鱼）。本项目没有复制其代码或素材，而是以 TypeScript 在服务端权威架构下重新实现：手机摇杆输入、1–4 人支持、主屏程序化 Phaser 渲染、状态事件化特效均为本仓库新写代码；鱼、水、道具与特效全部程序化绘制，未导入任何第三方图片、字体、音频或数据集。
 
 ## 项目介绍站生成素材（非第三方）
 

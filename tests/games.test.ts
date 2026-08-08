@@ -22,6 +22,7 @@ import { schaetzoramaManifest } from "../games/schaetzorama/src/manifest.js";
 import { rouletteManifest } from "../games/roulette/src/manifest.js";
 import { liarsTableManifest } from "../games/liars-table/src/manifest.js";
 import { auctionKingManifest } from "../games/auction-king/src/manifest.js";
+import { fishEatFishManifest } from "../games/fish-eat-fish/src/manifest.js";
 
 function context(
   selectedGame: ServerGameContext["selectedGame"],
@@ -125,7 +126,8 @@ describe("bundled game contracts", () => {
       bullshitManifest,
       rouletteManifest,
       liarsTableManifest,
-      auctionKingManifest
+      auctionKingManifest,
+      fishEatFishManifest
     ].map(({ id, minPlayers, maxPlayers }) => ({ id, minPlayers, maxPlayers }))).toEqual([
       { id: "tap-race", minPlayers: 2, maxPlayers: 4 },
       { id: "zeichnen-und-erraten", minPlayers: 2, maxPlayers: 4 },
@@ -134,7 +136,8 @@ describe("bundled game contracts", () => {
       { id: "bullshit", minPlayers: 2, maxPlayers: 52 },
       { id: "roulette", minPlayers: 2, maxPlayers: 2 },
       { id: "liars-table", minPlayers: 3, maxPlayers: 4 },
-      { id: "auction-king", minPlayers: 2, maxPlayers: 6 }
+      { id: "auction-king", minPlayers: 2, maxPlayers: 6 },
+      { id: "fish-eat-fish", minPlayers: 1, maxPlayers: 4 }
     ]);
   });
 

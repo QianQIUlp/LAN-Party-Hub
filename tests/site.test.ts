@@ -18,7 +18,7 @@ describe("project introduction site", () => {
       .map((game) => game.id)
       .sort();
 
-    expect(bundledIds).toHaveLength(8);
+    expect(bundledIds).toHaveLength(9);
     expect(siteCopy.en.games.items.map((game) => game.id).sort()).toEqual(bundledIds);
     expect(siteCopy.zh.games.items.map((game) => game.id).sort()).toEqual(bundledIds);
   });
